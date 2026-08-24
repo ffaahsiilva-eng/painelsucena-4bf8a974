@@ -421,7 +421,10 @@ export default function RDO() {
       "oficina_externa",
       "fora_de_operacao",
       "fora_de_obra",
-      "vistoria"
+      "vistoria",
+      "manutencao",
+      "manutenção",
+      "oficina"
     ]);
 
     const equipmentNoCanteiro = equipment
@@ -436,7 +439,7 @@ export default function RDO() {
         if (platesOut.has(eq.plate)) return false;
         
         // 2. Filtrar pelo status operacional atual/histórico
-        const currentStopReason = (eq as any).stop_reason || "none";
+        const currentStopReason = ((eq as any).stop_reason || "none").toLowerCase();
         
         // Equipamentos em serviço devem aparecer no RDO
         // Se estiver em manutenção ou vistoria, não deve aparecer (exceto PIPA 04 que é forçada no início do filtro)
