@@ -136,7 +136,7 @@ export function useAllEntries() {
 // Get equipment currently out (saida without a subsequent entrada)
 export function useEquipmentCurrentlyOut() {
   return useQuery({
-    queryKey: ["equipment-movements-currently-out"],
+    queryKey: ["equipment-currently-out-v2"],
     queryFn: async () => {
       // Order by created_at so equipment status reflects what was actually
       // registered last (in registration order), not by the movement_date/time
@@ -168,7 +168,7 @@ export function useEquipmentCurrentlyOut() {
         return b.movement_time.localeCompare(a.movement_time);
       });
     },
-    staleTime: 1000 * 60 * 2,
+    staleTime: 1000 * 30, // 30 seconds - faster refresh for dashboard accuracy
   });
 }
 
@@ -381,7 +381,7 @@ export function useCreateEquipmentMovement() {
       queryClient.invalidateQueries({ queryKey: ["equipment-movements"] });
       queryClient.invalidateQueries({ queryKey: ["equipment-movements-all"] });
       queryClient.invalidateQueries({ queryKey: ["equipment-movements-all-entries"] });
-      queryClient.invalidateQueries({ queryKey: ["equipment-movements-currently-out"] });
+      queryClient.invalidateQueries({ queryKey: ["equipment-currently-out-v2"] });
       queryClient.invalidateQueries({ queryKey: ["equipment-movements-currently-in"] });
       queryClient.invalidateQueries({ queryKey: ["equipment-movements-weekly"] });
       queryClient.invalidateQueries({ queryKey: ["equipment-movements-summary"] });
@@ -413,7 +413,7 @@ export function useUpdateEquipmentMovement() {
       queryClient.invalidateQueries({ queryKey: ["equipment-movements"] });
       queryClient.invalidateQueries({ queryKey: ["equipment-movements-all"] });
       queryClient.invalidateQueries({ queryKey: ["equipment-movements-all-entries"] });
-      queryClient.invalidateQueries({ queryKey: ["equipment-movements-currently-out"] });
+      queryClient.invalidateQueries({ queryKey: ["equipment-currently-out-v2"] });
       queryClient.invalidateQueries({ queryKey: ["equipment-movements-currently-in"] });
       queryClient.invalidateQueries({ queryKey: ["equipment-movements-weekly"] });
       queryClient.invalidateQueries({ queryKey: ["equipment-movements-summary"] });
@@ -442,7 +442,7 @@ export function useDeleteEquipmentMovement() {
       queryClient.invalidateQueries({ queryKey: ["equipment-movements"] });
       queryClient.invalidateQueries({ queryKey: ["equipment-movements-all"] });
       queryClient.invalidateQueries({ queryKey: ["equipment-movements-all-entries"] });
-      queryClient.invalidateQueries({ queryKey: ["equipment-movements-currently-out"] });
+      queryClient.invalidateQueries({ queryKey: ["equipment-currently-out-v2"] });
       queryClient.invalidateQueries({ queryKey: ["equipment-movements-currently-in"] });
       queryClient.invalidateQueries({ queryKey: ["equipment-movements-weekly"] });
       queryClient.invalidateQueries({ queryKey: ["equipment-movements-summary"] });

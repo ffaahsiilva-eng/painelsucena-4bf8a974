@@ -151,6 +151,7 @@ export function EquipmentStatusCard() {
       .filter((m: any) => isMaintenanceStatus(m.exit_reason))
       .map((m: any) => m.plate)
   );
+
   const isInMaintenance = (eq: Equipment) => {
     return isMaintenanceStatus(eq.stop_reason) || outMaintenancePlates.has(eq.plate);
   };
