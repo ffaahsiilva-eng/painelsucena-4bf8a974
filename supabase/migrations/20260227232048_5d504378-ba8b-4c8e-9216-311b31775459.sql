@@ -1,0 +1,1 @@
+ALTER TABLE public.daily_jardinagem_reports ADD COLUMN extra_entries jsonb DEFAULT NULL;

@@ -1,0 +1,1 @@
+ALTER TABLE public.site_settings ADD COLUMN instacena_gif_position jsonb DEFAULT '{"x": 16, "y": 80}'::jsonb;

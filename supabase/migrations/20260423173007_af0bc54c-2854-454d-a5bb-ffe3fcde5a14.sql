@@ -1,0 +1,1 @@
+UPDATE public.rdo_reports SET efetivo_gabiao_text = NULL, efetivo_jardinagem_text = NULL;

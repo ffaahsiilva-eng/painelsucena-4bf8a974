@@ -1,0 +1,1 @@
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS rh_matricula_hydro_label TEXT DEFAULT 'Matrícula Hydro';

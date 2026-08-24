@@ -1,0 +1,1 @@
+ALTER TABLE public.rdo_reports ADD COLUMN dds_text text;

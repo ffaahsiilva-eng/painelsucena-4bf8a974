@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN frame_animation text DEFAULT NULL;

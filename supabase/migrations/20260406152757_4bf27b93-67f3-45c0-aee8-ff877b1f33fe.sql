@@ -1,0 +1,1 @@
+ALTER TABLE public.dds_participation ADD COLUMN absence_reason text DEFAULT null;

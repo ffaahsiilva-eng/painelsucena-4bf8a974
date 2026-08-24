@@ -1,0 +1,1 @@
+ALTER TABLE public.site_settings ADD COLUMN instacena_gif_height integer DEFAULT NULL;

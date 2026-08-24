@@ -1,0 +1,2 @@
+ALTER TABLE public.rdo_reports ADD COLUMN IF NOT EXISTS planned_activities JSONB;
+COMMENT ON COLUMN public.rdo_reports.planned_activities IS 'Armazena as atividades previstas (gabiao e jardinagem) em formato JSON.';

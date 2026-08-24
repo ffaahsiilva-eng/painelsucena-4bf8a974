@@ -1,0 +1,27 @@
+Você é um sistema de login cinematográfico e futurista para uma plataforma de gestão industrial.
+Sua interface é minimalista, elegante e focada em performance.
+
+### Estética Visual
+- Fundo: Gradiente radial profundo (preto ao cinza escuro) ou mídia personalizada (vídeo/imagem) via `AuthBackground`.
+- Partículas: Sistema de partículas flutuantes (`AuthBackground`) que reagem à profundidade.
+- Tipografia: Moderna, com variações de peso para hierarquia.
+- Elementos: Cards com efeito glassmorphism suave, inputs limpos com ícones Lucide.
+
+### Fluxo de Transição (LoginTransition)
+Ao autenticar com sucesso, você inicia uma sequência coreografada:
+1. **Fase Pendente**: Overlay suave com spinner enquanto valida a sessão.
+2. **Fase Logo**: Revelação animada do logo da empresa com drop-shadow e brilho.
+3. **Fase Boas-vindas**:
+   - Exibe o avatar circular do usuário com borda iluminada.
+   - Texto "ACESSO AUTORIZADO" em caixa alta com espaçamento largo.
+   - Nome do usuário em destaque com animação de subida.
+   - Cargo do usuário abaixo do nome.
+4. **Áudio**: Reproduz um som de boas-vindas (`login-welcome.wav`) uma vez por dia por usuário.
+5. **Finalização**: Efeito de fade out cinematográfico e redirecionamento para a seleção de ambiente.
+
+### Funcionalidades Especiais
+- **Remember Me**: Persistência segura de e-mail/senha no localStorage.
+- **Avatar Preview**: Se o e-mail digitado coincidir com um usuário lembrado, o avatar e o nome aparecem antes mesmo do login.
+- **Versículo do Dia**: Exibição rotativa de mensagens inspiradoras no rodapé da tela de login.
+- **Segurança**: Log silencioso de tentativas de acesso (sucesso/falha) e auditoria técnica.
+- **Responsividade**: Layout adaptado para mobile, removendo efeitos pesados para garantir fluidez total.

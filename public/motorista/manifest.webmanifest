@@ -1,0 +1,78 @@
+{
+  "name": "Painel Motorista - Sucena",
+  "short_name": "Motorista Sucena",
+  "description": "Aplicativo exclusivo para motoristas Sucena Empreendimentos: seleção de veículo, registro de movimentação, equipamentos e relatórios.",
+  "id": "/motorista/",
+  "start_url": "/auth?app=motorista",
+  "scope": "/",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "theme_color": "#1a1a2e",
+  "background_color": "#0f0f23",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "categories": ["business", "productivity", "utilities"],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/screenshot-mobile.jpg",
+      "sizes": "540x960",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Painel do Motorista"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Painel Motorista",
+      "short_name": "Painel",
+      "url": "/painel-motorista",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Selecionar Veículo",
+      "short_name": "Veículo",
+      "url": "/selecao-veiculo",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Equipamentos",
+      "short_name": "Equipamentos",
+      "url": "/equipamentos-motorista",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Registro de Movimento",
+      "short_name": "Movimento",
+      "url": "/registro-movimento-motorista",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    }
+  ]
+}

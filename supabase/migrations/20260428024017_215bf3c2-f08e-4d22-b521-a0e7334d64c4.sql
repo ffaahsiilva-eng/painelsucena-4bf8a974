@@ -1,0 +1,1 @@
+ALTER TABLE public.wapi_config ADD COLUMN IF NOT EXISTS dds_notify_day_before boolean NOT NULL DEFAULT false;

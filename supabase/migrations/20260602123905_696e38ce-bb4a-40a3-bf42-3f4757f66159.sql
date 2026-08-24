@@ -1,0 +1,1 @@
+ALTER FUNCTION public.prevent_duplicate_wapi_outbox() SET search_path = public;

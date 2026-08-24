@@ -1,0 +1,1 @@
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS card_opacity numeric NOT NULL DEFAULT 0.45;

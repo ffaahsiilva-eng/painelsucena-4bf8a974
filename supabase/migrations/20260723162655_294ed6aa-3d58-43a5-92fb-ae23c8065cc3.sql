@@ -1,0 +1,1 @@
+ALTER TABLE public.adubo_movimentos ADD COLUMN IF NOT EXISTS receipt_data_url TEXT;

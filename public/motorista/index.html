@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>Painel Motorista - Sucena</title>
+    <meta name="description" content="Aplicativo exclusivo para motoristas Sucena Empreendimentos." />
+    <meta name="theme-color" content="#1a1a2e" />
+    <link rel="manifest" href="/motorista/manifest.webmanifest" />
+    <link rel="icon" href="/pwa-icon.ico" />
+    <link rel="apple-touch-icon" href="/pwa-192x192.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Motorista Sucena" />
+    <meta http-equiv="refresh" content="0; url=/auth?app=motorista" />
+    <style>
+      html, body { margin: 0; padding: 0; background: #0f0f23; color: #fff; font-family: system-ui, sans-serif; height: 100%; }
+      .wrap { display: flex; align-items: center; justify-content: center; height: 100vh; flex-direction: column; gap: 12px; }
+      img { width: 96px; height: 96px; border-radius: 20px; }
+      a { color: #4ade80; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <img src="/pwa-192x192.png" alt="Painel Motorista" />
+      <p>Abrindo Painel Motorista…</p>
+      <p><a href="/auth?app=motorista">Toque aqui se não for redirecionado</a></p>
+    </div>
+    <script>
+      // Garantir redirecionamento mesmo se meta-refresh for bloqueado
+      setTimeout(function () {
+        window.location.replace("/auth?app=motorista");
+      }, 50);
+    </script>
+  </body>
+</html>

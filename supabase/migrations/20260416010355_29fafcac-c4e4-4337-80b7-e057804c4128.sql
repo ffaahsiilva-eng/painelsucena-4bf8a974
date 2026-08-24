@@ -1,0 +1,1 @@
+ALTER TABLE public.radio_now_playing ADD COLUMN IF NOT EXISTS shuffle_all boolean NOT NULL DEFAULT false;

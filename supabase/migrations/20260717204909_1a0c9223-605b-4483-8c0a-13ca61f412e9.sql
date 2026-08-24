@@ -1,0 +1,1 @@
+ALTER TABLE public.wapi_config ADD COLUMN IF NOT EXISTS reroute_private_to_group boolean NOT NULL DEFAULT true;

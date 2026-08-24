@@ -1,0 +1,1 @@
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS show_signup_button boolean NOT NULL DEFAULT false;

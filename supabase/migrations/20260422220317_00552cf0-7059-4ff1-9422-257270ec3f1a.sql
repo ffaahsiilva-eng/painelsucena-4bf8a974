@@ -1,0 +1,1 @@
+DELETE FROM public.rh_efetivo WHERE environment = 'paragominas';

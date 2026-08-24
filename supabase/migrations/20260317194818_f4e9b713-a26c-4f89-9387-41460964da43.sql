@@ -1,0 +1,1 @@
+ALTER TABLE public.daily_jardinagem_reports ADD COLUMN plantio_especie text DEFAULT NULL;

@@ -1,0 +1,1 @@
+ALTER TABLE public.sling_inspections ADD COLUMN IF NOT EXISTS photo_url text;

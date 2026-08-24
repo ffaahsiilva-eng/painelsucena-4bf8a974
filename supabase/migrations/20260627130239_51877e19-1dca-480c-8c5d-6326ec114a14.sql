@@ -1,0 +1,4 @@
+CREATE UNIQUE INDEX IF NOT EXISTS uniq_equipment_movements_client_op_id ON public.equipment_movements (client_op_id) WHERE client_op_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uniq_equipment_stop_history_client_op_id ON public.equipment_stop_history (client_op_id) WHERE client_op_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uniq_daily_shift_records_client_op_id ON public.daily_shift_records (client_op_id) WHERE client_op_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uniq_driver_vehicle_checklists_client_op_id ON public.driver_vehicle_checklists (client_op_id) WHERE client_op_id IS NOT NULL;

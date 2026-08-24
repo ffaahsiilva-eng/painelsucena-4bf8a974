@@ -1,0 +1,1 @@
+ALTER TABLE public.wapi_config ADD COLUMN IF NOT EXISTS auto_send_matrix_alert boolean NOT NULL DEFAULT false;

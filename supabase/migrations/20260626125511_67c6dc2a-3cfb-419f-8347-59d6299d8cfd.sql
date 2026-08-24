@@ -1,0 +1,1 @@
+ALTER TABLE public.vehicle_inspections ALTER COLUMN vistoria DROP NOT NULL;

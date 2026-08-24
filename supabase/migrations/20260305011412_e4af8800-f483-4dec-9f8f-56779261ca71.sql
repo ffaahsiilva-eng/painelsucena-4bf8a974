@@ -1,0 +1,1 @@
+ALTER TABLE public.order_items ADD COLUMN photo_urls text[] DEFAULT '{}';

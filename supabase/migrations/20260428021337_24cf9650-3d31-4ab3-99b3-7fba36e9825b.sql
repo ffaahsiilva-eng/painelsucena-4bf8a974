@@ -1,0 +1,1 @@
+ALTER TABLE public.wapi_config ADD COLUMN IF NOT EXISTS dds_auto_notify boolean NOT NULL DEFAULT false;

@@ -1,0 +1,1 @@
+UPDATE public.backup_jobs SET status='failed', finished_at=now(), error_message='Timeout da edge function (~3min wall-clock). Reescrito para encadear invocações.' WHERE status='running' AND started_at < now() - interval '3 minutes';

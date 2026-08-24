@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "shop.sucena.twa",
+      "sha256_cert_fingerprints": [
+        "A4:01:FB:D3:70:13:C0:A7:D4:2C:52:67:F1:7A:8C:1B:17:2E:EC:2D:22:EC:F0:EC:13:C2:2A:69:FC:8B:7F:55"
+      ]
+    }
+  }
+]

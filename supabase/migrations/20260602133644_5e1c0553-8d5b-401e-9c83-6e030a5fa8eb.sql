@@ -1,0 +1,1 @@
+ALTER FUNCTION public.can_manage_planning(uuid) SET search_path = public;

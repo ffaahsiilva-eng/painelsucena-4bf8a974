@@ -1,0 +1,1 @@
+ALTER TABLE public.desvios ADD COLUMN IF NOT EXISTS correction TEXT;

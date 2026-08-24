@@ -1,0 +1,1 @@
+ALTER TYPE public.cargo_type ADD VALUE IF NOT EXISTS 'moderador';

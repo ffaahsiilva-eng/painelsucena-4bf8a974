@@ -1,0 +1,1 @@
+ALTER TABLE public.site_inspection_tasks ADD COLUMN observation text DEFAULT NULL;

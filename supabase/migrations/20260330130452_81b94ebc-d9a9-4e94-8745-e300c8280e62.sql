@@ -1,0 +1,1 @@
+ALTER TABLE public.dds_schedule ADD COLUMN IF NOT EXISTS event_photo_url text;
