@@ -7,39 +7,40 @@ import { Loader2, Truck, Activity, Wrench, Clock, PauseCircle, Droplets } from "
 
 const getStatusInfo = (stopReason: string | null) => {
   const reason = (stopReason || "").toLowerCase();
-  switch (reason) {
-    case "none":
-    case "":
-      return {
-        label: "Operando",
-        color: "bg-green-500/10 text-green-600 border-green-500/30",
-        icon: <Activity className="h-3 w-3" />,
-      };
-    case "waiting":
-      return {
-        label: "Aguardando",
-        color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/30",
-        icon: <PauseCircle className="h-3 w-3" />,
-      };
-    case "maintenance":
-    case "manutencao_corretiva":
-    case "manutencao_fora":
-    case "manutencao_externa":
-    case "oficina_externa":
-    case "manutencao":
-    case "manutenção":
-    case "oficina":
-      return {
-        label: "Manutenção",
-        color: "bg-red-500/10 text-red-600 border-red-500/30",
-        icon: <Wrench className="h-3 w-3" />,
-      };
-    case "manutencao_preventiva":
+  
+  if (reason === "none" || reason === "") {
+    return {
+      label: "Operando",
+      color: "bg-green-500/10 text-green-600 border-green-500/30",
+      icon: <Activity className="h-3 w-3" />,
+    };
+  }
+
+  if (reason === "waiting") {
+    return {
+      label: "Aguardando",
+      color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/30",
+      icon: <PauseCircle className="h-3 w-3" />,
+    };
+  }
+
+  if (reason.includes("manutenc") || reason.includes("manutenç") || reason.includes("oficina") || reason === "maintenance") {
+    // Pode separar se for preventiva, se quiser manter a cor laranja
+    if (reason.includes("preventiva")) {
       return {
         label: "Manutenção Preventiva",
         color: "bg-orange-500/10 text-orange-600 border-orange-500/30",
         icon: <Wrench className="h-3 w-3" />,
       };
+    }
+    return {
+      label: "Manutenção",
+      color: "bg-red-500/10 text-red-600 border-red-500/30",
+      icon: <Wrench className="h-3 w-3" />,
+    };
+  }
+
+  switch (reason) {
     case "aguardando_frente_servico":
       return {
         label: "Aguardando Frente",

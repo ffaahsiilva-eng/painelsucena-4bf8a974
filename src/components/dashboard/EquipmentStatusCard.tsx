@@ -134,29 +134,25 @@ export function EquipmentStatusCard() {
     );
   }
 
-  const maintenanceStatuses = [
-    "maintenance", 
-    "manutencao_corretiva", 
-    "manutencao_preventiva", 
-    "vistoria", 
-    "manutencao_fora", 
-    "manutencao_externa", 
-    "oficina_externa",
-    "manutencao",
-    "manutenção",
-    "oficina"
-  ];
+  const isMaintenanceStatus = (status: string | null | undefined) => {
+    if (!status) return false;
+    const s = status.toLowerCase();
+    return s.includes("manutenc") || 
+           s.includes("manutenç") || 
+           s.includes("oficina") || 
+           s === "maintenance" || 
+           s === "vistoria";
+  };
 
   const activeSet = new Set(activeShiftIds);
   // Placas atualmente fora da obra por manutenção/vistoria (equipment_movements)
   const outMaintenancePlates = new Set(
     currentlyOut
-      .filter((m: any) => maintenanceStatuses.includes((m.exit_reason || "").toLowerCase()))
+      .filter((m: any) => isMaintenanceStatus(m.exit_reason))
       .map((m: any) => m.plate)
   );
   const isInMaintenance = (eq: Equipment) => {
-    const reason = (eq.stop_reason || "").toLowerCase();
-    return maintenanceStatuses.includes(reason) || outMaintenancePlates.has(eq.plate);
+    return isMaintenanceStatus(eq.stop_reason) || outMaintenancePlates.has(eq.plate);
   };
   // Camionete e Ônibus sempre em Operação, exceto quando saíram para manutenção/vistoria
   const alwaysOperatingTypes = ["camionete", "onibus"];
