@@ -151,7 +151,7 @@ export function EquipmentStatusCard() {
   // Placas atualmente fora da obra por manutenção/vistoria (equipment_movements)
   const outMaintenancePlates = new Set(
     currentlyOut
-      .filter((m: any) => maintenanceStatuses.includes(m.exit_reason || ""))
+      .filter((m: any) => maintenanceStatuses.includes((m.exit_reason || "").toLowerCase()))
       .map((m: any) => m.plate)
   );
   const isInMaintenance = (eq: Equipment) => {
