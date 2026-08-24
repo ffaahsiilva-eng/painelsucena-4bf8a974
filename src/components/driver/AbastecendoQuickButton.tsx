@@ -112,6 +112,12 @@ export function AbastecendoQuickButton() {
             stop_reason: newStatus,
             stop_start_time: now,
           });
+          addPendingAction("stop_history", {
+            equipment_id: selectedVehicleId,
+            stop_reason: newStatus,
+            started_at: now,
+            changed_by_driver: profile?.full_name || null,
+          });
           addPendingAction("wapi_invoke", {
             functionName: "wapi-driver-status-notify",
             body: wapiBody,

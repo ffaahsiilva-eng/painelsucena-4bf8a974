@@ -140,49 +140,57 @@ export default function RegistroMovimentoMotorista() {
       
       const currentEnv = profile?.environment || "barcarena";
 
+      let onlineSuccess = false;
       if (isOnline) {
-        // Caminho online: comportamento original
-        await createMovement.mutateAsync({
-          equipment_name: selectedEquipmentData.name,
-          plate: selectedEquipmentData.plate,
-          movement_type: movementType,
-          exit_reason: movementType === "saida" ? exitReason : null,
-          problem_description: exitReason === "manutencao_corretiva" ? problemDescription : null,
-          observation: observation.trim() || null,
-          environment: currentEnv,
-        });
+        try {
+          // Caminho online: comportamento original
+          await createMovement.mutateAsync({
+            equipment_name: selectedEquipmentData.name,
+            plate: selectedEquipmentData.plate,
+            movement_type: movementType,
+            exit_reason: movementType === "saida" ? exitReason : null,
+            problem_description: exitReason === "manutencao_corretiva" ? problemDescription : null,
+            observation: observation.trim() || null,
+            environment: currentEnv,
+          });
 
-        if (movementType === "saida" && savedVehicleId) {
-          const today = new Date().toISOString().split("T")[0];
-          try {
-            await updateShiftRecord.mutateAsync({
-              id: undefined, // ensure it uses equipment_id + shift_date path
-              equipment_id: savedVehicleId,
-              shift_date: today,
-              final_horimeter: parseFloat(exitHorimeter),
-              final_km: parseFloat(exitKm),
-            });
-          } catch (e) {
-            console.error("Error updating shift record telemetry:", e);
+          if (movementType === "saida" && savedVehicleId) {
+            const today = new Date().toISOString().split("T")[0];
+            try {
+              await updateShiftRecord.mutateAsync({
+                id: undefined, // ensure it uses equipment_id + shift_date path
+                equipment_id: savedVehicleId,
+                shift_date: today,
+                final_horimeter: parseFloat(exitHorimeter),
+                final_km: parseFloat(exitKm),
+              });
+            } catch (e) {
+              console.error("Error updating shift record telemetry:", e);
+            }
           }
-        }
 
-        // Atualiza stop_reason do equipamento para refletir manutenção/vistoria em destaques
-        if (savedVehicleId) {
-          const newStopReason =
-            movementType === "saida" && exitReason
-              ? exitReason // manutencao_corretiva | manutencao_preventiva | vistoria
-              : null;
-          try {
-            await supabase
-              .from("equipment")
-              .update({ stop_reason: newStopReason })
-              .eq("id", savedVehicleId);
-          } catch (e) {
-            console.error("Erro ao atualizar stop_reason do equipamento:", e);
+          // Atualiza stop_reason do equipamento para refletir manutenção/vistoria em destaques
+          if (savedVehicleId) {
+            const newStopReason =
+              movementType === "saida" && exitReason
+                ? exitReason // manutencao_corretiva | manutencao_preventiva | vistoria
+                : null;
+            try {
+              await supabase
+                .from("equipment")
+                .update({ stop_reason: newStopReason })
+                .eq("id", savedVehicleId);
+            } catch (e) {
+              console.error("Erro ao atualizar stop_reason do equipamento:", e);
+            }
           }
+          onlineSuccess = true;
+        } catch (e) {
+          console.warn("Online movement registry failed, will fallback to offline", e);
         }
-      } else {
+      } 
+      
+      if (!onlineSuccess) {
         // Caminho offline: enfileira para sincronizar quando voltar a internet
         if (!user?.id) {
           toast.error("Usuário não autenticado. Não é possível registrar offline.");

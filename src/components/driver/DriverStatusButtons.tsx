@@ -376,14 +376,37 @@ export function DriverStatusButtons() {
       const today = now.split("T")[0];
 
       // Update the equipment status to end_of_shift
-      await updateStatus.mutateAsync({
-        id: selectedVehicleId,
-        stop_reason: "end_of_shift" as any,
-        stop_start_time: now,
-        previousStopReason: currentStatus as any,
-        previousStopStartTime: selectedVehicle.stop_start_time,
-        changed_by_driver: currentDriverName || null,
-      });
+      let statusSuccess = false;
+      if (isOnline) {
+        try {
+          await updateStatus.mutateAsync({
+            id: selectedVehicleId,
+            stop_reason: "end_of_shift" as any,
+            stop_start_time: now,
+            previousStopReason: currentStatus as any,
+            previousStopStartTime: selectedVehicle.stop_start_time,
+            changed_by_driver: currentDriverName || null,
+          });
+          statusSuccess = true;
+        } catch (e) {
+          console.warn("Online updateStatus failed, will save offline", e);
+        }
+      }
+
+      if (!statusSuccess) {
+        await addPendingAction("equipment_status", {
+          id: selectedVehicleId,
+          stop_reason: "end_of_shift",
+          stop_start_time: now,
+        });
+        
+        await addPendingAction("stop_history", {
+          equipment_id: selectedVehicleId,
+          stop_reason: "end_of_shift",
+          started_at: now,
+          changed_by_driver: currentDriverName || null,
+        });
+      }
 
       // Upsert daily_shift_record com valores finais. Se o registro não existir
       // (ex.: motorista não clicou em iniciar turno), cria agora a partir dos
@@ -394,30 +417,44 @@ export function DriverStatusButtons() {
       const shiftStartLs = localStorage.getItem(`shift_start_time_${selectedVehicleId}`);
       const shiftStartIso = shiftStartLs ? new Date(parseInt(shiftStartLs, 10)).toISOString() : now;
 
-      const { data: savedShiftRecord, error: upsertErr } = await (supabase as any)
-        .from("daily_shift_records")
-        .upsert(
-          {
-            equipment_id: selectedVehicleId,
-            equipment_name: selectedVehicle.name,
-            plate: selectedVehicle.plate,
-            shift_date: today,
-            driver_name: currentDriverName || selectedVehicle.driver || "—",
-            initial_horimeter: initialHorimeterLs ? parseFloat(initialHorimeterLs) : null,
-            initial_km: initialKmLs ? parseFloat(initialKmLs) : null,
-            shift_start_time: shiftStartIso,
-            final_horimeter: endShiftHorimeter ? parseFloat(endShiftHorimeter) : null,
-            final_km: endShiftKm ? parseFloat(endShiftKm) : null,
-            final_fuel_level: endShiftFuelLevel,
-            shift_end_time: now,
-          },
-          { onConflict: "equipment_id,shift_date", ignoreDuplicates: false }
-        )
-        .select("id")
-        .maybeSingle();
-      if (upsertErr) {
-        console.error("Falha ao upsert daily_shift_records:", upsertErr);
-        throw new Error(`Erro ao salvar parte diária: ${upsertErr.message}`);
+      const shiftData = {
+        equipment_id: selectedVehicleId,
+        equipment_name: selectedVehicle.name,
+        plate: selectedVehicle.plate,
+        shift_date: today,
+        driver_name: currentDriverName || selectedVehicle.driver || "—",
+        initial_horimeter: initialHorimeterLs ? parseFloat(initialHorimeterLs) : null,
+        initial_km: initialKmLs ? parseFloat(initialKmLs) : null,
+        shift_start_time: shiftStartIso,
+        final_horimeter: endShiftHorimeter ? parseFloat(endShiftHorimeter) : null,
+        final_km: endShiftKm ? parseFloat(endShiftKm) : null,
+        final_fuel_level: endShiftFuelLevel,
+        shift_end_time: now,
+      };
+
+      let savedShiftRecord: any = null;
+      let shiftSuccess = false;
+
+      if (isOnline) {
+        try {
+          const { data, error: upsertErr } = await (supabase as any)
+            .from("daily_shift_records")
+            .upsert(shiftData, { onConflict: "equipment_id,shift_date", ignoreDuplicates: false })
+            .select("id")
+            .maybeSingle();
+          if (upsertErr) throw upsertErr;
+          savedShiftRecord = data;
+          shiftSuccess = true;
+        } catch (err) {
+          console.warn("Online upsert shift record failed, will save offline", err);
+        }
+      }
+
+      if (!shiftSuccess) {
+        await addPendingAction("shift_record", {
+          ...shiftData,
+          update_existing: true,
+        });
       }
 
       // Garante dados frescos do equipamento para decidir/gerar PNG.
@@ -614,18 +651,26 @@ export function DriverStatusButtons() {
       setInitialKm(startShiftKm);
 
       // Create daily shift record in the database
+      let startShiftSuccess = false;
       if (isOnline) {
-        await createShiftRecord.mutateAsync({
-          equipment_id: selectedVehicleId,
-          equipment_name: selectedVehicle.name,
-          plate: selectedVehicle.plate,
-          driver_name: currentDriverName || "Motorista",
-          helper_name: selectedVehicle.helper || undefined,
-          initial_horimeter: parseFloat(startShiftHorimeter),
-          initial_km: parseFloat(startShiftKm),
-          initial_fuel_level: fuelLevel,
-        });
-      } else {
+        try {
+          await createShiftRecord.mutateAsync({
+            equipment_id: selectedVehicleId,
+            equipment_name: selectedVehicle.name,
+            plate: selectedVehicle.plate,
+            driver_name: currentDriverName || "Motorista",
+            helper_name: selectedVehicle.helper || undefined,
+            initial_horimeter: parseFloat(startShiftHorimeter),
+            initial_km: parseFloat(startShiftKm),
+            initial_fuel_level: fuelLevel,
+          });
+          startShiftSuccess = true;
+        } catch (e) {
+          console.warn("Online createShiftRecord failed, will save offline", e);
+        }
+      }
+
+      if (!startShiftSuccess) {
         await addPendingAction("shift_record", {
           equipment_id: selectedVehicleId,
           equipment_name: selectedVehicle.name,

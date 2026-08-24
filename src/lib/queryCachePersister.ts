@@ -14,10 +14,12 @@ const PERSIST_DEBOUNCE_MS = 1500;
 const PERSISTED_PREFIXES = [
   "equipment",
   "equipment-movements",
+  "equipment-currently-out-v2",
   "equipment-stop-history",
   "profile",
   "daily-shift-records",
   "user-roles",
+  "driver-checklists",
 ];
 
 function shouldPersist(queryKey: readonly unknown[]): boolean {
