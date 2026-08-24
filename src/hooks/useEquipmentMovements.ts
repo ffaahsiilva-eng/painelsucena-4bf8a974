@@ -143,7 +143,7 @@ export function useEquipmentCurrentlyOut() {
       // fields which the user may set in the past.
       const { data, error } = await supabase
         .from("equipment_movements")
-        .select("id, equipment_name, plate, movement_type, movement_date, movement_time")
+        .select("id, equipment_name, plate, movement_type, movement_date, movement_time, exit_reason")
         .order("created_at", { ascending: true });
 
       if (error) throw error;
