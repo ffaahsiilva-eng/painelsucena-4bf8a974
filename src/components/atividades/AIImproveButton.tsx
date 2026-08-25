@@ -27,7 +27,7 @@ export function AIImproveButton({ text, onImproved, disabled }: AIImproveButtonP
         async () => {
           setLoading(true);
           const { data, error } = await supabase.functions.invoke("improve-activity-text", {
-            body: { text },
+            body: { text, confirmed: true },
           });
 
           if (error) throw error;
