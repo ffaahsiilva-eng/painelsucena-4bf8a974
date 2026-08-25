@@ -10,10 +10,17 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { text } = await req.json();
+    const { text, confirmed } = await req.json();
     if (!text || !text.trim()) {
       return new Response(JSON.stringify({ error: "Texto vazio" }), {
         status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (confirmed !== true) {
+      return new Response(JSON.stringify({ error: "Confirmação obrigatória para usar IA e consumir créditos." }), {
+        status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

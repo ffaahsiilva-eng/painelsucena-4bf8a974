@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { confirmOnce } from "@/lib/pendingConfirm";
 
 export interface ProductImage {
   id: string;
@@ -37,50 +38,56 @@ export const useProductImages = () => {
   }, [productImages]);
 
   const generateImages = useCallback(async (products: Array<{ ni: string; nome: string }>) => {
-    setIsGenerating(true);
-    setGenerationProgress({ current: 0, total: products.length });
-
     try {
-      // Process in batches of 5 to avoid timeout
-      const batchSize = 5;
-      const batches = [];
-      for (let i = 0; i < products.length; i += batchSize) {
-        batches.push(products.slice(i, i + batchSize));
-      }
+      await confirmOnce(
+        "ai:generate-product-images",
+        `Esta ação usa IA para gerar ${products.length} imagem(ns) e pode consumir créditos. Deseja continuar?`,
+        async () => {
+          setIsGenerating(true);
+          setGenerationProgress({ current: 0, total: products.length });
 
-      let successCount = 0;
-      let failCount = 0;
+          // Process in batches of 5 to avoid timeout
+          const batchSize = 5;
+          const batches = [];
+          for (let i = 0; i < products.length; i += batchSize) {
+            batches.push(products.slice(i, i + batchSize));
+          }
 
-      for (let i = 0; i < batches.length; i++) {
-        const batch = batches[i];
-        
-        const { data, error } = await supabase.functions.invoke("generate-product-images", {
-          body: { products: batch },
-        });
+          let successCount = 0;
+          let failCount = 0;
 
-        if (error) {
-          console.error("Error generating batch:", error);
-          failCount += batch.length;
-        } else if (data?.summary) {
-          successCount += data.summary.successful;
-          failCount += data.summary.failed;
+          for (let i = 0; i < batches.length; i++) {
+            const batch = batches[i];
+            
+            const { data, error } = await supabase.functions.invoke("generate-product-images", {
+              body: { products: batch, confirmed: true },
+            });
+
+            if (error) {
+              console.error("Error generating batch:", error);
+              failCount += batch.length;
+            } else if (data?.summary) {
+              successCount += data.summary.successful;
+              failCount += data.summary.failed;
+            }
+
+            setGenerationProgress({ 
+              current: Math.min((i + 1) * batchSize, products.length), 
+              total: products.length 
+            });
+
+            // Wait between batches to avoid rate limiting
+            if (i < batches.length - 1) {
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+          }
+
+          // Refresh data
+          queryClient.invalidateQueries({ queryKey: ["product-images"] });
+
+          toast.success(`Geração concluída: ${successCount} imagens geradas, ${failCount} falhas`);
         }
-
-        setGenerationProgress({ 
-          current: Math.min((i + 1) * batchSize, products.length), 
-          total: products.length 
-        });
-
-        // Wait between batches to avoid rate limiting
-        if (i < batches.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-      }
-
-      // Refresh data
-      queryClient.invalidateQueries({ queryKey: ["product-images"] });
-
-      toast.success(`Geração concluída: ${successCount} imagens geradas, ${failCount} falhas`);
+      );
     } catch (error) {
       console.error("Error generating images:", error);
       toast.error("Erro ao gerar imagens");
