@@ -38,7 +38,7 @@ import MonthlyReportDialog from "@/components/atividades/MonthlyReportDialog";
 import { PhotoUploader } from "@/components/atividades/PhotoUploader";
 import { ReadOnlyBanner } from "@/components/ReadOnlyBanner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AIImproveButton } from "@/components/atividades/AIImproveButton";
+
 import { EditablePageTitle } from "@/components/cms/EditablePageTitle";
 import { EditableIcon } from "@/components/cms/EditableIcon";
 import { JardinagemMetasSummary } from "@/components/atividades/JardinagemMetasSummary";
@@ -1250,11 +1250,6 @@ export default function AtividadesII() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label className="text-base font-semibold">✏️ ATIVIDADES MANUAIS</Label>
-                  <AIImproveButton
-                    text={atividadesManuais}
-                    onImproved={setAtividadesManuais}
-                    disabled={!canEdit}
-                  />
                 </div>
                 <DebouncedTextarea
                   value={atividadesManuais}
@@ -1272,11 +1267,6 @@ export default function AtividadesII() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label>📝 OBSERVAÇÕES</Label>
-                  <AIImproveButton
-                    text={observacoes}
-                    onImproved={setObservacoes}
-                    disabled={!canEdit}
-                  />
                 </div>
                 <DebouncedTextarea
                   value={observacoes}

@@ -141,7 +141,7 @@ export function AbastecendoQuickButton() {
           : "cursor-pointer hover:scale-[1.02] active:scale-[0.97]"
       }`}
     >
-      <div className="p-4 flex flex-col items-center justify-center text-center min-h-[110px] pointer-events-none">
+      <div className="p-4 flex flex-col items-center justify-center text-center min-h-[90px] sm:min-h-[110px] pointer-events-none">
         <div className="text-white mb-2 pointer-events-none">
           {isUpdating ? (
             <Loader2 className="w-8 h-8 animate-spin" />

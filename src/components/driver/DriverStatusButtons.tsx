@@ -1092,7 +1092,7 @@ export function DriverStatusButtons() {
           )}
 
           {/* Status Control Buttons - Larger touch targets */}
-          <div className="grid grid-cols-2 gap-3 pt-3 border-t border-border">
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-3 pt-3 border-t border-border">
 
             {statusButtons.map((button) => {
               const isServices = button.action === ("services" as any);

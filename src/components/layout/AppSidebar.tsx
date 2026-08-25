@@ -520,7 +520,7 @@ export function AppSidebar({ lockedCollapsed = false }: { lockedCollapsed?: bool
       </SidebarContent>
 
       {/* Footer */}
-      <SidebarFooter className={`border-t border-sidebar-border/50 relative z-10 ${isCollapsed ? "p-1 py-4" : "p-2 md:p-2"}`}>
+      <SidebarFooter className={`border-t border-sidebar-border/50 relative z-10 safe-area-inset-bottom ${isCollapsed ? "p-1 py-4" : "p-2 md:p-2"}`}>
         {user ? (
           <>
             {/* User Info */}

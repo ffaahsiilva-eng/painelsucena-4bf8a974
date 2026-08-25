@@ -114,7 +114,7 @@ export const OnlineUsersFooter = ({ onUserClick, onToggleSidebar, isSidebarOpen,
 
   return (
     <div className={cn(
-      "fixed bottom-0 right-0 left-0 z-40 overflow-visible transition-[left] duration-200 ease-linear",
+      "fixed bottom-0 right-0 left-0 z-40 overflow-visible transition-[left] duration-200 ease-linear safe-area-bottom-fixed",
       isMinimized ? "bg-transparent" : "bg-sidebar text-sidebar-foreground border-t-0",
       "flex items-center",
       !isMinimized && "before:content-[''] before:absolute before:left-0 before:right-0 before:-top-10 before:h-10 before:pointer-events-none",

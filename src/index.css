@@ -130,6 +130,14 @@
     white-space: nowrap;
     text-align: left;
   }
+  /* Mobile: allow table cells to wrap so data isn't cut off */
+  @media (max-width: 640px) {
+    td, th {
+      white-space: normal;
+      word-break: break-word;
+      font-size: clamp(0.6875rem, 0.6rem + 0.25vw, 0.8125rem);
+    }
+  }
 }
 
 /* Wrapper padrão para tabelas grandes: rola horizontalmente em telas pequenas */
@@ -138,6 +146,41 @@
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   margin-bottom: 1rem;
+}
+
+/* ============================================================
+   Safe Area Utilities — iPhone Notch / Dynamic Island
+   Garante que headers e footers fixos não cubram conteúdo.
+   ============================================================ */
+.safe-area-inset-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.safe-area-inset-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.safe-area-bottom-fixed {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 4px);
+}
+
+/* ============================================================
+   Mobile font & layout fine-tuning (≤ 480px — small phones)
+   ============================================================ */
+@media (max-width: 480px) {
+  /* Slightly tighter line-height for dense mobile UIs */
+  body {
+    line-height: 1.45;
+  }
+  /* Cards & dialogs: tighter padding on small phones */
+  .p-4 { padding: 0.75rem; }
+  .p-5 { padding: 0.875rem; }
+  .p-6 { padding: 1rem; }
+  /* Ensure images inside cards don't overflow */
+  .rounded-2xl img,
+  .rounded-xl img {
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+  }
 }
 
 /* Utilitários para mobile-first list view */
@@ -2941,6 +2984,13 @@ button.reminder-neon-btn-ghost:hover,
   select,
   textarea {
     font-size: 16px; /* evita zoom automático no iOS */
+  }
+}
+
+/* === Fixed footers/headers: respect safe-area on notched phones === */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .fixed.bottom-0 {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 }
 

@@ -278,7 +278,7 @@ const PainelMotorista = () => {
               size="sm"
             />
             <div className="min-w-0">
-              <p className="text-xs font-semibold text-foreground leading-tight truncate max-w-[90px]">
+              <p className="text-xs font-semibold text-foreground leading-tight truncate max-w-[140px] sm:max-w-[180px]">
                 {profile?.full_name?.split(' ')[0] || "Motorista"}
               </p>
               <p className="text-[10px] text-muted-foreground leading-tight truncate">
@@ -331,7 +331,7 @@ const PainelMotorista = () => {
 
       {/* Content - Scrollable container */}
       <main className="flex-1 overflow-y-auto overscroll-contain">
-        <div className="p-4 max-w-lg mx-auto space-y-4 pb-8 safe-area-inset-bottom">
+        <div className="p-4 max-w-lg mx-auto space-y-4 pb-safe-area safe-area-inset-bottom">
         {/* Welcome Card */}
         <Card className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground border-none shadow-lg">
           <CardContent className="p-4">
@@ -413,7 +413,7 @@ const PainelMotorista = () => {
         <DriverStatusButtons />
 
         {/* Quick Access Grid - 2 columns, touch-friendly with larger targets */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 sm:gap-3">
           {quickAccessItems
             .filter((item) => !(item.hideForMunk && isMunk))
             .filter((item) => !(item.hideWhenExitPending && exitPending))
@@ -448,7 +448,7 @@ const PainelMotorista = () => {
                   }}
 
                 >
-                  <div className="p-4 flex flex-col items-center justify-center text-center min-h-[110px] pointer-events-none">
+                  <div className="p-4 flex flex-col items-center justify-center text-center min-h-[90px] sm:min-h-[110px] pointer-events-none">
                     <div className={`${item.iconColor} mb-2 pointer-events-none`}>
                       {item.icon}
                     </div>
@@ -470,7 +470,7 @@ const PainelMotorista = () => {
                 type="button"
                 className="bg-orange-500 hover:bg-orange-600 active:bg-orange-700 transition-all duration-150 border-none shadow-md touch-manipulation rounded-xl w-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary cursor-pointer hover:scale-[1.02] active:scale-[0.97]"
               >
-                <div className="p-4 flex flex-col items-center justify-center text-center min-h-[110px] pointer-events-none">
+                <div className="p-4 flex flex-col items-center justify-center text-center min-h-[90px] sm:min-h-[110px] pointer-events-none">
                   <div className="text-white mb-2 pointer-events-none">
                     <ClipboardCheck className="w-8 h-8" />
                   </div>

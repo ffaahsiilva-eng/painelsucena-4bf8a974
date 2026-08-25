@@ -368,7 +368,7 @@ export default function SelecaoVeiculo() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm border-b shadow-sm">
+      <header className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm border-b shadow-sm safe-area-inset-top">
         <div className="flex items-center justify-between p-3">
           <div className="flex items-center gap-3">
             <Truck className="h-6 w-6 text-primary" />
@@ -385,7 +385,7 @@ export default function SelecaoVeiculo() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto p-4 max-w-lg mx-auto w-full">
+      <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 max-w-lg mx-auto w-full safe-area-inset-bottom">
         {/* Welcome Message */}
         <div className="text-center mb-6">
           <h2 className="text-xl font-semibold mb-2">
@@ -442,9 +442,9 @@ export default function SelecaoVeiculo() {
                           imageUrl={(vehicle as any).image_url}
                         />
                       </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg">{vehicle.name}</h3>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-base sm:text-lg truncate">{vehicle.name}</h3>
+                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-sm text-muted-foreground">
                           <span className="font-mono bg-muted px-2 py-0.5 rounded">
                             {vehicle.plate}
                           </span>

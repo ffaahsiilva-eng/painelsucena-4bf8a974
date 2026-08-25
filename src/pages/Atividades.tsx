@@ -45,7 +45,7 @@ import MonthlyReportDialog from "@/components/atividades/MonthlyReportDialog";
 import { PhotoUploader } from "@/components/atividades/PhotoUploader";
 import { ReadOnlyBanner } from "@/components/ReadOnlyBanner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AIImproveButton } from "@/components/atividades/AIImproveButton";
+
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MudasParaPlantarTab from "@/components/atividades/MudasParaPlantarTab";
@@ -1382,11 +1382,6 @@ export default function Atividades() {
                       <SelectTrigger className="w-[120px] h-8 text-xs"><SelectValue>{atividadesManuaisBerma ? BERMA_OPTIONS.find(o => o.value === atividadesManuaisBerma)?.label : "Berma"}</SelectValue></SelectTrigger>
                       <SelectContent>{BERMA_OPTIONS.map((opt) => (<SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>))}</SelectContent>
                     </Select>
-                    <AIImproveButton
-                      text={atividadesManuais}
-                      onImproved={setAtividadesManuais}
-                      disabled={!canEdit}
-                    />
                   </div>
                 </div>
                 <DebouncedTextarea
@@ -1412,11 +1407,6 @@ export default function Atividades() {
                       <SelectTrigger className="w-[120px] h-8 text-xs"><SelectValue>{manutencaoCanteiroBerma ? BERMA_OPTIONS.find(o => o.value === manutencaoCanteiroBerma)?.label : "Berma"}</SelectValue></SelectTrigger>
                       <SelectContent>{BERMA_OPTIONS.map((opt) => (<SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>))}</SelectContent>
                     </Select>
-                    <AIImproveButton
-                      text={manutencaoCanteiro}
-                      onImproved={setManutencaoCanteiro}
-                      disabled={!canEdit}
-                    />
                   </div>
                 </div>
                 <DebouncedTextarea
