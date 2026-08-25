@@ -13,8 +13,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { DebouncedTextarea } from "@/components/atividades/DebouncedTextarea";
+import { AIImproveButton } from "@/components/atividades/AIImproveButton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -1249,7 +1249,10 @@ export default function AtividadesII() {
               {/* Manual Activities Text */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label className="text-base font-semibold">✏️ ATIVIDADES MANUAIS</Label>
+                  <div className="flex items-center gap-2">
+                    <Label className="text-base font-semibold">✏️ ATIVIDADES MANUAIS</Label>
+                    <AIImproveButton text={atividadesManuais} onImproved={setAtividadesManuais} />
+                  </div>
                 </div>
                 <DebouncedTextarea
                   value={atividadesManuais}

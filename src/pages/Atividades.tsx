@@ -16,8 +16,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { DebouncedTextarea } from "@/components/atividades/DebouncedTextarea";
+import { AIImproveButton } from "@/components/atividades/AIImproveButton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -1372,7 +1372,10 @@ export default function Atividades() {
               {/* Atividades Manuais */}
               <div className="space-y-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-2">
-                  <Label className="text-amber-600 dark:text-amber-400 font-semibold">✏️ OUTRAS ATIVIDADES (Preenchimento Manual)</Label>
+                  <div className="flex items-center gap-2">
+                    <Label className="text-amber-600 dark:text-amber-400 font-semibold">✏️ OUTRAS ATIVIDADES (Preenchimento Manual)</Label>
+                    <AIImproveButton text={atividadesManuais} onImproved={setAtividadesManuais} />
+                  </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <Select value={atividadesManuaisFaixa} onValueChange={setAtividadesManuaisFaixa}>
                       <SelectTrigger className="w-[120px] h-8 text-xs"><SelectValue placeholder="Faixa" /></SelectTrigger>
