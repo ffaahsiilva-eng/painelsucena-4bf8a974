@@ -12,12 +12,19 @@ serve(async (req) => {
   }
 
   try {
-    const { transcript, meetingTitle, participants } = await req.json();
+    const { transcript, meetingTitle, participants, confirmed } = await req.json();
 
     if (!transcript || typeof transcript !== "string" || transcript.trim().length < 20) {
       return new Response(
         JSON.stringify({ error: "Transcrição muito curta ou vazia." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    if (confirmed !== true) {
+      return new Response(
+        JSON.stringify({ error: "Confirmação obrigatória para usar IA e consumir créditos." }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 

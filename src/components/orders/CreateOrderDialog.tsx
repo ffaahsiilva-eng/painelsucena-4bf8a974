@@ -17,6 +17,7 @@ import { useCreateOrder, uploadOrderPhoto, QuantityUnit, OrderItemInput, useProd
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { confirmOnce } from "@/lib/pendingConfirm";
 import { ProductAutocomplete } from "./ProductAutocomplete";
 
 interface CreateOrderDialogProps {
@@ -133,27 +134,33 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
       return;
     }
 
-    setIsGeneratingAI(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-order-image", {
-        body: { prompt: productName },
-      });
+      await confirmOnce(
+        `ai:generate-order-image:${targetIndex ?? "new"}:${productName}`,
+        "Esta ação usa IA para gerar imagem e pode consumir créditos. Deseja continuar?",
+        async () => {
+          setIsGeneratingAI(true);
+          const { data, error } = await supabase.functions.invoke("generate-order-image", {
+            body: { prompt: productName, confirmed: true },
+          });
 
-      if (error) throw error;
+          if (error) throw error;
 
-      if (data.imageUrl) {
-        if (targetIndex !== undefined) {
-          const updated = [...items];
-          updated[targetIndex] = {
-            ...updated[targetIndex],
-            photo_urls: [...updated[targetIndex].photo_urls, data.imageUrl],
-          };
-          setItems(updated);
-        } else {
-          setCurrentItem(prev => ({ ...prev, photo_urls: [...prev.photo_urls, data.imageUrl] }));
+          if (data.imageUrl) {
+            if (targetIndex !== undefined) {
+              const updated = [...items];
+              updated[targetIndex] = {
+                ...updated[targetIndex],
+                photo_urls: [...updated[targetIndex].photo_urls, data.imageUrl],
+              };
+              setItems(updated);
+            } else {
+              setCurrentItem(prev => ({ ...prev, photo_urls: [...prev.photo_urls, data.imageUrl] }));
+            }
+            toast({ title: "Imagem gerada com sucesso!" });
+          }
         }
-        toast({ title: "Imagem gerada com sucesso!" });
-      }
+      );
     } catch (error) {
       toast({ title: "Erro ao gerar imagem", variant: "destructive" });
     } finally {

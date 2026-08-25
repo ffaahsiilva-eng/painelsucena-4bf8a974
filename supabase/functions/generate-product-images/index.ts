@@ -11,12 +11,19 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { products } = await req.json();
+    const { products, confirmed } = await req.json();
 
     if (!products || !Array.isArray(products) || products.length === 0) {
       return new Response(
         JSON.stringify({ error: "Lista de produtos é obrigatória" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (confirmed !== true) {
+      return new Response(
+        JSON.stringify({ error: "Confirmação obrigatória para usar IA e consumir créditos." }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 

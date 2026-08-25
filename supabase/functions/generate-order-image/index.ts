@@ -9,12 +9,19 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { prompt } = await req.json();
+    const { prompt, confirmed } = await req.json();
 
     if (!prompt) {
       return new Response(
         JSON.stringify({ error: "Prompt é obrigatório" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (confirmed !== true) {
+      return new Response(
+        JSON.stringify({ error: "Confirmação obrigatória para usar IA e consumir créditos." }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
