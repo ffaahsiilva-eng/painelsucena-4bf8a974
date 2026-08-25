@@ -144,7 +144,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     // consultado fresco para evitar redirect em loop caso o cache
     // esteja desatualizado após upload de foto.
     const cacheKey = `user_profile_${userId}`;
-    const cached = sessionStorage.getItem(cacheKey);
+    const cached = sessionStorage.getItem(cacheKey) || localStorage.getItem(cacheKey);
     if (cached) {
       try {
         const data = JSON.parse(cached);
@@ -191,6 +191,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
       const result = { cargo, admin };
       sessionStorage.setItem(cacheKey, JSON.stringify(result));
+      localStorage.setItem(cacheKey, JSON.stringify(result));
       return { ...result, hasAvatar: hasAvatarVal };
     } catch (err) {
       console.error("Error fetching user cargo:", err);

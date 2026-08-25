@@ -131,10 +131,8 @@ export function useShiftRecordByEquipment(equipmentId: string | null, date?: str
         }
         return parsed;
       } catch (err) {
-        if (!navigator.onLine) {
-          const cached = localStorage.getItem(cacheKey);
-          if (cached) return JSON.parse(cached);
-        }
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) return JSON.parse(cached);
         throw err;
       }
     },

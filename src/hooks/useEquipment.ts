@@ -100,35 +100,33 @@ export function useEquipment(options: { includeDesmobilized?: boolean } = {}) {
         localStorage.setItem(cacheKey, JSON.stringify(finalRows));
         return finalRows;
       } catch (err) {
-        if (!navigator.onLine) {
-          const cached = localStorage.getItem(cacheKey);
-          if (cached) {
-            let cachedRows: Equipment[] = JSON.parse(cached);
-            
-            // Rehydrate with pending actions
-            const pendingStr = localStorage.getItem("wapi_offline_actions");
-            if (pendingStr) {
-              try {
-                const actions = JSON.parse(pendingStr);
-                actions.forEach((a: any) => {
-                  if (a.type === "equipment_status") {
-                    const idx = cachedRows.findIndex(r => r.id === a.payload.id);
-                    if (idx >= 0) {
-                      cachedRows[idx] = {
-                        ...cachedRows[idx],
-                        stop_reason: a.payload.stop_reason,
-                        stop_start_time: a.payload.stop_start_time,
-                      };
-                    }
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          let cachedRows: Equipment[] = JSON.parse(cached);
+          
+          // Rehydrate with pending actions
+          const pendingStr = localStorage.getItem("wapi_offline_actions");
+          if (pendingStr) {
+            try {
+              const actions = JSON.parse(pendingStr);
+              actions.forEach((a: any) => {
+                if (a.type === "equipment_status") {
+                  const idx = cachedRows.findIndex(r => r.id === a.payload.id);
+                  if (idx >= 0) {
+                    cachedRows[idx] = {
+                      ...cachedRows[idx],
+                      stop_reason: a.payload.stop_reason,
+                      stop_start_time: a.payload.stop_start_time,
+                    };
                   }
-                });
-              } catch (e) {
-                console.warn("Failed to parse pending actions for equipment rehydration", e);
-              }
+                }
+              });
+            } catch (e) {
+              console.warn("Failed to parse pending actions for equipment rehydration", e);
             }
-            
-            return cachedRows;
           }
+          
+          return cachedRows;
         }
         throw err;
       }
