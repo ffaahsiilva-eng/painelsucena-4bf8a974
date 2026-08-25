@@ -56,6 +56,7 @@ Deno.serve(async (req) => {
       shiftRecordId,
       imageUrl,
       imageCaption,
+      timestamp,
     } = payload || {};
 
     if (!newStatus) {
@@ -151,7 +152,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const now = new Date();
+    // Se fornecido um timestamp original pelo frontend (ex: ação offline), usa ele. Senão, usa agora.
+    const now = timestamp ? new Date(timestamp) : new Date();
     const paraTime = new Date(now.getTime() - 3 * 60 * 60 * 1000);
     const dateBR = paraTime.toISOString().slice(0, 10).split("-").reverse().join("/");
     const timeBR = paraTime.toISOString().slice(11, 16);

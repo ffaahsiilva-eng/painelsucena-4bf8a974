@@ -448,37 +448,37 @@ export function DriverStatusButtons() {
         }
       }
 
-
       if (parteDiariaUrl) {
+        const wapiBody = {
+          equipmentId: selectedVehicleId,
+          equipmentName: selectedVehicle.name,
+          plate: selectedVehicle.plate,
+          newStatus: "end_of_shift",
+          previousStatus: currentStatus,
+          driverName: currentDriverName || null,
+          extraInfo: `*Combustível final:* ${getFuelLevelLabel(endShiftFuelLevel)}${endShiftHorimeter ? `\n*Horímetro:* ${endShiftHorimeter}` : ""}${endShiftKm ? `\n*KM:* ${endShiftKm}` : ""}`,
+          shiftRecordId: savedShiftRecord?.id || null,
+          imageUrl: parteDiariaUrl,
+          imageCaption: `📄 *PARTE DIÁRIA*\n${selectedVehicle.name} — ${selectedVehicle.plate}\nMotorista: ${currentDriverName || "—"}`,
+          timestamp: new Date().toISOString(),
+        };
         try {
-          const notifyUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wapi-driver-status-notify`;
-          const resp = await fetch(notifyUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            keepalive: true,
-            body: JSON.stringify({
-              equipmentId: selectedVehicleId,
-              equipmentName: selectedVehicle.name,
-              plate: selectedVehicle.plate,
-              newStatus: "end_of_shift",
-              previousStatus: currentStatus,
-              driverName: currentDriverName || null,
-              extraInfo: `*Combustível final:* ${getFuelLevelLabel(endShiftFuelLevel)}${endShiftHorimeter ? `\n*Horímetro:* ${endShiftHorimeter}` : ""}${endShiftKm ? `\n*KM:* ${endShiftKm}` : ""}`,
-              shiftRecordId: savedShiftRecord?.id || null,
-              imageUrl: parteDiariaUrl,
-              imageCaption: `📄 *PARTE DIÁRIA*\n${selectedVehicle.name} — ${selectedVehicle.plate}\nMotorista: ${currentDriverName || "—"}`,
-            }),
-          });
-          if (!resp.ok) {
-            const txt = await resp.text().catch(() => "");
-            console.warn("driver-status-notify HTTP", resp.status, txt);
+          if (isOnline) {
+            const notifyUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wapi-driver-status-notify`;
+            const resp = await fetch(notifyUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              keepalive: true,
+              body: JSON.stringify(wapiBody),
+            });
+            if (!resp.ok) console.warn("wapi notify returned", resp.status);
+          } else {
+            await addPendingAction("wapi_invoke", { functionName: "wapi-driver-status-notify", body: wapiBody });
           }
-        } catch (e: any) {
-          console.warn("driver-status-notify failed", e);
-          toast.error(`Falha ao enviar status ao grupo: ${e?.message || e}`, { duration: 6000 });
+        } catch (err) {
+          console.warn("wapi-driver-status-notify error", err);
         }
       }
-
 
       // Fim de Turno does NOT register as equipment exit (saída)
       // The equipment remains on site, only the shift ends
@@ -653,18 +653,20 @@ export function DriverStatusButtons() {
       // Notifica o grupo sobre o INÍCIO de TURNO (sem definir status Operando).
       // O status só vai para "Operando" quando o motorista clicar em "Operar".
       try {
+        const wapiBody = {
+          equipmentId: selectedVehicleId,
+          equipmentName: selectedVehicle.name,
+          plate: selectedVehicle.plate,
+          newStatus: "shift_start",
+          previousStatus: "shift_start",
+          driverName: currentDriverName || null,
+          extraInfo: `*Combustível:* ${getFuelLevelLabel(fuelLevel)}\n*Horímetro:* ${startShiftHorimeter}\n*KM:* ${startShiftKm}`,
+          timestamp: new Date().toISOString(),
+        };
         if (isOnline) {
-          await supabase.functions.invoke("wapi-driver-status-notify", {
-            body: {
-              equipmentId: selectedVehicleId,
-              equipmentName: selectedVehicle.name,
-              plate: selectedVehicle.plate,
-              newStatus: "shift_start",
-              previousStatus: "shift_start",
-              driverName: currentDriverName || null,
-              extraInfo: `*Combustível:* ${getFuelLevelLabel(fuelLevel)}\n*Horímetro:* ${startShiftHorimeter}\n*KM:* ${startShiftKm}`,
-            },
-          });
+          await supabase.functions.invoke("wapi-driver-status-notify", { body: wapiBody });
+        } else {
+          await addPendingAction("wapi_invoke", { functionName: "wapi-driver-status-notify", body: wapiBody });
         }
       } catch (e) {
         console.warn("driver-status-notify failed", e);
@@ -761,8 +763,6 @@ export function DriverStatusButtons() {
     }
     setShowStartShiftDialog(true);
   };
-
-
 
   const handleStatusChange = async (newStatus: DriverStopReason) => {
     if (!selectedVehicleId || !selectedVehicle) {
@@ -883,16 +883,22 @@ export function DriverStatusButtons() {
       });
 
       // Fire-and-forget WhatsApp group notification
-      supabase.functions.invoke("wapi-driver-status-notify", {
-        body: {
-          equipmentId: selectedVehicleId,
-          equipmentName: selectedVehicle.name,
-          plate: selectedVehicle.plate,
-          newStatus,
-          previousStatus: currentStatus,
-          driverName: currentDriverName || null,
-        },
-      }).catch((e) => console.warn("driver-status-notify failed", e));
+      const wapiBody = {
+        equipmentId: selectedVehicleId,
+        equipmentName: selectedVehicle.name,
+        plate: selectedVehicle.plate,
+        newStatus,
+        previousStatus: currentStatus,
+        driverName: currentDriverName || null,
+        timestamp: new Date().toISOString(),
+      };
+      if (isOnline) {
+        supabase.functions.invoke("wapi-driver-status-notify", { body: wapiBody }).catch((err) => {
+          console.warn("Failed to notify wapi-driver-status-notify", err);
+        });
+      } else {
+        addPendingAction("wapi_invoke", { functionName: "wapi-driver-status-notify", body: wapiBody }).catch(e => console.warn(e));
+      }
 
       toast.success(`Status alterado para: ${statusLabels[newStatus] || newStatus}`);
       await commitDriverAction(clientActionId);
@@ -923,7 +929,6 @@ export function DriverStatusButtons() {
       release(statusKey);
     }
   };
-
 
   if (isLoading) {
     return (
@@ -1432,19 +1437,23 @@ export function DriverStatusButtons() {
                       } as any);
                       localStorage.setItem(`active_service_${selectedVehicleId}`, s.id);
                       localStorage.setItem(`active_service_label_${selectedVehicleId}`, `Serviço: ${s.label}`);
-                      supabase.functions
-                        .invoke("wapi-driver-status-notify", {
-                          body: {
-                            equipmentId: selectedVehicleId,
-                            equipmentName: selectedVehicle.name,
-                            plate: selectedVehicle.plate,
-                            newStatus: "servico",
-                            previousStatus: selectedVehicle.stop_reason || "none",
-                            driverName: currentDriverName || null,
-                            extraInfo: `*Serviço:* ${s.label}`,
-                          },
-                        })
-                        .catch((e) => console.warn("driver-status-notify failed", e));
+                      const wapiBody = {
+                        equipmentId: selectedVehicleId,
+                        equipmentName: selectedVehicle.name,
+                        plate: selectedVehicle.plate,
+                        newStatus: "servico",
+                        previousStatus: selectedVehicle.stop_reason || "none",
+                        driverName: currentDriverName || null,
+                        extraInfo: `*Serviço:* ${s.label}`,
+                        timestamp: new Date().toISOString(),
+                      };
+                      if (isOnline) {
+                        supabase.functions.invoke("wapi-driver-status-notify", { body: wapiBody }).catch((err) => {
+                          console.warn("Failed to notify wapi-driver-status-notify", err);
+                        });
+                      } else {
+                        addPendingAction("wapi_invoke", { functionName: "wapi-driver-status-notify", body: wapiBody }).catch(e => console.warn(e));
+                      }
                       toast.success(`Serviço selecionado: ${s.label}`);
                       setServicesOpen(false);
                     } catch (err: any) {

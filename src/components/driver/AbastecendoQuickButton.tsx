@@ -56,6 +56,16 @@ export function AbastecendoQuickButton() {
         const now = new Date().toISOString();
         const newStatus: StopReason = "end_of_day";
 
+        const wapiBody = {
+          equipmentId: selectedVehicleId,
+          equipmentName: selectedVehicle.name,
+          plate: selectedVehicle.plate,
+          newStatus,
+          previousStatus: currentStatus,
+          driverName: profile?.full_name || null,
+          timestamp: now,
+        };
+
         if (!isOnline) {
           addPendingAction("equipment_status", {
             id: selectedVehicleId,
@@ -67,6 +77,10 @@ export function AbastecendoQuickButton() {
             stop_reason: newStatus,
             started_at: now,
             changed_by_driver: profile?.full_name || null,
+          });
+          addPendingAction("wapi_invoke", {
+            functionName: "wapi-driver-status-notify",
+            body: wapiBody,
           });
           toast.success("Salvo offline: Abastecendo");
           setIsUpdating(false);
@@ -88,16 +102,7 @@ export function AbastecendoQuickButton() {
             changedBy: profile?.full_name || null,
           });
           supabase.functions
-            .invoke("wapi-driver-status-notify", {
-              body: {
-                equipmentId: selectedVehicleId,
-                equipmentName: selectedVehicle.name,
-                plate: selectedVehicle.plate,
-                newStatus,
-                previousStatus: currentStatus,
-                driverName: profile?.full_name || null,
-              },
-            })
+            .invoke("wapi-driver-status-notify", { body: wapiBody })
             .catch((e) => console.warn("driver-status-notify failed", e));
           toast.success("Status alterado para: Abastecendo");
         } catch (err) {
@@ -106,6 +111,10 @@ export function AbastecendoQuickButton() {
             id: selectedVehicleId,
             stop_reason: newStatus,
             stop_start_time: now,
+          });
+          addPendingAction("wapi_invoke", {
+            functionName: "wapi-driver-status-notify",
+            body: wapiBody,
           });
           toast.warning("Erro de conexão. Alteração salva para sincronizar depois.");
         } finally {

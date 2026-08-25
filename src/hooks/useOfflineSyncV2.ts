@@ -349,11 +349,26 @@ export function useOfflineSyncV2() {
             plate: checklistPayload.plate,
             driver_name: checklistPayload.driver_name || null,
             problem_description: checklistPayload.problem_description,
-            created_by: checklistPayload.created_by || null,
+            created_by: checklistPayload.created_by || "Sistema (Offline)",
             client_op_id: checklistPayload.client_op_id,
           } as never);
 
           if (error && (error as { code?: string }).code !== "23505") throw error;
+          break;
+        }
+
+        case "wapi_invoke": {
+          const { functionName, body } = action.payload as {
+            functionName: string;
+            body: any;
+          };
+          
+          const { error } = await supabase.functions.invoke(functionName, { body });
+          if (error) {
+            console.error(`[OfflineSync] Failed to invoke WAPI function ${functionName}:`, error);
+            // Optionally we can choose to throw or just log. We throw to retry it later if the API is genuinely down.
+            throw error;
+          }
           break;
         }
 
