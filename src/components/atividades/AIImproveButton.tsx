@@ -3,6 +3,7 @@ import { Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { confirmOnce } from "@/lib/pendingConfirm";
 
 interface AIImproveButtonProps {
   text: string;
@@ -19,23 +20,29 @@ export function AIImproveButton({ text, onImproved, disabled }: AIImproveButtonP
       return;
     }
 
-    setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("improve-activity-text", {
-        body: { text },
-      });
+      await confirmOnce(
+        "ai:improve-activity-text",
+        "Esta ação usa IA e pode consumir créditos. Deseja continuar?",
+        async () => {
+          setLoading(true);
+          const { data, error } = await supabase.functions.invoke("improve-activity-text", {
+            body: { text },
+          });
 
-      if (error) throw error;
+          if (error) throw error;
 
-      if (data?.error) {
-        toast.error(data.error);
-        return;
-      }
+          if (data?.error) {
+            toast.error(data.error);
+            return;
+          }
 
-      if (data?.improved) {
-        onImproved(data.improved);
-        toast.success("Texto melhorado pela IA!");
-      }
+          if (data?.improved) {
+            onImproved(data.improved);
+            toast.success("Texto melhorado pela IA!");
+          }
+        },
+      );
     } catch (err: any) {
       toast.error("Erro ao melhorar texto: " + (err.message || "Tente novamente"));
     } finally {
