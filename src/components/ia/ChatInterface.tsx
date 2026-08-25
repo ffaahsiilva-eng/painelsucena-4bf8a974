@@ -140,11 +140,11 @@ export const ChatInterface = () => {
                     <span className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                   </div>
                 ) : (
-                  <ReactMarkdown 
-                    className={cn("break-words", message.role === "user" ? "text-white" : "text-foreground")}
-                  >
-                    {message.text}
-                  </ReactMarkdown>
+                  <div className={cn("break-words", message.role === "user" ? "text-white" : "text-foreground")}>
+                    <ReactMarkdown>
+                      {message.text}
+                    </ReactMarkdown>
+                  </div>
                 )}
               </div>
 
