@@ -186,13 +186,13 @@ export function DriverStatusButtons() {
       // registering "Iniciar Turno" twice — only Fim de Turno can re-enable it.
       (async () => {
         try {
-          const today = new Date().toISOString().split("T")[0];
           const { data, error } = await (supabase as any)
             .from("daily_shift_records")
             .select("initial_horimeter, initial_km, shift_start_time, shift_end_time")
             .eq("equipment_id", vehicleId)
-            .eq("shift_date", today)
             .is("shift_end_time", null)
+            .order("shift_start_time", { ascending: false })
+            .limit(1)
             .maybeSingle();
           if (error || !data) return;
           if (data.initial_horimeter != null) {
@@ -595,13 +595,13 @@ export function DriverStatusButtons() {
       // open daily_shift_record for today (no shift_end_time), the driver must
       // register Fim de Turno first.
       try {
-        const today = new Date().toISOString().split("T")[0];
         const { data: openShift, error: shiftError } = await (supabase as any)
           .from("daily_shift_records")
           .select("id")
           .eq("equipment_id", selectedVehicleId)
-          .eq("shift_date", today)
           .is("shift_end_time", null)
+          .order("shift_start_time", { ascending: false })
+          .limit(1)
           .maybeSingle();
         
         if (shiftError) {

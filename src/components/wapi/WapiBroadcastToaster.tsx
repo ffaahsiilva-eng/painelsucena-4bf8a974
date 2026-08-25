@@ -178,7 +178,7 @@ export function WapiBroadcastToaster() {
   if (!user || !environment || items.length === 0 || isSelectingEnvironment || isLoginTransitioning) return null;
 
   return (
-    <div className="fixed bottom-20 sm:bottom-4 right-4 z-[100] flex flex-col gap-2 max-w-[92vw] sm:max-w-sm pointer-events-none">
+    <div className="fixed bottom-20 sm:bottom-4 right-4 z-[100] hidden sm:flex flex-col gap-2 max-w-[92vw] sm:max-w-sm pointer-events-none">
       {items.map((b) => {
         const text = b.caption || b.message || "";
         return (
