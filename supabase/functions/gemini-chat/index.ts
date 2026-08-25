@@ -33,7 +33,32 @@ serve(async (req) => {
     const isImageCommand = message.toLowerCase().trim().startsWith("/imagem ");
     
     if (isImageCommand) {
-      const imagePrompt = message.substring(8).trim();
+      const originalPrompt = message.substring(8).trim();
+      let imagePrompt = originalPrompt;
+      
+      // 1. Melhorar o prompt usando o prprio Gemini
+      try {
+        const enhanceUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${GEMINI_API_KEY}`;
+        const enhanceRes = await fetch(enhanceUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ 
+              role: "user", 
+              parts: [{ text: `Translate the following image generation prompt to English and dramatically enhance it to be a highly detailed, professional, cinematic, masterpiece Midjourney-style prompt. Output ONLY the final english prompt, nothing else, no quotes: ${originalPrompt}` }] 
+            }],
+            generationConfig: { temperature: 0.7, maxOutputTokens: 200 }
+          })
+        });
+        if (enhanceRes.ok) {
+          const enhanceData = await enhanceRes.json();
+          if (enhanceData.candidates?.[0]?.content?.parts?.[0]?.text) {
+            imagePrompt = enhanceData.candidates[0].content.parts[0].text.trim();
+          }
+        }
+      } catch (e) {
+        console.error("Erro ao melhorar o prompt, usando original:", e);
+      }
       
       try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${GEMINI_API_KEY}`;
@@ -65,8 +90,8 @@ serve(async (req) => {
       } catch (err) {
         console.log("Fallback para Pollinations.ai devido a erro no Imagen 3:", err instanceof Error ? err.message : err);
         // Fallback for when Imagen API is not enabled for the free tier key
-        const safePrompt = encodeURIComponent(imagePrompt);
-        const fallbackUrl = `https://image.pollinations.ai/prompt/${safePrompt}?nologo=true&seed=${Math.floor(Math.random()*1000)}`;
+        const safePrompt = encodeURIComponent(imagePrompt + " masterpiece, high resolution, highly detailed, realistic, cinematic lighting");
+        const fallbackUrl = `https://image.pollinations.ai/prompt/${safePrompt}?nologo=true&model=flux&seed=${Math.floor(Math.random()*10000)}`;
         return new Response(
           JSON.stringify({ text: `Aqui está a imagem que você pediu:\n\n![Imagem gerada](${fallbackUrl})` }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
