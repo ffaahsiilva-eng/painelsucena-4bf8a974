@@ -23,10 +23,10 @@ serve(async (req) => {
       throw new Error("A chave de IA não está configurada.");
     }
 
-    const { message, history } = await req.json();
+    const { message, history, attachedImage } = await req.json();
 
-    if (!message) {
-      throw new Error("Mensagem não fornecida");
+    if (!message && !attachedImage) {
+      throw new Error("Nenhuma mensagem ou imagem foi fornecida.");
     }
 
     // Check if it's an image generation command
@@ -81,9 +81,23 @@ serve(async (req) => {
       contents.push(...history);
     }
     
+    const userParts: any[] = [];
+    if (message && message.trim().length > 0) {
+      userParts.push({ text: message });
+    }
+    
+    if (attachedImage && attachedImage.base64 && attachedImage.mimeType) {
+      userParts.push({
+        inlineData: {
+          mimeType: attachedImage.mimeType,
+          data: attachedImage.base64
+        }
+      });
+    }
+    
     contents.push({
       role: "user",
-      parts: [{ text: message }]
+      parts: userParts
     });
 
     const gatewayMessages = [
