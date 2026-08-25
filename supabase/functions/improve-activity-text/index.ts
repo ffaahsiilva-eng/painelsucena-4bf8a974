@@ -6,6 +6,9 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const TEXT_MODEL = "google/gemini-2.5-flash";
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -18,45 +21,55 @@ serve(async (req) => {
       });
     }
 
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const GEMINI_API_KEY = Deno.env.get("GeminiAPIKey") || Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) throw new Error("A chave GEMINI_API_KEY (ou GeminiAPIKey) não está configurada no servidor.");
+    if (!LOVABLE_API_KEY && !GEMINI_API_KEY) throw new Error("A chave de IA não está configurada no servidor.");
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${GEMINI_API_KEY}`;
-    
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [
-            {
-              text: "Você é um assistente de relatórios de atividades de campo (jardinagem, gabião, obras civis). Sua tarefa é melhorar a descrição da atividade fornecida pelo usuário, tornando-a mais clara, profissional e objetiva para um relatório diário de obra (RDO). Mantenha o mesmo sentido original, mas melhore a redação. Responda APENAS com o texto melhorado, sem explicações extras. Mantenha curto e direto."
-            }
-          ]
-        },
-        contents: [
-          {
-            parts: [{ text: text }]
-          }
-        ]
-      }),
-    });
+    const systemPrompt = "Você é um assistente de relatórios de atividades de campo (jardinagem, gabião, obras civis). Sua tarefa é melhorar a descrição da atividade fornecida pelo usuário, tornando-a mais clara, profissional e objetiva para um relatório diário de obra (RDO). Mantenha o mesmo sentido original, mas melhore a redação. Responda APENAS com o texto melhorado, sem explicações extras. Mantenha curto e direto.";
+    const response = LOVABLE_API_KEY
+      ? await fetch(AI_GATEWAY_URL, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: TEXT_MODEL,
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: text },
+            ],
+            temperature: 0.4,
+            max_tokens: 500,
+          }),
+        })
+      : await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            systemInstruction: {
+              parts: [{ text: systemPrompt }]
+            },
+            contents: [
+              {
+                parts: [{ text: text }]
+              }
+            ]
+          }),
+        });
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Gemini API error:", response.status, errorText);
-      throw new Error(`Erro na API do Google Gemini (Status: ${response.status})`);
+      throw new Error(`Erro na API de IA (Status: ${response.status})`);
     }
 
     const data = await response.json();
-    let improved = text;
-    
-    // Extrai o texto gerado da estrutura de resposta do Gemini
-    if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
-      improved = data.candidates[0].content.parts[0].text;
-    }
+    const improved = LOVABLE_API_KEY
+      ? data.choices?.[0]?.message?.content || text
+      : data.candidates?.[0]?.content?.parts?.[0]?.text || text;
 
     return new Response(JSON.stringify({ improved }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
