@@ -1424,8 +1424,45 @@ export function DriverStatusButtons() {
                       return;
                     }
                     setSubmittingServiceId(s.id);
+                    const now = new Date().toISOString();
+                    const wapiBody = {
+                      equipmentId: selectedVehicleId,
+                      equipmentName: selectedVehicle.name,
+                      plate: selectedVehicle.plate,
+                      newStatus: "servico",
+                      previousStatus: selectedVehicle.stop_reason || "none",
+                      driverName: currentDriverName || null,
+                      extraInfo: `*Serviço:* ${s.label}`,
+                      timestamp: now,
+                    };
+
+                    if (!isOnline) {
+                      addPendingAction("equipment_status", {
+                        id: selectedVehicleId,
+                        stop_reason: "servico",
+                        stop_start_time: now,
+                      }).catch(e => console.warn(e));
+                      addPendingAction("stop_history", {
+                        equipment_id: selectedVehicleId,
+                        stop_reason: "servico",
+                        started_at: now,
+                        changed_by_driver: currentDriverName || null,
+                        defect_description: `Serviço: ${s.label}`,
+                      }).catch(e => console.warn(e));
+                      addPendingAction("wapi_invoke", {
+                        functionName: "wapi-driver-status-notify",
+                        body: wapiBody,
+                      }).catch(e => console.warn(e));
+                      
+                      localStorage.setItem(`active_service_${selectedVehicleId}`, s.id);
+                      localStorage.setItem(`active_service_label_${selectedVehicleId}`, `Serviço: ${s.label}`);
+                      toast.success(`Serviço salvo offline: ${s.label}`);
+                      setServicesOpen(false);
+                      setSubmittingServiceId(null);
+                      return;
+                    }
+
                     try {
-                      const now = new Date().toISOString();
                       await updateStatus.mutateAsync({
                         id: selectedVehicleId,
                         stop_reason: "servico" as any,
@@ -1437,28 +1474,35 @@ export function DriverStatusButtons() {
                       } as any);
                       localStorage.setItem(`active_service_${selectedVehicleId}`, s.id);
                       localStorage.setItem(`active_service_label_${selectedVehicleId}`, `Serviço: ${s.label}`);
-                      const wapiBody = {
-                        equipmentId: selectedVehicleId,
-                        equipmentName: selectedVehicle.name,
-                        plate: selectedVehicle.plate,
-                        newStatus: "servico",
-                        previousStatus: selectedVehicle.stop_reason || "none",
-                        driverName: currentDriverName || null,
-                        extraInfo: `*Serviço:* ${s.label}`,
-                        timestamp: new Date().toISOString(),
-                      };
-                      if (isOnline) {
-                        supabase.functions.invoke("wapi-driver-status-notify", { body: wapiBody }).catch((err) => {
-                          console.warn("Failed to notify wapi-driver-status-notify", err);
-                        });
-                      } else {
-                        addPendingAction("wapi_invoke", { functionName: "wapi-driver-status-notify", body: wapiBody }).catch(e => console.warn(e));
-                      }
+                      
+                      supabase.functions.invoke("wapi-driver-status-notify", { body: wapiBody }).catch((err) => {
+                        console.warn("Failed to notify wapi-driver-status-notify", err);
+                      });
                       toast.success(`Serviço selecionado: ${s.label}`);
                       setServicesOpen(false);
                     } catch (err: any) {
                       console.error(err);
-                      toast.error(`Erro ao registrar serviço: ${err?.message || err}`);
+                      addPendingAction("equipment_status", {
+                        id: selectedVehicleId,
+                        stop_reason: "servico",
+                        stop_start_time: now,
+                      }).catch(e => console.warn(e));
+                      addPendingAction("stop_history", {
+                        equipment_id: selectedVehicleId,
+                        stop_reason: "servico",
+                        started_at: now,
+                        changed_by_driver: currentDriverName || null,
+                        defect_description: `Serviço: ${s.label}`,
+                      }).catch(e => console.warn(e));
+                      addPendingAction("wapi_invoke", {
+                        functionName: "wapi-driver-status-notify",
+                        body: wapiBody,
+                      }).catch(e => console.warn(e));
+                      
+                      localStorage.setItem(`active_service_${selectedVehicleId}`, s.id);
+                      localStorage.setItem(`active_service_label_${selectedVehicleId}`, `Serviço: ${s.label}`);
+                      toast.warning(`Erro de conexão. Serviço ${s.label} salvo para sincronizar depois.`);
+                      setServicesOpen(false);
                     } finally {
                       setSubmittingServiceId(null);
                     }
