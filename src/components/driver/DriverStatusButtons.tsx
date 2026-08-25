@@ -166,13 +166,16 @@ export function DriverStatusButtons() {
   const { data: currentShiftRecord } = useShiftRecordByEquipment(selectedVehicleId);
 
   useEffect(() => {
-    if (currentShiftRecord && currentShiftRecord.initial_horimeter != null && currentShiftRecord.initial_km != null && selectedVehicleId) {
-      const h = String(currentShiftRecord.initial_horimeter);
-      const k = String(currentShiftRecord.initial_km);
+    if (currentShiftRecord && selectedVehicleId) {
+      console.log("Rehydrating shift from DB:", currentShiftRecord);
+      const h = currentShiftRecord.initial_horimeter != null ? String(currentShiftRecord.initial_horimeter) : "0";
+      const k = currentShiftRecord.initial_km != null ? String(currentShiftRecord.initial_km) : "0";
+      
       localStorage.setItem(`shift_horimeter_${selectedVehicleId}`, h);
       localStorage.setItem(`shift_km_${selectedVehicleId}`, k);
       setInitialHorimeter(h);
       setInitialKm(k);
+      
       if (currentShiftRecord.shift_start_time) {
         const ts = new Date(currentShiftRecord.shift_start_time).getTime();
         localStorage.setItem(`shift_start_time_${selectedVehicleId}`, ts.toString());
