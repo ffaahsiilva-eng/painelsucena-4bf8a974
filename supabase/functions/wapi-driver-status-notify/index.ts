@@ -140,9 +140,22 @@ Deno.serve(async (req) => {
               ? eqDriver.trim()
               : "—";
 
-    const newLabel = STATUS_LABELS[newStatus] || newStatus;
+    let newLabel = STATUS_LABELS[newStatus] || newStatus;
     const prevLabel = previousStatus ? (STATUS_LABELS[previousStatus] || previousStatus) : null;
     const isEndOfShift = newStatus === "end_of_shift" || newStatus === "fim_turno";
+
+    // Correção: Se tiver ponto de água, NUNCA usar o emoji de combustível
+    // A dupla-chamada (end_of_day + abastecimento) gerava duas mensagens. 
+    // Vamos garantir que se houver ponto de água, o label é sempre "💧 Abastecendo Água"
+    // e vamos abortar se for uma chamada explícita de end_of_day com waterPoint para evitar duplo envio.
+    if (waterPoint) {
+      if (newStatus === "end_of_day") {
+        return new Response(JSON.stringify({ success: true, skipped: true, reason: "ignore-fuel-msg-for-water-point" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      newLabel = "💧 Abastecendo Água";
+    }
 
     // Fim de Turno já tem o texto oficial enviado pelo trigger da Parte Diária.
     // Aqui mantemos apenas o envio opcional do PNG, evitando o texto genérico duplicado.
