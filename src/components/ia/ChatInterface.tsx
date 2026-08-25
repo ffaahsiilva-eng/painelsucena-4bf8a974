@@ -130,7 +130,7 @@ export const ChatInterface = () => {
                   "px-4 py-3 rounded-2xl max-w-[85%] text-sm shadow-sm",
                   message.role === "user" 
                     ? "bg-primary text-primary-foreground rounded-tr-sm" 
-                    : "bg-muted border rounded-tl-sm prose prose-sm dark:prose-invert"
+                    : "bg-muted border rounded-tl-sm prose prose-sm dark:prose-invert prose-img:rounded-xl prose-img:w-full prose-img:max-w-md prose-img:shadow-md"
                 )}
               >
                 {message.isStreaming && !message.text ? (

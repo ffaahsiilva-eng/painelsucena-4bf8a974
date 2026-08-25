@@ -25,7 +25,52 @@ serve(async (req) => {
       throw new Error("Mensagem não fornecida");
     }
 
-    // Prepare contents array with history and new message
+    // Check if it's an image generation command
+    const isImageCommand = message.toLowerCase().trim().startsWith("/imagem ");
+    
+    if (isImageCommand) {
+      const imagePrompt = message.substring(8).trim();
+      
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${GEMINI_API_KEY}`;
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            instances: [{ prompt: imagePrompt }],
+            parameters: { sampleCount: 1 }
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error("Imagen 3 API failed or not allowed on this tier");
+        }
+
+        const data = await response.json();
+        const base64 = data.predictions?.[0]?.bytesBase64;
+        
+        if (!base64) {
+          throw new Error("No image data returned from API");
+        }
+
+        // Return base64 markdown
+        return new Response(
+          JSON.stringify({ text: `Aqui está a imagem que você pediu:\n\n![Imagem gerada](data:image/jpeg;base64,${base64})` }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (err) {
+        console.log("Fallback para Pollinations.ai devido a erro no Imagen 3:", err.message);
+        // Fallback for when Imagen API is not enabled for the free tier key
+        const safePrompt = encodeURIComponent(imagePrompt);
+        const fallbackUrl = `https://image.pollinations.ai/prompt/${safePrompt}?nologo=true&seed=${Math.floor(Math.random()*1000)}`;
+        return new Response(
+          JSON.stringify({ text: `Aqui está a imagem que você pediu:\n\n![Imagem gerada](${fallbackUrl})` }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // Prepare contents array with history and new message for standard text model
     const contents = [];
     
     if (history && Array.isArray(history)) {
@@ -54,7 +99,7 @@ serve(async (req) => {
           role: "user",
           parts: [
             {
-              text: "Você é um assistente virtual inteligente integrado a um painel de controle chamado SucenaPainel. Seja prestativo, claro, e ajude o usuário no que ele precisar. Use formatação markdown sempre que útil (listas, negrito, etc)."
+              text: "Você é um assistente virtual inteligente integrado a um painel de controle chamado SucenaPainel. Você sabe que o usuário pode gerar imagens se digitar /imagem seguido da descrição. Se ele pedir uma imagem sem o /imagem, avise-o amigavelmente para digitar /imagem seguido do que ele quer desenhar. Use formatação markdown sempre que útil."
             }
           ]
         }
