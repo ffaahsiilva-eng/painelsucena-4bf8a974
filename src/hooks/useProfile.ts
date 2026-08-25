@@ -13,18 +13,31 @@ export const useProfile = () => {
     queryKey: ["profile", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
+      const cacheKey = `cached_profile_${user.id}`;
       
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      
-      if (error) throw error;
-      if (data && data.avatar_url) {
-        data.avatar_url = await resolveStorageUrl(data.avatar_url);
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        
+        if (error) throw error;
+        if (data && data.avatar_url) {
+          data.avatar_url = await resolveStorageUrl(data.avatar_url);
+        }
+        
+        if (data) {
+          localStorage.setItem(cacheKey, JSON.stringify(data));
+        }
+        return data;
+      } catch (err) {
+        if (!navigator.onLine) {
+          const cached = localStorage.getItem(cacheKey);
+          if (cached) return JSON.parse(cached);
+        }
+        throw err;
       }
-      return data;
     },
     enabled: !!user?.id,
   });

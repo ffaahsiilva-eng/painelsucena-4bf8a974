@@ -76,21 +76,62 @@ export function useEquipment(options: { includeDesmobilized?: boolean } = {}) {
   return useQuery({
     queryKey: ["equipment", { includeDesmobilized, env }],
     queryFn: async () => {
-      let query = supabase
-        .from("equipment")
-        .select("id, name, plate, driver, helper, equipment_type, stop_reason, stop_start_time, mobilization_status, image_url, environment")
-        .order("created_at", { ascending: true });
-      if (env) query = query.eq("environment", env);
-      const { data, error } = await query;
+      const cacheKey = `cached_equipment_${env || "default"}`;
+      try {
+        let query = supabase
+          .from("equipment")
+          .select("id, name, plate, driver, helper, equipment_type, stop_reason, stop_start_time, mobilization_status, image_url, environment")
+          .order("created_at", { ascending: true });
+        if (env) query = query.eq("environment", env);
+        
+        // Set a small timeout for the fetch if we know we are offline, or let it fail
+        const { data, error } = await query;
 
-      if (error) throw error;
-      const rows = (data as Equipment[]).map((r) => ({
-        ...r,
-        mobilization_status: (r.mobilization_status ?? "mobilizado") as MobilizationStatus,
-      }));
-      return includeDesmobilized
-        ? rows
-        : rows.filter((r) => r.mobilization_status !== "desmobilizado");
+        if (error) throw error;
+        const rows = (data as Equipment[]).map((r) => ({
+          ...r,
+          mobilization_status: (r.mobilization_status ?? "mobilizado") as MobilizationStatus,
+        }));
+        
+        const finalRows = includeDesmobilized
+          ? rows
+          : rows.filter((r) => r.mobilization_status !== "desmobilizado");
+          
+        localStorage.setItem(cacheKey, JSON.stringify(finalRows));
+        return finalRows;
+      } catch (err) {
+        if (!navigator.onLine) {
+          const cached = localStorage.getItem(cacheKey);
+          if (cached) {
+            let cachedRows: Equipment[] = JSON.parse(cached);
+            
+            // Rehydrate with pending actions
+            const pendingStr = localStorage.getItem("wapi_offline_actions");
+            if (pendingStr) {
+              try {
+                const actions = JSON.parse(pendingStr);
+                actions.forEach((a: any) => {
+                  if (a.type === "equipment_status") {
+                    const idx = cachedRows.findIndex(r => r.id === a.payload.id);
+                    if (idx >= 0) {
+                      cachedRows[idx] = {
+                        ...cachedRows[idx],
+                        stop_reason: a.payload.stop_reason,
+                        stop_start_time: a.payload.stop_start_time,
+                      };
+                    }
+                  }
+                });
+              } catch (e) {
+                console.warn("Failed to parse pending actions for equipment rehydration", e);
+              }
+            }
+            
+            return cachedRows;
+          }
+        }
+        throw err;
+      }
     },
   });
 }

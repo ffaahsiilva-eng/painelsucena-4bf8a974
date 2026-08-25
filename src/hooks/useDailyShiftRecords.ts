@@ -106,23 +106,37 @@ export function useShiftRecordByEquipment(equipmentId: string | null, date?: str
     queryKey: ["daily-shift-record", equipmentId, today],
     queryFn: async () => {
       if (!equipmentId) return null;
+      const cacheKey = `cached_shift_${equipmentId}_${today}`;
       
-      let query = supabase
-        .from("daily_shift_records")
-        .select("id, equipment_id, equipment_name, plate, shift_date, driver_name, helper_name, initial_horimeter, initial_km, initial_fuel_level, shift_start_time, final_horimeter, final_km, final_fuel_level, shift_end_time, refueling_points, status_history, created_at, updated_at")
-        .eq("equipment_id", equipmentId);
+      try {
+        let query = supabase
+          .from("daily_shift_records")
+          .select("id, equipment_id, equipment_name, plate, shift_date, driver_name, helper_name, initial_horimeter, initial_km, initial_fuel_level, shift_start_time, final_horimeter, final_km, final_fuel_level, shift_end_time, refueling_points, status_history, created_at, updated_at")
+          .eq("equipment_id", equipmentId);
+          
+        if (date) {
+          query = query.eq("shift_date", date).maybeSingle();
+        } else {
+          // Find the latest open shift
+          query = query.is("shift_end_time", null).order("shift_start_time", { ascending: false }).limit(1).maybeSingle();
+        }
+
+        const { data, error } = await query;
+
+        if (error) throw error;
         
-      if (date) {
-        query = query.eq("shift_date", date).maybeSingle();
-      } else {
-        // Find the latest open shift
-        query = query.is("shift_end_time", null).order("shift_start_time", { ascending: false }).limit(1).maybeSingle();
+        const parsed = data ? parseShiftRecord(data) : null;
+        if (parsed) {
+          localStorage.setItem(cacheKey, JSON.stringify(parsed));
+        }
+        return parsed;
+      } catch (err) {
+        if (!navigator.onLine) {
+          const cached = localStorage.getItem(cacheKey);
+          if (cached) return JSON.parse(cached);
+        }
+        throw err;
       }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data ? parseShiftRecord(data) : null;
     },
     enabled: !!equipmentId,
   });
