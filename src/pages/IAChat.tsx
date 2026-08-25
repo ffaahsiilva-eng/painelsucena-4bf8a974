@@ -13,7 +13,10 @@ export default function IAChat() {
           </div>
           <div>
             <h1 className="text-xl font-bold">Assistente IA</h1>
-            <p className="text-xs text-muted-foreground">Gemini 1.5 - Powered by Google</p>
+            <div className="flex items-center gap-1 mt-0.5 cursor-pointer hover:bg-muted/50 px-2 py-0.5 -ml-2 rounded-md transition-colors w-fit">
+              <span className="text-xs font-medium text-muted-foreground">Gemini 1.5 Pro High</span>
+              <span className="text-[9px] text-muted-foreground">▼</span>
+            </div>
           </div>
         </div>
         
