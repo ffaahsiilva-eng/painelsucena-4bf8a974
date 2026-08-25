@@ -63,7 +63,7 @@ serve(async (req) => {
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       } catch (err) {
-        console.log("Fallback para Pollinations.ai devido a erro no Imagen 3:", err.message);
+        console.log("Fallback para Pollinations.ai devido a erro no Imagen 3:", err instanceof Error ? err.message : err);
         // Fallback for when Imagen API is not enabled for the free tier key
         const safePrompt = encodeURIComponent(imagePrompt);
         const fallbackUrl = `https://image.pollinations.ai/prompt/${safePrompt}?nologo=true&seed=${Math.floor(Math.random()*1000)}`;
@@ -93,7 +93,7 @@ serve(async (req) => {
       },
       ...contents.map((item) => ({
         role: item.role === "model" ? "assistant" : "user",
-        content: item.parts?.map((part) => part.text).filter(Boolean).join("\n") || "",
+        content: item.parts?.map((part: { text?: string }) => part.text).filter(Boolean).join("\n") || "",
       })),
     ];
     
@@ -157,7 +157,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Erro na Edge Function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : "Erro desconhecido" }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   }
