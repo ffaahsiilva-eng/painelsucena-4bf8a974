@@ -165,6 +165,21 @@ export function DriverStatusButtons() {
   const createEquipmentMovement = useCreateEquipmentMovement();
   const { data: currentShiftRecord } = useShiftRecordByEquipment(selectedVehicleId);
 
+  useEffect(() => {
+    if (currentShiftRecord && currentShiftRecord.initial_horimeter != null && currentShiftRecord.initial_km != null && selectedVehicleId) {
+      const h = String(currentShiftRecord.initial_horimeter);
+      const k = String(currentShiftRecord.initial_km);
+      localStorage.setItem(`shift_horimeter_${selectedVehicleId}`, h);
+      localStorage.setItem(`shift_km_${selectedVehicleId}`, k);
+      setInitialHorimeter(h);
+      setInitialKm(k);
+      if (currentShiftRecord.shift_start_time) {
+        const ts = new Date(currentShiftRecord.shift_start_time).getTime();
+        localStorage.setItem(`shift_start_time_${selectedVehicleId}`, ts.toString());
+      }
+    }
+  }, [currentShiftRecord, selectedVehicleId]);
+
   // Activity timer - counts elapsed time since current status was selected
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -180,39 +195,8 @@ export function DriverStatusButtons() {
       setInitialHorimeter(storedHorimeter);
       setInitialKm(storedKm);
 
-      // Rehydrate from DB: if there's an open daily_shift_record for today
-      // (no shift_end_time), the shift is already active even if localStorage
-      // was wiped (e.g. cleared cache, different device). This prevents
-      // registering "Iniciar Turno" twice — only Fim de Turno can re-enable it.
-      (async () => {
-        try {
-          const { data, error } = await (supabase as any)
-            .from("daily_shift_records")
-            .select("initial_horimeter, initial_km, shift_start_time, shift_end_time")
-            .eq("equipment_id", vehicleId)
-            .is("shift_end_time", null)
-            .order("shift_start_time", { ascending: false })
-            .limit(1)
-            .maybeSingle();
-          if (error || !data) return;
-          if (data.initial_horimeter != null) {
-            const h = String(data.initial_horimeter);
-            localStorage.setItem(`shift_horimeter_${vehicleId}`, h);
-            setInitialHorimeter(h);
-          }
-          if (data.initial_km != null) {
-            const k = String(data.initial_km);
-            localStorage.setItem(`shift_km_${vehicleId}`, k);
-            setInitialKm(k);
-          }
-          if (data.shift_start_time) {
-            const ts = new Date(data.shift_start_time).getTime();
-            localStorage.setItem(`shift_start_time_${vehicleId}`, ts.toString());
-          }
-        } catch (e) {
-          console.warn("rehydrate shift from DB failed", e);
-        }
-      })();
+      // Rehydrate from DB: if there's an open daily_shift_record, sync it
+      // using the reactive hook currentShiftRecord instead of manual query.
     }
   }, []);
 
