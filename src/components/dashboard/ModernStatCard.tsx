@@ -26,7 +26,9 @@ interface ModernStatCardProps {
   bgTint?: string;
 }
 
-const ORANGE = "hsl(var(--primary))";
+import { GlassCard } from "./GlassCard";
+
+const ORANGE = "#B38A45"; // Gold from premium palette
 
 const SparklineChart = memo(({ data }: { data: number[] }) => {
   const isMobile = useIsMobile();
@@ -37,12 +39,12 @@ const SparklineChart = memo(({ data }: { data: number[] }) => {
   }, [isMobile]);
   const chartData = (show ? data : data.map(() => 0)).map((v, i) => ({ v, i }));
   return (
-    <div className="w-full h-16 mt-1">
+    <div className="w-full h-16 mt-3">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={chartData} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
           <defs>
-            <linearGradient id="sparkOrange" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={ORANGE} stopOpacity={0.45} />
+            <linearGradient id="sparkGold" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={ORANGE} stopOpacity={0.5} />
               <stop offset="100%" stopColor={ORANGE} stopOpacity={0} />
             </linearGradient>
           </defs>
@@ -50,8 +52,8 @@ const SparklineChart = memo(({ data }: { data: number[] }) => {
             type="monotone"
             dataKey="v"
             stroke={ORANGE}
-            fill="url(#sparkOrange)"
-            strokeWidth={2.5}
+            fill="url(#sparkGold)"
+            strokeWidth={3}
             dot={false}
             isAnimationActive={!isMobile}
             animationDuration={800}
@@ -71,13 +73,13 @@ const MiniBarChart = ({ data }: { data: number[] }) => {
   }, []);
   const chartData = (show ? data : data.map(() => 0)).map((v, i) => ({ v, i }));
   return (
-    <div className="w-full h-16 mt-1">
+    <div className="w-full h-16 mt-3">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={chartData} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
           <Bar
             dataKey="v"
             fill={ORANGE}
-            radius={[3, 3, 0, 0]}
+            radius={[4, 4, 0, 0]}
             isAnimationActive
             animationDuration={1200}
             animationEasing="ease-out"
@@ -101,47 +103,49 @@ const ModernStatCard = ({
   // Special compact layout for "Total de Funcionários" gauge variant
   if (variant === "gauge") {
     return (
-      <div className="rounded-2xl p-4 bg-card border border-border shadow-sm overflow-hidden flex flex-col h-full hover:scale-[1.01] transition-transform glass-card-dashboard relative">
-        <p className="text-xs text-muted-foreground mb-2 truncate uppercase tracking-wider font-semibold text-center">{title}</p>
+      <GlassCard className="flex flex-col h-full py-8 text-center items-center justify-center">
+        <p className="text-[13px] font-semibold text-[#6D7175] uppercase tracking-widest mb-1">{title}</p>
         <div className="flex flex-col items-center justify-center flex-1 min-w-0 py-2">
-          <div className="flex flex-col items-center min-w-0 z-10">
-            <span className="text-6xl text-foreground leading-[1.1] truncate tracking-widest px-2" style={{ fontFamily: "Brazil2026, sans-serif" }}>
+          <div className="flex flex-col items-center min-w-0 z-10 my-4">
+            <span className="text-[52px] text-[#292C2E] leading-none font-extrabold tracking-tight px-2">
               {value}
             </span>
             {percentage > 0 && (
-              <span className="text-xs font-bold text-emerald-500 inline-flex items-center">
+              <span className="text-xs font-semibold text-[#B38A45] inline-flex items-center mt-2 bg-[#B38A45]/10 px-2.5 py-1 rounded-full">
                 {percentage}%
                 <ArrowUp className="h-3 w-3 ml-0.5" />
               </span>
             )}
           </div>
         </div>
-      </div>
+      </GlassCard>
     );
   }
 
   return (
-    <div className="rounded-2xl p-4 bg-card border border-border shadow-sm overflow-hidden flex flex-col h-full hover:scale-[1.01] transition-transform glass-card-dashboard">
-      <div className="flex items-start justify-between mb-2">
+    <GlassCard className="flex flex-col h-full p-6">
+      <div className="flex items-start justify-between mb-4">
         <div>
-          <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">{title}</p>
-          <div className="flex items-baseline gap-1.5 mt-0.5">
-            <span className="text-4xl text-foreground leading-none tracking-widest" style={{ fontFamily: "Brazil2026, sans-serif" }}>
+          <p className="text-[13px] font-semibold text-[#6D7175] uppercase tracking-widest">{title}</p>
+          <div className="flex items-baseline gap-1.5 mt-2">
+            <span className="text-4xl text-[#292C2E] leading-none font-extrabold tracking-tight">
               {value}
             </span>
             {percentage > 0 && (
-              <span className="text-[10px] font-bold text-emerald-500 inline-flex items-center">
+              <span className="text-xs font-semibold text-[#B38A45] inline-flex items-center ml-2 bg-[#B38A45]/10 px-2 py-0.5 rounded-full">
                 {percentage}%
-                <ArrowUp className="h-2.5 w-2.5" />
+                <ArrowUp className="h-3 w-3 ml-0.5" />
               </span>
             )}
           </div>
         </div>
-        <Icon className="h-3.5 w-3.5 text-muted-foreground/70" />
+        <div className="w-10 h-10 rounded-full bg-white/50 flex items-center justify-center text-[#B38A45] shadow-sm">
+          <Icon className="h-5 w-5" strokeWidth={2.5} />
+        </div>
       </div>
       {variant === "sparkline" && <SparklineChart data={sparklineData} />}
       {variant === "bars" && <MiniBarChart data={barData} />}
-    </div>
+    </GlassCard>
   );
 };
 

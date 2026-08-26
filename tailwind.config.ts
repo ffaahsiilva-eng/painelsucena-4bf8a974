@@ -53,6 +53,11 @@ export default {
         success: "hsl(var(--success))",
         warning: "hsl(var(--warning))",
         info: "hsl(var(--info))",
+        glass: "var(--glass)",
+        "glass-heavy": "var(--glass-heavy)",
+        "glass-light": "var(--glass-light)",
+        "accent-gold": "var(--accent-gold)",
+        "accent-gold-soft": "var(--accent-gold-soft)",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

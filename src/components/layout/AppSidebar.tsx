@@ -374,7 +374,12 @@ export function AppSidebar({ lockedCollapsed = false }: { lockedCollapsed?: bool
 
   // Sidebar padrão global — personalizações por usuário foram removidas.
   // Sempre usa os tokens do tema (--sidebar-*) que respeitam tema claro/escuro.
-  const sidebarStyle: React.CSSProperties = {};
+  const sidebarStyle: React.CSSProperties = {
+    background: "rgba(30,32,33,0.88)",
+    backdropFilter: "blur(24px)",
+    WebkitBackdropFilter: "blur(24px)",
+    borderRight: "1px solid rgba(255,255,255,0.08)"
+  };
 
   const particleColors = useMemo(() => {
     const colors = [settings.login_particles_color || "white"];
@@ -386,7 +391,7 @@ export function AppSidebar({ lockedCollapsed = false }: { lockedCollapsed?: bool
   return (
     <Sidebar collapsible="icon" className="border-r-0 relative shrink-0 h-screen sticky top-0 rounded-r-2xl md:rounded-r-2xl overflow-visible" style={sidebarStyle}>
       {/* Background com animação e cores personalizadas */}
-      <div className="absolute inset-0 overflow-hidden rounded-r-2xl pointer-events-none bg-sidebar">
+      <div className="absolute inset-0 overflow-hidden rounded-r-2xl pointer-events-none">
         <SidebarBackground 
           animation={settings.sidebar_animation || "particles"} 
           particleColors={particleColors}
@@ -458,8 +463,8 @@ export function AppSidebar({ lockedCollapsed = false }: { lockedCollapsed?: bool
         </Button>
       )}
 
-      {/* Navigation */}
-      <SidebarContent className="relative z-10">
+      {/* Navigation - Hidden on desktop since it moved to TopNavHeader */}
+      <SidebarContent className="relative z-10 md:hidden">
         <ScrollArea className="flex-1">
           <SidebarGroup className="py-2">
             <SidebarGroupContent>

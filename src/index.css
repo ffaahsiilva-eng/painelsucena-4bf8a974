@@ -283,6 +283,13 @@ html, body {
     --sidebar-accent-foreground: 0 0% 10%;
     --sidebar-border: 45 100% 48% / 0.06;
     --sidebar-ring: 45 100% 48%;
+    
+    /* Premium Glassmorphism Redesign */
+    --glass: rgba(255,255,255,0.46);
+    --glass-heavy: rgba(255,255,255,0.62);
+    --glass-light: rgba(255,255,255,0.28);
+    --accent-gold: #B38A45;
+    --accent-gold-soft: rgba(179,138,69,0.16);
   }
 
   .dark {

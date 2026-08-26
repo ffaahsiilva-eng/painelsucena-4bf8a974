@@ -28,6 +28,9 @@ const FILTER_LABELS: Record<FilterKind, string> = {
   faltam: "Metas que faltam bater",
 };
 
+import { GlassCard } from "./GlassCard";
+import { ProgressRing } from "./ProgressRing";
+
 export function PlanejamentoProgressCard() {
   const { data: metas, isLoading } = usePlanejamentoMetas();
   const [openFilter, setOpenFilter] = useState<FilterKind | null>(null);
@@ -67,108 +70,60 @@ export function PlanejamentoProgressCard() {
     return items.filter((m) => Number(m.realizado) < Number(m.meta));
   }, [items, openFilter]);
 
-  const ringSize = 140;
-  const strokeWidth = 12;
-  const radius = (ringSize - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
   const animatedAvanco = useAnimatedNumber(stats.avancoGeral, 10000);
   const animatedConcluidas = useAnimatedNumber(stats.concluidas, 10000);
   const animatedTotal = useAnimatedNumber(stats.total, 10000);
   const animatedFaltam = useAnimatedNumber(stats.faltam, 10000);
-  const offset = circumference - (animatedAvanco / 100) * circumference;
 
   return (
-    <div className="rounded-2xl p-5 h-full flex flex-col bg-card border border-border shadow-sm transition-transform hover:scale-[1.01] glass-card-dashboard">
-      <div className="flex items-start justify-between mb-3">
+    <div className="h-full">
+      <GlassCard className="flex flex-col h-full py-6 items-center text-center justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          <h3 className="text-[13px] font-semibold text-[#6D7175] uppercase tracking-widest mb-1">
             Avanço Mensal
-          </p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Metas do Planejamento
-          </p>
+          </h3>
         </div>
+        
         <Link
           to="/planejamento"
-          className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+          className="absolute top-6 right-6 text-xs font-semibold text-[#B38A45] hover:text-[#D8B16B] transition-colors"
         >
-          Ver tudo <ArrowRight className="h-3 w-3" />
+          Ver Tudo
         </Link>
-      </div>
 
-      <div className="flex items-center justify-center my-2">
-        <div className="relative">
-          <svg height={ringSize} width={ringSize}>
-            <circle
-              stroke="hsl(var(--muted))"
-              fill="transparent"
-              strokeWidth={strokeWidth}
-              r={radius}
-              cx={ringSize / 2}
-              cy={ringSize / 2}
-            />
-            <circle
-              stroke="hsl(var(--primary))"
-              fill="transparent"
-              strokeWidth={strokeWidth}
-              strokeLinecap="round"
-              strokeDasharray={`${circumference} ${circumference}`}
-              strokeDashoffset={offset}
-              r={radius}
-              cx={ringSize / 2}
-              cy={ringSize / 2}
-              style={{
-                transform: "rotate(-90deg)",
-                transformOrigin: "50% 50%",
-              }}
-            />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-3xl font-extrabold text-foreground tabular-nums tracking-widest" style={{ fontFamily: "Brazil2026, sans-serif" }}>
-              {isLoading ? "—" : `${animatedAvanco}%`}
-            </span>
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-              Avanço
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-3 gap-2 mt-2">
-        <Stat
-          icon={<Target className="h-3.5 w-3.5" />}
-          label="Total"
-          value={animatedTotal}
-          tone="muted"
-          onClick={() => setOpenFilter("total")}
-        />
-        <Stat
-          icon={<CheckCircle2 className="h-3.5 w-3.5" />}
-          label="Concluídas"
-          value={animatedConcluidas}
-          tone="success"
-          onClick={() => setOpenFilter("concluidas")}
-        />
-        <Stat
-          icon={<AlertCircle className="h-3.5 w-3.5" />}
-          label="Faltam"
-          value={animatedFaltam}
-          tone="warning"
-          onClick={() => setOpenFilter("faltam")}
-        />
-      </div>
-
-      <div className="mt-3">
-        <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-          <div
-            className="h-full rounded-full bg-primary"
-            style={{ width: `${animatedAvanco}%`, transition: "width 80ms linear" }}
+        <div className="flex-1 flex items-center justify-center my-4">
+          <ProgressRing 
+            progress={stats.avancoGeral} 
+            size={180} 
+            strokeWidth={14} 
+            label={`${animatedAvanco}%`} 
           />
         </div>
-        <p className="text-[11px] text-muted-foreground mt-2">
-          {animatedConcluidas} de {animatedTotal} metas concluídas
-        </p>
-      </div>
+
+        <div className="grid grid-cols-3 gap-8 mt-2 w-full px-4">
+          <Stat
+            icon={<Target className="h-4 w-4" />}
+            label="Total"
+            value={animatedTotal}
+            tone="muted"
+            onClick={() => setOpenFilter("total")}
+          />
+          <Stat
+            icon={<CheckCircle2 className="h-4 w-4" />}
+            label="Concluídas"
+            value={animatedConcluidas}
+            tone="success"
+            onClick={() => setOpenFilter("concluidas")}
+          />
+          <Stat
+            icon={<AlertCircle className="h-4 w-4" />}
+            label="Faltam"
+            value={animatedFaltam}
+            tone="warning"
+            onClick={() => setOpenFilter("faltam")}
+          />
+        </div>
+      </GlassCard>
 
       <Dialog open={!!openFilter} onOpenChange={(o) => !o && setOpenFilter(null)}>
         <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">

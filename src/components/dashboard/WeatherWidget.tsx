@@ -167,142 +167,100 @@ export function WeatherWidget() {
   ];
   const todayImage = constructionImages[new Date().getDay()];
 
-  const cardClass =
-    "relative rounded-2xl p-5 h-full overflow-hidden shadow-lg transition-transform hover:scale-[1.01] bg-card border border-border glass-card-dashboard";
-  const cardStyle: React.CSSProperties = {};
-  const textMuted = "text-muted-foreground";
+import { GlassCard } from "./GlassCard";
 
-
-  if (error) {
-    return (
-      <div className={cardClass} style={cardStyle}>
-        <Cloud className="h-8 w-8 mx-auto mb-2" />
-        <p className={`text-sm text-center ${textMuted}`}>{error}</p>
-        <Button variant="ghost" size="sm" className={`mt-2 w-full ${textMuted}`} onClick={() => fetchWeather()}>
-          <RefreshCw className="h-3 w-3 mr-1" /> Tentar novamente
-        </Button>
-      </div>
-    );
-  }
-
-  if (loading || !weather) {
-    return (
-      <div className={cardClass} style={cardStyle}>
-        <Skeleton className="h-10 w-20 bg-white/10" />
-        <Skeleton className="h-5 w-32 mt-2 bg-white/10" />
-      </div>
-    );
-  }
-
-  const description = WMO_DESCRIPTIONS[weather.weatherCode] || "Indisponível";
-
-  // Selecionar mídia configurada conforme período e condição.
-  // Dia = 07:00 até 18:19 (Pará UTC-3). Noite = a partir de 18:20.
-  const isCold = weather.temperature < 22;
-  const nowPara = new Date(Date.now() - 3 * 60 * 60 * 1000);
-  const minutes = nowPara.getUTCHours() * 60 + nowPara.getUTCMinutes();
-  const isDay = minutes >= 7 * 60 && minutes < 18 * 60 + 20; // 07:00 .. 18:19
-
-  // Prioridade: chuva > frio (noite usa "fria") > demais (sol no dia, "quente" à noite)
-  let pool: string[] = [];
-  if (isDay) {
-    if (isRainy) pool = settings.weather_day_rainy_media_urls || [];
-    else if (isCold) pool = settings.weather_day_cold_media_urls || [];
-    else pool = settings.weather_day_sunny_media_urls || [];
-    // Fallback para mídia antiga single-URL
-    if (pool.length === 0) {
-      const legacy = isRainy ? settings.weather_rainy_media_url : isCold ? settings.weather_cold_media_url : settings.weather_sunny_media_url;
-      if (legacy) pool = [legacy];
-    }
-  } else {
-    if (isRainy) pool = settings.weather_night_rainy_media_urls || [];
-    else if (isCold) pool = settings.weather_night_cold_media_urls || [];
-    else pool = settings.weather_night_hot_media_urls || [];
-  }
-
-  // Sorteio determinístico por dia (mesmo vídeo durante todo o dia, muda no próximo)
-  const daySeed = `${nowPara.getUTCFullYear()}-${nowPara.getUTCMonth()}-${nowPara.getUTCDate()}-${isDay ? "d" : "n"}`;
-  let seedHash = 0;
-  for (let i = 0; i < daySeed.length; i++) seedHash = (seedHash * 31 + daySeed.charCodeAt(i)) >>> 0;
-  const mediaUrl = pool.length > 0 ? pool[seedHash % pool.length] : null;
-  const isVideoMedia = !!mediaUrl && /\.(mp4|webm|mov|ogg)(\?|$)/i.test(mediaUrl);
+// ... existing code ...
 
   return (
-    <div className={cardClass} style={cardStyle}>
-      {mediaUrl && (
-        <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-          {isVideoMedia ? (
-            <video
-              src={mediaUrl}
-              className="w-full h-full object-cover"
-              autoPlay
-              muted
-              loop
-              playsInline
-            />
-          ) : (
-            <img loading="lazy" decoding="async" src={mediaUrl} alt="" className="w-full h-full object-cover" />
-          )}
-          <div className="absolute inset-0 bg-black/40" />
-        </div>
-      )}
-
-      <div className={`relative z-10 ${mediaUrl ? "text-white" : ""}`}>
-
-        <div className={`flex items-center justify-between gap-1.5 text-[11px] mb-3 ${textMuted}`}>
-          <div className="flex items-center gap-1.5 min-w-0">
-            <MapPin className={`h-3 w-3 shrink-0 ${isSunny ? "" : "text-primary"}`} />
-            <span className="truncate">{weather.locationName}</span>
-            <button
-              type="button"
-              onClick={() => requestGeolocation(false)}
-              disabled={locating}
-              title="Usar minha localização"
-              className="shrink-0 inline-flex items-center justify-center h-5 w-5 rounded-full hover:bg-white/10 transition-colors"
-              aria-label="Usar minha localização"
-            >
-              <LocateFixed className={`h-3 w-3 ${locating ? "animate-spin" : ""} ${coordsRef.current ? "text-emerald-400" : "text-primary"}`} />
-            </button>
-          </div>
-
-          <div className={`flex items-center gap-1 shrink-0 px-1.5 py-0.5 rounded-full ${isSunny ? 'bg-slate-900/5' : 'bg-white/10'}`}>
-            {weather.isFallback ? (
-              <>
-                <AlertCircle className="h-2.5 w-2.5 text-amber-500" />
-                <span className="font-medium">Fallback</span>
-              </>
+    <div className="h-full">
+      <GlassCard className="flex flex-col h-full p-6 relative overflow-hidden text-[#292C2E]">
+        {mediaUrl && (
+          <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-2xl opacity-40 mix-blend-overlay">
+            {isVideoMedia ? (
+              <video
+                src={mediaUrl}
+                className="w-full h-full object-cover"
+                autoPlay
+                muted
+                loop
+                playsInline
+              />
             ) : (
-              <>
-                <CheckCircle2 className="h-2.5 w-2.5 text-emerald-500" />
-                <span className="font-medium">Tempo Real</span>
-              </>
+              <img loading="lazy" decoding="async" src={mediaUrl} alt="" className="w-full h-full object-cover" />
             )}
+            <div className="absolute inset-0 bg-black/40" />
+          </div>
+        )}
+
+        <div className={`relative z-10 h-full flex flex-col justify-between`}>
+          <div className={`flex items-center justify-between gap-1.5 text-[11px] mb-3 text-[#6D7175]`}>
+            <div className="flex items-center gap-1.5 min-w-0 font-semibold tracking-wide uppercase">
+              <MapPin className={`h-3 w-3 shrink-0 text-[#B38A45]`} />
+              <span className="truncate">{weather.locationName}</span>
+              <button
+                type="button"
+                onClick={() => requestGeolocation(false)}
+                disabled={locating}
+                title="Usar minha localização"
+                className="shrink-0 inline-flex items-center justify-center h-5 w-5 rounded-full hover:bg-black/5 transition-colors"
+                aria-label="Usar minha localização"
+              >
+                <LocateFixed className={`h-3 w-3 ${locating ? "animate-spin" : ""} ${coordsRef.current ? "text-emerald-500" : "text-[#B38A45]"}`} />
+              </button>
+            </div>
+
+            <div className={`flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-full bg-black/5 border border-black/5`}>
+              {weather.isFallback ? (
+                <>
+                  <AlertCircle className="h-2.5 w-2.5 text-amber-500" />
+                  <span className="font-semibold text-amber-700">Fallback</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="h-2.5 w-2.5 text-emerald-500" />
+                  <span className="font-semibold text-emerald-700">Tempo Real</span>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between my-2">
+            <div>
+              <span className="text-[52px] font-extrabold leading-none tracking-tight text-[#292C2E]">
+                {weather.temperature}°
+              </span>
+              <p className={`text-sm font-semibold mt-1 text-[#6D7175]`}>{description}</p>
+            </div>
+            <div className="w-14 h-14 rounded-full bg-white/50 flex items-center justify-center text-[#B38A45] shadow-sm">
+              {getWeatherIcon(weather.weatherCode)}
+            </div>
+          </div>
+
+          <div className={`space-y-2 text-xs border-t border-black/10 pt-4 mt-auto font-medium text-[#6D7175]`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <Thermometer className={`h-4 w-4 text-[#B38A45]`} />
+                <span>Sensação</span>
+              </div>
+              <span className="font-bold text-[#292C2E]">{weather.apparentTemp}°</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <Droplets className={`h-4 w-4 text-[#B38A45]`} />
+                <span>Umidade</span>
+              </div>
+              <span className="font-bold text-[#292C2E]">{weather.humidity}%</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <Wind className={`h-4 w-4 text-[#B38A45]`} />
+                <span>Vento</span>
+              </div>
+              <span className="font-bold text-[#292C2E]">{weather.windSpeed} km/h</span>
+            </div>
           </div>
         </div>
-
-        <div className="flex items-start justify-between mb-1">
-          <span className="text-5xl font-extrabold leading-none tracking-widest" style={{ fontFamily: "Brazil2026, sans-serif" }}>
-            {weather.temperature}°
-          </span>
-        </div>
-
-        <p className={`text-sm font-medium mb-4 ${textMuted}`}>{description}</p>
-
-        <div className={`space-y-1.5 text-xs border-t pt-3 ${textMuted} ${isSunny ? "border-slate-900/10" : "border-primary/20"}`}>
-          <div className="flex items-center gap-1.5">
-            <Thermometer className={`h-3.5 w-3.5 ${isSunny ? "" : "text-primary"}`} />
-            <span>Sensação {weather.apparentTemp}°</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Droplets className={`h-3.5 w-3.5 ${isSunny ? "" : "text-primary"}`} />
-            <span>Umidade {weather.humidity}%</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Wind className={`h-3.5 w-3.5 ${isSunny ? "" : "text-primary"}`} />
-            <span>Vento {weather.windSpeed} km/h</span>
-          </div>
-        </div>
-      </div>
+      </GlassCard>
     </div>
   );
 }

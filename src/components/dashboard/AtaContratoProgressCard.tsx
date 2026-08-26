@@ -5,6 +5,7 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAllMeetingMinuteItems } from "@/hooks/useMeetingMinutes";
+import { GlassCard } from "./GlassCard";
 
 export function AtaContratoProgressCard() {
   const { data: items = [], isLoading } = useAllMeetingMinuteItems();
@@ -23,83 +24,95 @@ export function AtaContratoProgressCard() {
   ];
 
   return (
-    <Card className="h-full overflow-hidden glass-card-dashboard">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between gap-2">
+    <div className="h-full">
+      <GlassCard className="flex flex-col h-full p-6 relative overflow-hidden">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <FileText className="w-4 h-4 text-primary" />
-            <CardTitle className="text-base">Ata de Contrato</CardTitle>
+            <FileText className="w-4 h-4 text-[#B38A45]" />
+            <span className="text-[13px] font-semibold text-[#6D7175] uppercase tracking-widest">
+              Ata de Contrato
+            </span>
           </div>
           <Link
             to="/ata-reuniao-contrato"
-            className="text-xs text-primary hover:underline flex items-center gap-1"
+            className="text-xs font-semibold text-[#B38A45] hover:text-[#D8B16B] transition-colors flex items-center gap-1"
           >
             Ver <ArrowRight className="w-3 h-3" />
           </Link>
         </div>
-        <CardDescription className="text-xs">Itens da última ata importada</CardDescription>
-      </CardHeader>
-      <CardContent className="pt-0">
-        {isLoading ? (
-          <div className="h-[140px] flex items-center justify-center text-xs text-muted-foreground">
-            Carregando...
-          </div>
-        ) : stats.total === 0 ? (
-          <div className="h-[140px] flex flex-col items-center justify-center text-xs text-muted-foreground gap-2">
-            <FileText className="w-8 h-8 opacity-30" />
-            Nenhuma ata importada
-          </div>
-        ) : (
-          <div className="flex items-center gap-3">
-            <div className="w-[120px] h-[120px] relative">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={data}
-                    innerRadius={36}
-                    outerRadius={56}
-                    paddingAngle={2}
-                    dataKey="value"
-                    stroke="none"
-                  >
-                    {data.map((d) => (
-                      <Cell key={d.name} fill={d.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      background: "hsl(var(--background))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: 8,
-                      fontSize: 12,
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-2xl font-bold tabular-nums tracking-widest" style={{ fontFamily: "Brazil2026, sans-serif" }}>{stats.pct.toFixed(0)}%</span>
-                <span className="text-[10px] text-muted-foreground">concluído</span>
+        <p className="text-xs font-medium text-[#92969A] mb-4">Itens da última ata importada</p>
+        
+        <div className="flex-1">
+          {isLoading ? (
+            <div className="h-[140px] flex items-center justify-center text-xs font-medium text-[#92969A]">
+              Carregando...
+            </div>
+          ) : stats.total === 0 ? (
+            <div className="h-[140px] flex flex-col items-center justify-center text-xs font-medium text-[#92969A] gap-2">
+              <FileText className="w-8 h-8 opacity-30" />
+              Nenhuma ata importada
+            </div>
+          ) : (
+            <div className="flex items-center gap-6 h-full mt-2">
+              <div className="w-[140px] h-[140px] relative shrink-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={data}
+                      innerRadius={45}
+                      outerRadius={65}
+                      paddingAngle={2}
+                      dataKey="value"
+                      stroke="none"
+                    >
+                      {data.map((d) => (
+                        <Cell key={d.name} fill={d.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        background: "rgba(255, 255, 255, 0.95)",
+                        border: "1px solid rgba(0, 0, 0, 0.1)",
+                        borderRadius: 8,
+                        fontSize: 12,
+                        color: "#292C2E",
+                        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+                      }}
+                      itemStyle={{ color: "#292C2E", fontWeight: 600 }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-3xl font-extrabold tabular-nums tracking-widest text-[#292C2E]" style={{ fontFamily: "Brazil2026, sans-serif" }}>
+                    {stats.pct.toFixed(0)}%
+                  </span>
+                  <span className="text-[10px] text-[#92969A] uppercase tracking-wider font-semibold">concluído</span>
+                </div>
+              </div>
+              <div className="flex-1 flex flex-col gap-3 min-w-0">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: "hsl(160 84% 39%)" }} />
+                    <span className="text-sm font-medium text-[#6D7175]">Concluídos</span>
+                  </div>
+                  <span className="font-bold text-[#292C2E] text-sm tabular-nums">{stats.done}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: "hsl(25 95% 53%)" }} />
+                    <span className="text-sm font-medium text-[#6D7175]">Pendentes</span>
+                  </div>
+                  <span className="font-bold text-[#292C2E] text-sm tabular-nums">{stats.pending}</span>
+                </div>
+                <div className="flex items-center justify-between pt-3 border-t border-black/5">
+                  <span className="text-sm font-semibold text-[#292C2E]">Total de itens</span>
+                  <span className="font-extrabold text-[#292C2E] text-base tabular-nums">{stats.total}</span>
+                </div>
               </div>
             </div>
-            <div className="flex-1 space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full" style={{ background: "hsl(160 84% 39%)" }} />
-                <span className="text-xs text-muted-foreground flex-1">Concluídos</span>
-                <Badge variant="outline" className="tabular-nums">{stats.done}</Badge>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full" style={{ background: "hsl(25 95% 53%)" }} />
-                <span className="text-xs text-muted-foreground flex-1">Pendentes</span>
-                <Badge variant="outline" className="tabular-nums">{stats.pending}</Badge>
-              </div>
-              <div className="flex items-center gap-2 pt-1 border-t">
-                <span className="text-xs text-muted-foreground flex-1">Total de itens</span>
-                <Badge className="tabular-nums">{stats.total}</Badge>
-              </div>
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          )}
+        </div>
+      </GlassCard>
+    </div>
   );
 }

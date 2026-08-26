@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Users, ClipboardCheck, AlertCircle, Activity, Calendar as CalendarIcon, Filter, ArrowUp, ArrowRight, Briefcase } from "lucide-react";
+import { Users, ClipboardCheck, AlertCircle, Activity, Calendar as CalendarIcon, Filter, ArrowUp, ArrowRight, Briefcase, RefreshCw } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -11,6 +11,8 @@ import { useProfile } from "@/hooks/useProfile";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { SimpleTree } from "@/components/ui/simple-growth-tree";
 import { EditablePageTitle } from "@/components/cms/EditablePageTitle";
+import { GlassCard } from "@/components/dashboard/GlassCard";
+import { ProgressRing } from "@/components/dashboard/ProgressRing";
 import {
   DndContext,
   closestCenter,
@@ -381,6 +383,14 @@ const Dashboard = () => {
                 Hoje
               </button>
             )}
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              title="Recarregar Dados"
+              className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </button>
           </div>
         </div>
 
@@ -434,75 +444,45 @@ const Dashboard = () => {
 
             {/* Far right: Equipamentos Ativos (clean white card matching reference) */}
             <div className="lg:col-span-3">
-            <div className="rounded-2xl p-5 h-full flex flex-col bg-card border border-border shadow-sm transition-transform hover:scale-[1.01] glass-card-dashboard">
-              <div className="flex items-start justify-between mb-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                  Equipamentos Ativos
-                </p>
-                <Link
-                  to="/status-geral-equipamentos"
-                  className="text-xs text-primary hover:underline inline-flex items-center gap-1"
-                >
-                  Ver tudo <ArrowRight className="h-3 w-3" />
-                </Link>
-              </div>
-
-              <div className="flex items-center justify-center flex-1 my-2">
-                <div className="relative">
-                  <svg height={140} width={140}>
-                    <circle
-                      stroke="hsl(var(--muted))"
-                      fill="transparent"
-                      strokeWidth={12}
-                      r={60}
-                      cx={70}
-                      cy={70}
-                    />
-                    <circle
-                      stroke="hsl(var(--primary))"
-                      fill="transparent"
-                      strokeWidth={12}
-                      strokeLinecap="round"
-                      strokeDasharray={`${60 * 2 * Math.PI} ${60 * 2 * Math.PI}`}
-                      strokeDashoffset={60 * 2 * Math.PI - (animatedEquipPercent / 100) * 60 * 2 * Math.PI}
-                      r={60}
-                      cx={70}
-                      cy={70}
-                      style={{
-                        transform: "rotate(-90deg)",
-                        transformOrigin: "50% 50%",
-                      }}
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-2xl font-extrabold text-primary tracking-widest leading-none" style={{ fontFamily: "Brazil2026, sans-serif" }}>
-                      {animatedEquipPercent}%
-                    </span>
+              <div className="h-full">
+                <GlassCard className="h-full flex flex-col items-center text-center justify-between py-8">
+                  <div>
+                    <h3 className="text-[13px] font-semibold text-[#6D7175] uppercase tracking-widest mb-1">
+                      Equipamentos Ativos
+                    </h3>
                   </div>
-                </div>
-              </div>
 
-              <div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-extrabold text-foreground tracking-widest leading-none" style={{ fontFamily: "Brazil2026, sans-serif" }}>
-                    {animatedInOperation}
-                  </span>
-                  <span className="text-sm text-muted-foreground self-end mb-0.5">de {animatedTotalEquip}</span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-0.5 mb-2">
-                  equipamentos em uso
-                </p>
-                <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-primary"
-                    style={{ width: `${animatedEquipPercent}%`, transition: "width 80ms linear" }}
-                  />
-                </div>
-                <p className="text-[11px] text-muted-foreground mt-2">
-                  <span style={{ fontFamily: "Brazil2026, sans-serif" }} className="tracking-widest">{animatedInOperation}</span> no canteiro de <span style={{ fontFamily: "Brazil2026, sans-serif" }} className="tracking-widest">{animatedTotalEquip}</span> equipamentos
-                </p>
+                  <div className="flex-1 flex items-center justify-center my-6">
+                    <ProgressRing 
+                      progress={equipPercent} 
+                      size={180} 
+                      strokeWidth={14} 
+                      label={`${animatedEquipPercent}%`} 
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex items-baseline justify-center gap-1">
+                      <span className="text-[28px] font-extrabold text-[#292C2E] leading-none">
+                        {animatedInOperation}
+                      </span>
+                      <span className="text-sm font-medium text-[#92969A]">
+                        /{animatedTotalEquip}
+                      </span>
+                    </div>
+                    <p className="text-[11px] font-medium text-[#6D7175] mt-1">
+                      Equipamentos operantes
+                    </p>
+                  </div>
+                  
+                  <Link
+                    to="/status-geral-equipamentos"
+                    className="absolute top-4 right-4 text-xs font-semibold text-[#B38A45] hover:text-[#D8B16B] transition-colors"
+                  >
+                    Ver Tudo
+                  </Link>
+                </GlassCard>
               </div>
-            </div>
           </div>
         </div>
       </Suspense>
@@ -565,7 +545,7 @@ const Dashboard = () => {
         </div>
 
         {/* Matriz do mês (gráfico lateral) + Ata de Contrato */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4 mb-16">
           <div className="lg:col-span-2 animate-slide-up" style={{ animationDelay: "0.18s" }}>
             <Suspense fallback={<DashboardItemSkeleton />}>
               <AtaContratoProgressCard />
@@ -574,6 +554,11 @@ const Dashboard = () => {
           <div className="animate-slide-up" style={{ animationDelay: "0.2s" }}>
             <MatrixSideChart />
           </div>
+        </div>
+        
+        {/* Logo at the bottom */}
+        <div className="flex justify-center pb-8 opacity-20 hover:opacity-40 transition-opacity">
+          <SimpleTree className="w-16 h-16 grayscale" />
         </div>
       </div>
     </Layout>

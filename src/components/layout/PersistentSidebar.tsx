@@ -96,15 +96,17 @@ export const PersistentSidebar = ({ children }: PersistentSidebarProps) => {
     );
   }
 
+  const DEFAULT_BG_URL = "https://images.unsplash.com/photo-1542224566-6e85f2e6772f?auto=format&fit=crop&w=2560&q=80"; // Mountains landscape
+  const globalBgUrl = settings?.global_background_url || DEFAULT_BG_URL;
+  const isVideoBg = /\.(mp4|webm|ogg|mov|m4v)(\?|$)/i.test(globalBgUrl);
+
   return (
     <SidebarProvider defaultOpen={isAvatarBlocked ? false : !isMobile}>
       <div 
-        className={`h-screen flex flex-row w-full overflow-x-clip overflow-y-hidden ${
-          settings?.global_background_url ? "bg-transparent" : "bg-background"
-        }`}
-        data-has-global-bg={!!settings?.global_background_url}
+        className={`h-screen flex flex-row w-full overflow-x-clip overflow-y-hidden bg-transparent`}
+        data-has-global-bg="true"
       >
-        {user && !isDriver && !useDock && !isAuthPage && !isEnvSelectionPage && isMobile && (
+        {user && !isDriver && !useDock && !isAuthPage && !isEnvSelectionPage && (
           <div className={`overflow-visible ${justCompletedTransition ? "animate-fade-in" : ""}`}>
             <AppSidebar lockedCollapsed={!!isAvatarBlocked} />
           </div>
@@ -114,29 +116,27 @@ export const PersistentSidebar = ({ children }: PersistentSidebarProps) => {
             justCompletedTransition ? "animate-fade-in" : ""
           }`}
         >
-          {settings?.global_background_url && (
-            /\.(mp4|webm|ogg|mov|m4v)(\?|$)/i.test(settings.global_background_url) ? (
-              <video
-                src={settings.global_background_url}
-                autoPlay
-                loop
-                muted
-                playsInline
-                preload="none"
-                poster="/logo-sucena-pdf.png"
-                className="fixed inset-0 w-full h-full object-cover pointer-events-none z-0 transition-opacity duration-300"
+          {isVideoBg ? (
+            <video
+              src={globalBgUrl}
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="none"
+              poster="/logo-sucena-pdf.png"
+              className="fixed inset-0 w-full h-full object-cover pointer-events-none z-0 transition-opacity duration-300"
 
-                style={{ opacity: settings.global_background_opacity ?? 0.1 }}
-              />
-            ) : (
-              <div 
-                className="fixed inset-0 pointer-events-none z-0 bg-center bg-cover bg-no-repeat transition-opacity duration-300"
-                style={{ 
-                  backgroundImage: `url(${settings.global_background_url})`,
-                  opacity: settings.global_background_opacity ?? 0.1
-                }}
-              />
-            )
+              style={{ opacity: settings?.global_background_opacity ?? 0.1 }}
+            />
+          ) : (
+            <div 
+              className="fixed inset-0 pointer-events-none z-0 bg-center bg-cover bg-no-repeat transition-opacity duration-300"
+              style={{ 
+                backgroundImage: `url(${globalBgUrl})`,
+                opacity: settings?.global_background_opacity ?? 0.15
+              }}
+            />
           )}
 
           <div className="relative z-10 flex-1 flex flex-col min-w-0 h-full overflow-hidden">
