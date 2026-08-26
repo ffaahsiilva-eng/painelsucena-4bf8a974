@@ -119,19 +119,23 @@ function SortableNavItemComponent({
     <SidebarMenuItem ref={setNodeRef} style={style}>
       <SidebarMenuButton
         asChild
-        isActive={isActive}
         tooltip={item.label}
-        className="group min-h-[44px] md:min-h-[32px] tap-target"
+        className="group !p-0 bg-transparent hover:bg-transparent hover:text-inherit !shadow-none border-none outline-none h-auto"
       >
-        <Link to={item.path} onClick={onNavigate} className="flex items-center gap-2 md:gap-1.5 py-1.5">
+        <Link 
+          to={item.path} 
+          onClick={onNavigate} 
+          className="sucena-nav-item w-full gap-2 py-1.5 px-3"
+          data-active={isActive}
+        >
           {!isCollapsed && showGrip && (
             <span
               {...attributes}
               {...listeners}
-              className="cursor-grab active:cursor-grabbing p-1 -ml-1 opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity"
+              className="cursor-grab active:cursor-grabbing p-1 -ml-2 opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity"
               onClick={(e) => e.preventDefault()}
             >
-              <GripVertical className="h-4 w-4 text-sidebar-foreground/50" />
+              <GripVertical className="h-4 w-4 opacity-50" />
             </span>
           )}
           <item.icon
@@ -144,7 +148,7 @@ function SortableNavItemComponent({
               pageKey="sidebar"
               elementKey={`nav-${item.id}`}
               defaultValue={item.label}
-              className={`font-medium text-sm md:text-base truncate block w-full ${item.isEmergency ? "text-red-500" : ""} ${item.id === "destaques" ? "font-weghorst" : ""}`}
+              className={`font-medium text-xs md:text-[13px] truncate block w-full ${item.isEmergency ? "text-red-500" : ""}`}
               as="span"
               canEdit={!!editMode}
             />
@@ -372,44 +376,25 @@ export function AppSidebar({ lockedCollapsed = false }: { lockedCollapsed?: bool
     // The redirect will happen after the animation completes in LogoutTransitionGate
   };
 
-  // Sidebar padrão global — personalizações por usuário foram removidas.
-  // Sempre usa os tokens do tema (--sidebar-*) que respeitam tema claro/escuro.
-  const sidebarStyle: React.CSSProperties = {
-    background: "rgba(30,32,33,0.88)",
-    backdropFilter: "blur(24px)",
-    WebkitBackdropFilter: "blur(24px)",
-    borderRight: "1px solid rgba(255,255,255,0.08)"
-  };
-
-  const particleColors = useMemo(() => {
-    const colors = [settings.login_particles_color || "white"];
-    if (settings.login_particles_color2) colors.push(settings.login_particles_color2);
-    if (settings.login_particles_color3) colors.push(settings.login_particles_color3);
-    return colors;
-  }, [settings.login_particles_color, settings.login_particles_color2, settings.login_particles_color3]);
-
   return (
-    <Sidebar collapsible="icon" className="border-r-0 relative shrink-0 h-screen sticky top-0 rounded-r-2xl md:rounded-r-2xl overflow-visible" style={sidebarStyle}>
-      {/* Background com animação e cores personalizadas */}
-      <div className="absolute inset-0 overflow-hidden rounded-r-2xl pointer-events-none">
+    <Sidebar collapsible="icon" className="sucena-sidebar border-none h-screen" style={{ width: "var(--sidebar-w)", "--sidebar-width": "var(--sidebar-w)" } as any}>
+      {/* Background com animação e cores personalizadas - Disabled for glass theme */}
+      {/* <div className="absolute inset-0 overflow-hidden rounded-r-2xl pointer-events-none">
         <SidebarBackground 
           animation={settings.sidebar_animation || "particles"} 
           particleColors={particleColors}
         />
-      </div>
+      </div> */}
       
       {/* Header with Logo - clickable for admin/moderator to change */}
-      <SidebarHeader className={`border-sidebar-border/50 relative z-10 ${isCollapsed ? "p-1.5" : "p-2 md:p-3"}`}>
+      <SidebarHeader className={`border-none relative z-10 ${isCollapsed ? "p-1.5" : "pt-8 pb-4 px-4"}`}>
         <div className="flex items-center justify-center">
           {!isCollapsed ? (
-            <div className={`relative group ${!settings.logo_url ? "border-b border-sidebar-border/50 w-full pb-2 md:pb-3 flex justify-center" : ""}`}>
-              <img loading="lazy" decoding="async" 
-                src={settings.logo_url || logoPrincipal} 
-                alt="Logo" 
-                className={settings.logo_url 
-                  ? "h-20 md:h-24 max-w-[200px] md:max-w-[240px] object-contain -mt-2 mb-[-8px] transition-all duration-300" 
-                  : "h-10 md:h-12 max-w-[140px] md:max-w-[160px] object-contain"} 
-              />
+            <div className={`relative group w-full flex justify-center`}>
+              <div className="text-white flex items-center gap-2 tracking-widest uppercase font-semibold text-sm">
+                <Leaf className="w-5 h-5 text-[#c8943d]" />
+                SUCENA
+              </div>
               {isAdmin && isEditMode && (
                 <>
                   <input
@@ -429,16 +414,11 @@ export function AppSidebar({ lockedCollapsed = false }: { lockedCollapsed?: bool
               )}
             </div>
           ) : (
-            <img loading="lazy" decoding="async" 
-              src={sidebarCollapsedLogo} 
-              alt="Logo" 
-              className="h-8 w-8 object-contain" 
-            />
+            <Leaf className="w-5 h-5 text-[#c8943d] mt-4" />
           )}
         </div>
       </SidebarHeader>
 
-      {/* Floating collapse button - positioned in the middle of sidebar edge, half in half out */}
       {/* Floating collapse button - positioned in the middle of sidebar edge, half in half out */}
       {!sidebarIsMobile && (
         <Button

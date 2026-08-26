@@ -3012,3 +3012,381 @@ button.reminder-neon-btn-ghost:hover,
   content-visibility: auto;
   contain-intrinsic-size: auto 300px;
 }
+
+/* ============================================================
+   SUCENA GLASS — base visual para Lovable/React
+   Use como base global. Ajuste seletores para a estrutura real do projeto.
+   ============================================================ */
+
+:root {
+  --app-bg: #ecece9;
+  --graphite-950: #292d2f;
+  --graphite-900: #303436;
+  --graphite-700: #555b5f;
+
+  --text-primary: #2b2f31;
+  --text-secondary: #6b7074;
+  --text-muted: #8c9194;
+
+  --glass-heavy: rgba(255,255,255,.60);
+  --glass: rgba(255,255,255,.46);
+  --glass-soft: rgba(255,255,255,.31);
+  --glass-border: rgba(255,255,255,.62);
+  --glass-border-soft: rgba(255,255,255,.40);
+
+  --accent-gold: #b68a46;
+  --accent-gold-light: #d3aa62;
+  --accent-gold-soft: rgba(182,138,70,.16);
+
+  --success: #59a477;
+  --warning: #c8943d;
+  --danger: #c76d6d;
+
+  --shadow-sm: 0 7px 20px rgba(38,41,43,.045);
+  --shadow-glass: 0 14px 36px rgba(38,41,43,.07);
+  --shadow-hover: 0 18px 42px rgba(38,41,43,.095);
+
+  --sidebar-w: 178px;
+  --radius-card: 19px;
+}
+
+/* Base styles updated to match the reference */
+body {
+  margin: 0;
+  color: var(--text-primary);
+  font-family: Inter, Geist, Manrope, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--app-bg);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgba(182,138,70,.18);
+}
+
+.sucena-app {
+  position: relative;
+  min-height: 100vh;
+  isolation: isolate;
+}
+
+.sucena-bg-photo {
+  position: fixed;
+  inset: 0;
+  z-index: -3;
+  background-size: cover;
+  background-position: center;
+  filter: brightness(1.22) contrast(.72) saturate(.52);
+  transform: scale(1.01);
+}
+
+.sucena-bg-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      96deg,
+      rgba(244,244,242,.94) 0%,
+      rgba(242,242,240,.88) 24%,
+      rgba(238,239,237,.79) 54%,
+      rgba(234,236,235,.69) 100%
+    );
+}
+
+.sucena-bg-haze {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 46% 12%, rgba(255,255,255,.38), transparent 38%);
+}
+
+.sucena-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: var(--sidebar-w);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  color: rgba(255,255,255,.90);
+  background:
+    linear-gradient(180deg, rgba(41,44,46,.92), rgba(44,47,49,.82));
+  backdrop-filter: blur(26px) saturate(115%);
+  -webkit-backdrop-filter: blur(26px) saturate(115%);
+  border-right: 1px solid rgba(255,255,255,.16);
+  box-shadow: 10px 0 35px rgba(20,22,24,.05);
+}
+
+.sucena-main {
+  margin-left: var(--sidebar-w);
+  min-height: 100vh;
+  position: relative;
+}
+
+.sucena-topbar {
+  position: fixed;
+  top: 20px;
+  left: calc(var(--sidebar-w) + 36px);
+  right: 22px;
+  z-index: 40;
+
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+
+  padding: 6px 10px;
+  background: rgba(255,255,255,.56);
+  border: 1px solid rgba(255,255,255,.62);
+  border-radius: 16px;
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  box-shadow:
+    0 12px 32px rgba(32,35,38,.06),
+    inset 0 1px 0 rgba(255,255,255,.56);
+}
+
+.sucena-content {
+  padding: 128px 48px 115px 42px;
+  min-width: 0;
+}
+
+.sucena-page-title {
+  margin: 0;
+  font-size: clamp(38px, 3.35vw, 56px);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -.045em;
+  color: var(--text-primary);
+}
+
+.sucena-page-subtitle {
+  margin-top: 10px;
+  font-size: 17px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.sucena-glass-card {
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.56), rgba(255,255,255,.34));
+  border: 1px solid rgba(255,255,255,.62);
+  border-radius: var(--radius-card);
+  backdrop-filter: blur(22px) saturate(128%);
+  -webkit-backdrop-filter: blur(22px) saturate(128%);
+  box-shadow:
+    0 12px 30px rgba(37,40,42,.065),
+    inset 0 1px 0 rgba(255,255,255,.55);
+  color: var(--text-primary);
+  overflow: hidden;
+}
+
+.sucena-clickable-card {
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    background 180ms ease,
+    border-color 180ms ease;
+}
+
+.sucena-clickable-card:hover {
+  transform: translateY(-2px);
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.64), rgba(255,255,255,.40));
+  border-color: rgba(255,255,255,.72);
+  box-shadow: var(--shadow-hover);
+}
+
+.sucena-nav-item {
+  position: relative;
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #43484b; /* Originalmente, usemos o que o prompt deu, ou texto global. Na sidebar é escuro. Na sidebar a ref usa #43484b (grafite claro) ou #fff? O css diz que .sucena-sidebar color é rgba(255,255,255,.90). Mas a ref diz #43484b... Ah não, a nav-item pode estar no Topbar. */
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: 180ms ease;
+}
+
+.sucena-nav-item:hover {
+  background: rgba(255,255,255,.32);
+}
+
+.sucena-nav-item[data-active="true"] {
+  background: rgba(255,255,255,.58);
+  color: var(--text-primary);
+}
+
+.sucena-nav-item[data-active="true"]::after {
+  content: "";
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 1px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #a77b3d, #d4b16c);
+}
+
+.sucena-date-control,
+.sucena-glass-button,
+.sucena-input,
+.sucena-select {
+  background: rgba(255,255,255,.42);
+  border: 1px solid rgba(255,255,255,.58);
+  color: var(--text-primary);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.35);
+}
+
+.sucena-date-control {
+  border-radius: 15px;
+  padding: 14px 22px;
+}
+
+.sucena-glass-button {
+  border-radius: 12px;
+  padding: 12px 17px;
+  cursor: pointer;
+  transition: 180ms ease;
+}
+
+.sucena-glass-button:hover {
+  background: rgba(255,255,255,.58);
+}
+
+.sucena-input,
+.sucena-select {
+  min-height: 42px;
+  width: 100%;
+  padding: 0 13px;
+  border-radius: 12px;
+  outline: none;
+}
+
+.sucena-input:focus,
+.sucena-select:focus {
+  border-color: rgba(182,138,70,.45);
+  box-shadow:
+    0 0 0 3px rgba(182,138,70,.10),
+    inset 0 1px 0 rgba(255,255,255,.35);
+}
+
+.sucena-dashboard-grid {
+  display: grid;
+  grid-template-columns: 1.08fr 1.05fr .96fr .96fr;
+  gap: 26px;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.sucena-module-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 24px;
+  width: min(980px, 100%);
+  margin: 34px auto 0;
+}
+
+.sucena-module-tile {
+  min-height: 180px;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.54), rgba(255,255,255,.33));
+  border: 1px solid rgba(255,255,255,.62);
+  border-radius: 19px;
+  backdrop-filter: blur(21px) saturate(125%);
+  -webkit-backdrop-filter: blur(21px) saturate(125%);
+  box-shadow:
+    0 12px 30px rgba(37,40,42,.06),
+    inset 0 1px 0 rgba(255,255,255,.52);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  color: var(--text-primary);
+  transition: 180ms ease;
+}
+
+.sucena-module-tile:hover {
+  transform: translateY(-3px);
+  background: rgba(255,255,255,.60);
+  border-color: rgba(182,138,70,.24);
+  box-shadow: 0 18px 40px rgba(37,40,42,.09);
+}
+
+.sucena-footer-glass {
+  position: fixed;
+  left: var(--sidebar-w);
+  right: 0;
+  bottom: 0;
+  min-height: 92px;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(52,55,57,.34);
+  border-top: 1px solid rgba(255,255,255,.18);
+  backdrop-filter: blur(18px) saturate(110%);
+  -webkit-backdrop-filter: blur(18px) saturate(110%);
+}
+
+@media (max-width: 1439px) {
+  .sucena-dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0,1fr));
+  }
+}
+
+@media (max-width: 1023px) {
+  :root { --sidebar-w: 78px; }
+
+  .sucena-content {
+    padding-left: 28px;
+    padding-right: 28px;
+  }
+
+  .sucena-module-grid {
+    grid-template-columns: repeat(2, minmax(0,1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .sucena-sidebar {
+    transform: translateX(-100%);
+  }
+
+  .sucena-main {
+    margin-left: 0;
+  }
+
+  .sucena-topbar {
+    left: 12px;
+    right: 12px;
+    top: 10px;
+  }
+
+  .sucena-content {
+    padding: 92px 16px calc(24px + env(safe-area-inset-bottom));
+  }
+
+  .sucena-dashboard-grid,
+  .sucena-module-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sucena-footer-glass {
+    left: 0;
+    min-height: 72px;
+  }
+}

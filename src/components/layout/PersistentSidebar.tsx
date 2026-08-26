@@ -102,56 +102,55 @@ export const PersistentSidebar = ({ children }: PersistentSidebarProps) => {
 
   return (
     <SidebarProvider defaultOpen={isAvatarBlocked ? false : !isMobile}>
-      <div 
-        className={`h-screen flex flex-row w-full overflow-x-clip overflow-y-hidden bg-transparent`}
-        data-has-global-bg="true"
-      >
+      <div className="sucena-app w-full" data-has-global-bg="true">
+        {/* Background Layers */}
+        {isVideoBg ? (
+          <video
+            src={globalBgUrl}
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="none"
+            poster="/logo-sucena-pdf.png"
+            className="sucena-bg-photo object-cover w-full h-full"
+            style={{ opacity: settings?.global_background_opacity ?? 0.8 }}
+          />
+        ) : (
+          <div 
+            className="sucena-bg-photo"
+            style={{ 
+              backgroundImage: `url(${globalBgUrl})`,
+              opacity: settings?.global_background_opacity ?? 0.8
+            }}
+          />
+        )}
+        <div className="sucena-bg-overlay" />
+        <div className="sucena-bg-haze" />
+
+        {/* Sidebar */}
         {user && !isDriver && !useDock && !isAuthPage && !isEnvSelectionPage && (
-          <div className={`overflow-visible ${justCompletedTransition ? "animate-fade-in" : ""}`}>
+          <div className={justCompletedTransition ? "animate-fade-in" : ""}>
             <AppSidebar lockedCollapsed={!!isAvatarBlocked} />
           </div>
         )}
-        <div
-          className={`flex-1 flex flex-col min-w-0 h-full overflow-hidden relative ${
-            justCompletedTransition ? "animate-fade-in" : ""
-          }`}
-        >
-          {isVideoBg ? (
-            <video
-              src={globalBgUrl}
-              autoPlay
-              loop
-              muted
-              playsInline
-              preload="none"
-              poster="/logo-sucena-pdf.png"
-              className="fixed inset-0 w-full h-full object-cover pointer-events-none z-0 transition-opacity duration-300"
 
-              style={{ opacity: settings?.global_background_opacity ?? 0.1 }}
-            />
-          ) : (
-            <div 
-              className="fixed inset-0 pointer-events-none z-0 bg-center bg-cover bg-no-repeat transition-opacity duration-300"
-              style={{ 
-                backgroundImage: `url(${globalBgUrl})`,
-                opacity: settings?.global_background_opacity ?? 0.15
-              }}
+        {/* Main Content */}
+        <div className={`sucena-main ${justCompletedTransition ? "animate-fade-in" : ""}`}>
+          {user && !isDriver && !useDock && !isAuthPage && !isEnvSelectionPage && !isAvatarBlocked && !isMobile && (
+            <TopNavHeader />
+          )}
+          {!isDriver && (
+            <SidebarTrigger
+              aria-label="Abrir menu"
+              className="fixed bottom-24 left-2 z-[101] md:hidden !h-7 !w-7 !min-h-0 !min-w-0 rounded-full bg-sidebar-accent/85 backdrop-blur-sm border border-sidebar-border/50 text-sidebar-foreground/90 shadow-lg p-0 flex items-center justify-center [&_svg]:!h-3.5 [&_svg]:!w-3.5 [&_img]:!h-3.5 [&_img]:!w-3.5"
             />
           )}
-
-          <div className="relative z-10 flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-            {user && !isDriver && !useDock && !isAuthPage && !isEnvSelectionPage && !isAvatarBlocked && !isMobile && (
-              <TopNavHeader />
-            )}
-            {!isDriver && (
-              <SidebarTrigger
-                aria-label="Abrir menu"
-                className="fixed bottom-24 left-2 z-[101] md:hidden !h-7 !w-7 !min-h-0 !min-w-0 rounded-full bg-sidebar-accent/85 backdrop-blur-sm border border-sidebar-border/50 text-sidebar-foreground/90 shadow-lg p-0 flex items-center justify-center [&_svg]:!h-3.5 [&_svg]:!w-3.5 [&_img]:!h-3.5 [&_img]:!w-3.5"
-              />
-            )}
+          <div className="sucena-content">
             {children}
           </div>
         </div>
+
         {useDock && !isAuthPage && <DockNavigation />}
       </div>
     </SidebarProvider>
