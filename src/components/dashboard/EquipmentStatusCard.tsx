@@ -100,7 +100,7 @@ export function EquipmentStatusCard() {
       if (error) throw error;
       return (data ?? []).map((r) => r.equipment_id);
     },
-    refetchInterval: 60_000,
+
   });
 
   if (isLoading) {

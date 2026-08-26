@@ -40,6 +40,8 @@ import {
   DateFieldKey,
 } from "@/hooks/useVehicleInspections";
 import { useIsAdmin } from "@/hooks/useUserRole";
+import { compressImage } from "@/utils/imageCompression";
+
 import {
   Collapsible,
   CollapsibleContent,
@@ -72,7 +74,7 @@ export function VehicleInspectionTable({ vehicles }: VehicleInspectionTableProps
       const path = `vehicle-inspections/${vehicle.id}/${fieldKey}-${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage
         .from("site-assets")
-        .upload(path, file, { upsert: true, contentType: file.type });
+        .upload(path, await compressImage(file), { upsert: true, contentType: file.type });
       if (upErr) throw upErr;
       const { data: urlData } = supabase.storage.from("site-assets").getPublicUrl(path);
       const newDocs = { ...(vehicle.documents || {}), [fieldKey]: { url: urlData.publicUrl, name: file.name, type: file.type } };

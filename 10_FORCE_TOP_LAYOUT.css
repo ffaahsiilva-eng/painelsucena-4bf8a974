@@ -1,0 +1,164 @@
+/* V5 — FIX DO GRANDE ESPAÇO VAZIO / DASHBOARD NO TOPO */
+
+:root {
+  --sidebar-w: clamp(140px, 10.65vw, 178px);
+}
+
+.app-bg-photo,
+.app-bg-overlay,
+.app-bg-haze,
+.background-photo,
+.background-overlay,
+.background-haze {
+  position: fixed !important;
+  inset: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  pointer-events: none !important;
+}
+
+.app-bg-photo,
+.background-photo {
+  z-index: -30 !important;
+  background-size: cover !important;
+  background-position: center !important;
+  filter: brightness(1.02) contrast(.82) saturate(.62) !important;
+}
+
+.app-bg-overlay,
+.background-overlay {
+  z-index: -20 !important;
+  background:
+    linear-gradient(
+      100deg,
+      rgba(239,240,238,.70) 0%,
+      rgba(239,240,238,.61) 30%,
+      rgba(236,238,236,.53) 62%,
+      rgba(232,235,234,.47) 100%
+    ) !important;
+}
+
+.app-bg-haze,
+.background-haze {
+  z-index: -10 !important;
+}
+
+.app-main,
+.main-shell {
+  position: relative !important;
+  z-index: 1 !important;
+  margin-left: var(--sidebar-w) !important;
+  min-height: 100vh !important;
+}
+
+.app-content,
+.pixel-content,
+main[role="main"] {
+  position: relative !important;
+  z-index: 10 !important;
+  display: block !important;
+  align-items: initial !important;
+  justify-content: initial !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin-top: 0 !important;
+  padding-top: 124px !important;
+  padding-left: 34px !important;
+  padding-right: 36px !important;
+  padding-bottom: 105px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+.dashboard-glass-v4,
+.dashboard-page,
+[data-dashboard] {
+  position: relative !important;
+  z-index: 10 !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding-top: 0 !important;
+  top: auto !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+.dashboard-glass-v4 h1,
+.dashboard-title,
+.dashboard-page h1 {
+  font-family: Inter, Geist, Manrope, system-ui, sans-serif !important;
+  font-size: clamp(42px, 3.2vw, 56px) !important;
+  font-weight: 400 !important;
+  letter-spacing: -.045em !important;
+  line-height: .98 !important;
+  color: #2c3032 !important;
+}
+
+.sidebar,
+.pixel-sidebar,
+aside[data-sidebar] {
+  width: var(--sidebar-w) !important;
+  min-width: var(--sidebar-w) !important;
+  max-width: var(--sidebar-w) !important;
+}
+
+.sidebar-avatar {
+  width: clamp(68px, 5.1vw, 86px) !important;
+  height: clamp(68px, 5.1vw, 86px) !important;
+}
+
+.topbar,
+.pixel-topbar,
+header[data-topbar] {
+  left: calc(var(--sidebar-w) + clamp(28px,2vw,36px)) !important;
+  top: 20px !important;
+  right: 22px !important;
+  height: 58px !important;
+}
+
+.app-footer,
+.pixel-footer {
+  left: var(--sidebar-w) !important;
+  height: clamp(82px, 9.8vh, 96px) !important;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(66,69,71,.16),
+      rgba(55,58,60,.32)
+    ) !important;
+  box-shadow: none !important;
+}
+
+.app-footer::before,
+.app-footer::after,
+.pixel-footer::before,
+.pixel-footer::after {
+  content: none !important;
+}
+
+/* Remove typical layout spacers if they exist.
+   Map only to actual decorative wrappers; do NOT target functional sections blindly. */
+.dashboard-spacer,
+.main-spacer,
+.page-spacer,
+.hero-spacer,
+.empty-hero {
+  display: none !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* IMPORTANT:
+   If the real project uses a different class for the block occupying the huge
+   vertical space, identify it with DevTools and fix that class instead of
+   adding negative margins to the Dashboard. */

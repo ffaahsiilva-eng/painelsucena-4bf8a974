@@ -23,6 +23,8 @@ import { Loader2, Camera, Upload } from "lucide-react";
 import { ImageEditor } from "@/components/settings/ImageEditor";
 import { NeonAvatar } from "@/components/ui/NeonAvatar";
 import type { Database } from "@/integrations/supabase/types";
+import { compressImage } from "@/utils/imageCompression";
+
 
 type CargoType = Database["public"]["Enums"]["cargo_type"];
 
@@ -125,7 +127,7 @@ export const EditUserDialog = ({
       const fileName = `${user.user_id}/avatar.jpg`;
       const { error: uploadError } = await supabase.storage
         .from("site-assets")
-        .upload(fileName, blob, { upsert: true });
+        .upload(fileName, await compressImage(blob), { upsert: true });
 
       if (uploadError) throw uploadError;
 

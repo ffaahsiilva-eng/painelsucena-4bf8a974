@@ -114,7 +114,7 @@ export const OnlineUsersFooter = ({ onUserClick, onToggleSidebar, isSidebarOpen,
 
   return (
     <div className={cn(
-      "fixed bottom-0 right-0 left-0 z-40 overflow-visible transition-[left] duration-200 ease-linear safe-area-bottom-fixed",
+      "sucena-online-footer fixed bottom-0 right-0 left-0 z-40 overflow-visible transition-[left] duration-200 ease-linear safe-area-bottom-fixed",
       isMinimized ? "bg-transparent" : "bg-sidebar text-sidebar-foreground border-t-0",
       "flex items-center",
       !isMinimized && "before:content-[''] before:absolute before:left-0 before:right-0 before:-top-10 before:h-10 before:pointer-events-none",
@@ -125,12 +125,12 @@ export const OnlineUsersFooter = ({ onUserClick, onToggleSidebar, isSidebarOpen,
         <Link
           to="/"
           aria-label="Início"
-          className="hidden md:flex absolute left-1/2 -translate-x-1/2 bottom-0 z-50 items-center justify-center pointer-events-auto"
+          className="sucena-footer-logo-link hidden md:flex absolute left-1/2 -translate-x-1/2 bottom-0 z-50 items-center justify-center pointer-events-auto"
         >
           <img loading="lazy" decoding="async"
             src={settings?.logo_url || logoPrincipal}
             alt="Logo"
-            className="h-11 max-w-[170px] object-contain drop-shadow-[0_4px_10px_rgba(0,0,0,0.7)] mb-3"
+            className="sucena-footer-logo h-11 max-w-[170px] object-contain mb-3"
           />
         </Link>
       )}
@@ -156,25 +156,9 @@ export const OnlineUsersFooter = ({ onUserClick, onToggleSidebar, isSidebarOpen,
             <TooltipProvider delayDuration={0}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (onSignOut) {
-                        onSignOut();
-                      } else {
-                        signOut();
-                      }
-                    }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-transparent hover:bg-red-500/90 hover:text-white text-secondary-foreground transition-all active:scale-95 shadow-none border-none"
-                    aria-label="Sair"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    <span className="text-[11px] font-bold tracking-tight uppercase">Sair</span>
-                  </button>
+                  {/* SAIR removido do rodapé para evitar duplicação */}
+                  <div className="hidden" />
                 </TooltipTrigger>
-                <TooltipContent side="top" className="bg-card border text-[11px]">
-                  Sair da conta
-                </TooltipContent>
               </Tooltip>
             </TooltipProvider>
             {isAdmin && (
@@ -230,7 +214,7 @@ export const OnlineUsersFooter = ({ onUserClick, onToggleSidebar, isSidebarOpen,
                       onClick={async () => {
                         await hardRefreshToLatest({ clearVisualState: true });
                       }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary hover:bg-secondary/80 text-secondary-foreground transition-all active:scale-95 shadow-sm"
+                      className="sucena-footer-refresh flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all active:scale-95"
                       aria-label="Recarregar sistema"
                     >
                       <RefreshCw className="h-4 w-4 animate-[spin_10s_linear_infinite] hover:animate-[spin_2s_linear_infinite]" />
@@ -250,7 +234,7 @@ export const OnlineUsersFooter = ({ onUserClick, onToggleSidebar, isSidebarOpen,
                 e.stopPropagation();
                 onToggleSidebar();
               }}
-              className="relative p-1 hover:bg-muted/50 rounded-full transition-all group"
+              className="sucena-footer-chat relative p-1 rounded-full transition-all group"
               title={isSidebarOpen ? "Fechar conversas" : "Abrir conversas"}
             >
               <img loading="lazy" decoding="async" 
@@ -271,7 +255,7 @@ export const OnlineUsersFooter = ({ onUserClick, onToggleSidebar, isSidebarOpen,
             <button
               type="button"
               onClick={() => setColorDialogOpen(true)}
-              className="flex shrink-0 items-center gap-1.5 px-2 py-1 md:px-3 md:py-1.5 rounded-full bg-muted/50 hover:bg-muted transition-colors cursor-pointer shadow-sm"
+              className="sucena-footer-color flex shrink-0 items-center gap-1.5 px-2 py-1 md:px-3 md:py-1.5 rounded-full transition-colors cursor-pointer"
               title={`Cor proibida do mês: ${forbiddenColor.name} — clique para ver todas`}
             >
               <span

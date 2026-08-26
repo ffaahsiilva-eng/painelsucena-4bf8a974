@@ -1,0 +1,31 @@
+SUCENA — PATCH DESKTOP LAYOUT FIXO
+
+OBJETIVO
+Manter a mesma composição visual do Dashboard em PCs grandes e pequenos.
+A partir de 1024 px de largura o Dashboard continua SEMPRE em 4 colunas.
+
+O QUE FOI CORRIGIDO
+- Removido o breakpoint que transformava o Dashboard em 2 colunas em PCs menores.
+- Sidebar não recolhe mais para 78 px em resoluções de PC.
+- Topbar reduz fonte/padding de forma proporcional sem alterar a composição.
+- Cards, gráficos, círculos, textos e espaçamentos ficam menores proporcionalmente.
+- Progress Rings agora encolhem junto com o card e não estouram a coluna.
+- Almoxarifado mantém 3 colunas em modo PC.
+- Layout de tablet só passa a ser usado abaixo de 1024 px.
+- Corrigido um return duplicado no DashboardV4.tsx.
+
+FAIXAS
+- >= 1440 px: desktop amplo.
+- 1024–1439 px: desktop compacto, mesma composição de 4 colunas.
+- 768–1023 px: tablet.
+- <= 767 px: mobile.
+
+COMO APLICAR
+1. Pare o servidor (Ctrl+C).
+2. Faça backup do projeto.
+3. Extraia este ZIP NA RAIZ do projeto SucenPainelGit.
+4. Quando o Windows perguntar, escolha "Substituir os arquivos no destino".
+5. Rode novamente:
+   npm run dev
+
+NÃO extraia dentro de src. O ZIP já contém a estrutura src/... correta.

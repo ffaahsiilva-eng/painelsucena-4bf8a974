@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEnvironment } from "./useEnvironment";
 import { resolveStorageUrl } from "@/lib/storage";
 import sucenaLogo from "@/assets/Sucena-Official.png.asset.json";
+import { compressImage } from "@/utils/imageCompression";
+
 
 export interface SiteSettings {
   id: string;
@@ -351,7 +353,7 @@ export function useSiteSettings() {
 
     const { error: uploadError } = await supabase.storage
       .from("site-assets")
-      .upload(filePath, file, { upsert: true });
+      .upload(filePath, await compressImage(file), { upsert: true });
 
     if (uploadError) throw uploadError;
 

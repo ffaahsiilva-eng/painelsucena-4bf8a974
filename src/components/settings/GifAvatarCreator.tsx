@@ -7,6 +7,8 @@ import { ImagePlus, Trash2, Loader2, Film, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { compressImage } from "@/utils/imageCompression";
+
 
 interface GifAvatarCreatorProps {
   userId: string;
@@ -148,7 +150,7 @@ export function GifAvatarCreator({ userId, onAvatarCreated }: GifAvatarCreatorPr
       const fileName = `${userId}/avatar-gif.gif`;
       const { error: uploadError } = await supabase.storage
         .from("site-assets")
-        .upload(fileName, blob, { upsert: true, contentType: "image/gif" });
+        .upload(fileName, await compressImage(blob), { upsert: true, contentType: "image/gif" });
 
       if (uploadError) throw uploadError;
 

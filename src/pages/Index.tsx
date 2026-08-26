@@ -1,7 +1,11 @@
-import Dashboard from "./Dashboard";
+import DashboardV4 from "./DashboardV4";
 
 const Index = () => {
-  return <Dashboard />;
+  return (
+    <>
+      <DashboardV4 />
+    </>
+  );
 };
 
 export default Index;

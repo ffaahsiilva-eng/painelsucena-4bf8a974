@@ -12,6 +12,8 @@ import { FormattingToolbar } from "./FormattingToolbar";
 import { RichTextInput, RichTextInputHandle } from "./RichTextInput";
 import { EmojiPicker } from "@/components/chat/EmojiPicker";
 import { AnimatedEmojiPicker } from "./AnimatedEmojiPicker";
+import { compressImage } from "@/utils/imageCompression";
+
 
 const getInitials = (name: string) => {
   const parts = name.split(" ");
@@ -95,7 +97,7 @@ export function CreatePostCard() {
     for (const file of Array.from(files)) {
       const ext = file.name.split(".").pop();
       const path = `instacena/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-      const { error } = await supabase.storage.from("site-assets").upload(path, file);
+      const { error } = await supabase.storage.from("site-assets").upload(path, await compressImage(file));
       if (error) {
         toast.error("Erro ao enviar imagem");
         continue;
@@ -130,7 +132,7 @@ export function CreatePostCard() {
 
       const ext = file.name.split(".").pop();
       const path = `instacena/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-      const { error } = await supabase.storage.from("site-assets").upload(path, file);
+      const { error } = await supabase.storage.from("site-assets").upload(path, await compressImage(file));
       if (error) {
         toast.error("Erro ao enviar vídeo");
         continue;

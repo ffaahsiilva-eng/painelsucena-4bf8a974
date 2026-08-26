@@ -20,6 +20,8 @@ import { useDDSMidnightRefresh } from "@/hooks/useMidnightRefresh";
 import { DDSParticipationDialog } from "./DDSParticipationDialog";
 import sextouVideo from "@/assets/sextou-dds.mp4.asset.json";
 import { useEnvironment, ENVIRONMENTS } from "@/hooks/useEnvironment";
+import { compressImage } from "@/utils/imageCompression";
+
 
 export const DDSHighlightCard = () => {
   const { data: todayDDS, isLoading: loadingToday } = useTodayDDS();
@@ -74,7 +76,7 @@ export const DDSHighlightCard = () => {
     try {
       const fileExt = file.name.split(".").pop();
       const fileName = `dds-theme-${todayDDS.scheduled_date}-${Date.now()}.${fileExt}`;
-      const { error: uploadError } = await supabase.storage.from("site-assets").upload(fileName, file, { upsert: true });
+      const { error: uploadError } = await supabase.storage.from("site-assets").upload(fileName, await compressImage(file), { upsert: true });
       if (uploadError) throw uploadError;
       const { data: urlData } = supabase.storage.from("site-assets").getPublicUrl(fileName);
       await updatePhoto.mutateAsync({ id: todayDDS.id, photo_url: urlData.publicUrl });
@@ -98,7 +100,7 @@ export const DDSHighlightCard = () => {
     try {
       const fileExt = file.name.split(".").pop();
       const fileName = `dds-event-${todayDDS.scheduled_date}-${Date.now()}.${fileExt}`;
-      const { error: uploadError } = await supabase.storage.from("site-assets").upload(fileName, file, { upsert: true });
+      const { error: uploadError } = await supabase.storage.from("site-assets").upload(fileName, await compressImage(file), { upsert: true });
       if (uploadError) throw uploadError;
       const { data: urlData } = supabase.storage.from("site-assets").getPublicUrl(fileName);
       await updateEventPhoto.mutateAsync({ id: todayDDS.id, event_photo_url: urlData.publicUrl });

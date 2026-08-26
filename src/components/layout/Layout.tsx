@@ -103,8 +103,8 @@ const Layout = ({ children }: LayoutProps) => {
   };
 
   return (
-    <SidebarInset className="flex flex-col h-full overflow-hidden bg-transparent min-w-0 w-full max-w-full">
-      <main className={`flex-1 overflow-y-auto overflow-x-hidden bg-transparent w-full max-w-full min-w-0 ${isDockTheme ? 'pb-36 md:pb-28' : 'pb-28 md:pb-24'} safe-area-inset-bottom`}>
+    <SidebarInset className="sucena-page-layout flex flex-col bg-transparent min-w-0 w-full max-w-full">
+      <main className="sucena-page-main flex-1 bg-transparent w-full max-w-full min-w-0 safe-area-inset-bottom">
         {isEditMode && (
           <div className="bg-primary/10 border-b border-primary/30 px-4 py-1.5 flex items-center gap-2 text-primary text-sm">
             <Pencil className="h-3.5 w-3.5 shrink-0 animate-pulse" />

@@ -60,7 +60,7 @@ export function PageTransition({ children }: PageTransitionProps) {
   }, [location.pathname, children]);
 
   return (
-    <div className="w-full max-w-full min-w-0 overflow-hidden perspective-2000 relative min-h-screen">
+    <div className="w-full max-w-full min-w-0 perspective-2000 relative">
       <div
         className={`w-full h-full transform-origin-left transition-all ease-in-out transform-style-3d ${
           phase === "flipping" ? "animate-notebook-flip" : "opacity-100 transform-none"

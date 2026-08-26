@@ -11,6 +11,8 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StoryViewer } from "./StoryViewer";
+import { compressImage } from "@/utils/imageCompression";
+
 
 const getInitials = (name: string) => {
   const parts = name.split(" ");
@@ -86,7 +88,7 @@ export function StoryBar() {
       const path = `instacena/stories/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
       const { error: upErr } = await supabase.storage
         .from("site-assets")
-        .upload(path, previewFile, {
+        .upload(path, await compressImage(previewFile), {
           cacheControl: "3600",
           upsert: false,
           contentType: previewFile.type,

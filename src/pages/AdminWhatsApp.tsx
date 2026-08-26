@@ -243,7 +243,7 @@ const AdminWhatsApp = () => {
   const { data: logs } = useQuery({
     queryKey: ["wapi-logs"],
     enabled: !!user && isAdmin,
-    refetchInterval: 30000,
+
     queryFn: async () => {
       const { data, error } = await supabase
         .from("wapi_message_logs" as never)

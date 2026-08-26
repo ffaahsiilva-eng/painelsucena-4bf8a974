@@ -27,6 +27,8 @@ import { ThemePicker } from "@/components/settings/ThemePicker";
 import { PrimaryColorPicker } from "@/components/settings/PrimaryColorPicker";
 import { useQueryClient } from "@tanstack/react-query";
 import { resolveStorageUrl } from "@/lib/storage";
+import { compressImage } from "@/utils/imageCompression";
+
 
 const nameSchema = z.string().trim().min(2, "Nome deve ter pelo menos 2 caracteres").max(100, "Nome deve ter no máximo 100 caracteres");
 const emailSchema = z.string().trim().email("Email inválido").max(255, "Email deve ter no máximo 255 caracteres");
@@ -249,7 +251,7 @@ const Configuracoes = () => {
       // Upload to storage
       const { error: uploadError } = await supabase.storage
         .from("site-assets")
-        .upload(fileName, blob, { upsert: true });
+        .upload(fileName, await compressImage(blob), { upsert: true });
 
       if (uploadError) throw uploadError;
 

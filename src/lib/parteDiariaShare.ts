@@ -7,6 +7,8 @@ import {
 } from "@/lib/pdf/fuelGauge";
 import type { Equipment, EquipmentStopHistory } from "@/hooks/useEquipment";
 import type { EquipmentMovement } from "@/hooks/useEquipmentMovements";
+import { compressImage } from "@/utils/imageCompression";
+
 
 const PARA_OFFSET_MS = 3 * 60 * 60 * 1000;
 
@@ -579,7 +581,7 @@ export async function generateAndUploadParteDiariaPng(
   for (let attempt = 1; attempt <= 3; attempt++) {
     const { error } = await supabase.storage
       .from("site-assets")
-      .upload(path, blob, { contentType: "image/png", upsert: true });
+      .upload(path, await compressImage(blob), { contentType: "image/png", upsert: true });
     if (!error) {
       const { data } = supabase.storage.from("site-assets").getPublicUrl(path);
       return data?.publicUrl ?? null;

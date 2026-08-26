@@ -68,30 +68,39 @@ export function TopNavHeader() {
     path === "/" ? location.pathname === "/" : location.pathname === path || location.pathname.startsWith(path + "/");
 
   return (
-    <nav className="sucena-topbar hidden md:flex">
-      <div className="flex-1 min-w-0 relative z-50 overflow-hidden">
-        <ul className="flex items-center justify-start flex-nowrap gap-x-2 w-full overflow-x-auto overflow-y-hidden overscroll-x-contain whitespace-nowrap scrollbar-none">
+    <nav className="sucena-topbar hidden md:flex" data-topbar>
+      <div className="sucena-topbar-scroll">
+        <ul className="sucena-topbar-nav scrollbar-none">
           {orderedNavItems.map((item) => {
             const active = isActive(item.path);
             return (
-              <li key={item.id} className="shrink-0">
+              <li key={item.id} className={cn("sucena-topbar-item-wrap", item.id === "cipa" && "sucena-topbar-cipa-wrap")}>
                 <Link
                   to={item.path}
-                  className={cn("sucena-nav-item", item.isEmergency && "text-red-500 hover:text-red-400")}
+                  className={cn("sucena-topbar-link", item.isEmergency && "text-red-500 hover:text-red-400", item.id === "cipa" && "sucena-topbar-cipa")}
                   data-active={active}
                   title={item.label}
                 >
                   {item.id === "cipa" ? (
-                    <img loading="lazy" decoding="async" src={cipaLogo.url} alt="CIPA" className="h-6 w-6 object-contain opacity-80 hover:opacity-100 mr-2" />
+                    <img loading="lazy" decoding="async" src={cipaLogo.url} alt="CIPA" className="sucena-cipa-icon" />
                   ) : null}
-                  <span className={cn(item.isEmergency && "emergency-neon", item.id === "destaques" && "font-weghorst text-[15px]")}>
-                    {item.label}
-                  </span>
+                  {item.id !== "cipa" && (
+                    <span className={cn(item.isEmergency && "emergency-neon")}>{item.label}</span>
+                  )}
                 </Link>
               </li>
             );
           })}
         </ul>
+        <button
+          type="button"
+          onClick={() => signOut()}
+          className="sucena-topbar-logout"
+          aria-label="Sair"
+          title="Sair"
+        >
+          <LogOut className="h-4 w-4" />
+        </button>
       </div>
     </nav>
   );

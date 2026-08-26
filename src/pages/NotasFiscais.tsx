@@ -18,6 +18,8 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { compressImage } from "@/utils/imageCompression";
+
 
 const NotasFiscais = () => {
   const { user } = useAuth();
@@ -98,7 +100,7 @@ const NotasFiscais = () => {
         const path = `${user.id}/${Date.now()}.${ext}`;
         const { error: uploadError } = await supabase.storage
           .from("notas-fiscais")
-          .upload(path, file);
+          .upload(path, await compressImage(file));
         if (uploadError) throw uploadError;
 
         const { data: urlData } = supabase.storage

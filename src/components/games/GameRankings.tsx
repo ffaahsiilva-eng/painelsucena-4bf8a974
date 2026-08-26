@@ -29,7 +29,7 @@ export function GameRankings() {
   const { data: quizScores, isLoading: loadingQuiz } = useTopScoresByGame();
   const { data: checkersStats, isLoading: loadingCheckers } = useQuery({
     queryKey: ["checkers-stats-ranking"],
-    refetchInterval: 120000,
+
     queryFn: async () => {
       const { data, error } = await supabase
         .from("checkers_stats")
@@ -42,7 +42,7 @@ export function GameRankings() {
   });
   const { data: dominoStats, isLoading: loadingDomino } = useQuery({
     queryKey: ["domino-stats-ranking"],
-    refetchInterval: 120000,
+
     queryFn: async () => {
       const { data, error } = await supabase
         .from("domino_stats")

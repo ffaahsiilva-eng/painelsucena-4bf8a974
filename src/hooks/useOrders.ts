@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { compressImage } from "@/utils/imageCompression";
+
 
 export type OrderStatus = 'solicitado' | 'aprovado' | 'a_caminho' | 'entregue' | 'pedido_realizado' | 'cancelado' | 'em_analise' | 'comprado' | 'recusado';
 export type QuantityUnit = 'unidade' | 'centimetros' | 'metros' | 'quilos' | 'litros' | 'pacotes' | 'caixas' | 'pecas' | 'par' | 'rolo' | 'saco' | 'galao' | 'balde' | 'metro_quadrado' | 'metro_cubico';
@@ -662,7 +664,7 @@ export const uploadOrderPhoto = async (file: File): Promise<string> => {
 
   const { error } = await supabase.storage
     .from("order-photos")
-    .upload(fileName, file);
+    .upload(fileName, await compressImage(file));
 
   if (error) throw error;
 

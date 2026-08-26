@@ -52,12 +52,7 @@ export function useBackupJobs() {
       if (error) throw error;
       return (data || []) as BackupJob[];
     },
-    refetchInterval: (query) => {
-      const jobs = (query.state.data as BackupJob[] | undefined) || [];
-      return jobs.some((j) => j.status === "running" || j.status === "pending")
-        ? 5000
-        : 60000;
-    },
+
   });
 }
 
@@ -72,7 +67,7 @@ export function useBackupDriveStatus() {
       if (error) throw error;
       return data;
     },
-    refetchInterval: 60000,
+
   });
 }
 

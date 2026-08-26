@@ -37,6 +37,8 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { getCurrentMonthCampaigns } from "@/data/campaignData";
 import instaCenaLogo from "@/assets/instacena-logo.png";
 import type { Database } from "@/integrations/supabase/types";
+import { compressImage } from "@/utils/imageCompression";
+
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 
@@ -253,7 +255,7 @@ const Admin = () => {
       const path = `logos/instacena-logo-${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage
         .from("site-assets")
-        .upload(path, file, { upsert: true });
+        .upload(path, await compressImage(file), { upsert: true });
       if (upErr) throw upErr;
 
       const { data } = await supabase.storage.from("site-assets").createSignedUrl(path, 315360000);

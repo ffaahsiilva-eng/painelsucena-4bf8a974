@@ -14,6 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { colorLabels, colorClasses, type SlingWithInspection } from "@/hooks/useSlingEquipment";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { compressImage } from "@/utils/imageCompression";
+
 
 interface SlingInspectionDialogProps {
   open: boolean;
@@ -63,7 +65,7 @@ export function SlingInspectionDialog({
       const path = `slings/${sling.id}/${Date.now()}.${ext}`;
       const { error } = await supabase.storage
         .from("inspection-photos")
-        .upload(path, file, { upsert: true });
+        .upload(path, await compressImage(file), { upsert: true });
       if (error) throw error;
       const { data } = supabase.storage.from("inspection-photos").getPublicUrl(path);
       setPhotoUrl(data.publicUrl);

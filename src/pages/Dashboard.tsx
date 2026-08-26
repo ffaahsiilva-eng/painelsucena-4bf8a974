@@ -302,9 +302,9 @@ const Dashboard = () => {
         currentMonthName={lastDayMatrix.currentMonthName}
         pendingCargos={lastDayMatrix.pendingCargos}
       />
-      <div className="container mx-auto px-3 sm:px-8 py-6 sm:py-10 max-w-7xl safe-area-inset-bottom">
+      <div className="container mx-auto px-3 sm:px-8 py-6 sm:py-10 max-w-[1240px] safe-area-inset-bottom">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 animate-fade-in gap-4">
+        <div className="dashboard-heading-row">
           {isDockTheme ? (
             <div className="flex-1 flex justify-center pl-16 pt-2">
               <SimpleTree className="w-32 h-24 sm:w-56 sm:h-48" />
@@ -314,10 +314,10 @@ const Dashboard = () => {
               <EditablePageTitle
                 pageKey="dashboard"
                 defaultValue="Dashboard"
-                className="text-4xl sm:text-5xl font-bold text-gradient leading-tight font-weghorst tracking-widest"
+                className="dashboard-title"
                 as="h1"
               />
-              <p className="text-xs sm:text-sm mt-1 text-muted-foreground">
+              <p className="dashboard-subtitle">
                 Visão geral da operação
               </p>
             </div>
@@ -396,9 +396,9 @@ const Dashboard = () => {
 
         {/* Main stats grid */}
         <Suspense fallback={<DashboardItemSkeleton />}>
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 mb-8 animate-slide-up items-stretch">
+          <div className="dashboard-grid animate-slide-up">
             {/* Left column: Weather + Total Funcionários */}
-            <div className="lg:col-span-3 flex flex-col gap-4 sm:gap-6">
+            <div className="flex flex-col gap-6">
               <WeatherWidget />
               <ModernStatCard
                 title="Total de Funcionários"
@@ -410,12 +410,12 @@ const Dashboard = () => {
             </div>
 
             {/* Center: Avanço Mensal (Planejamento) */}
-            <div className="lg:col-span-3">
+            <div className="flex flex-col">
               <PlanejamentoProgressCard />
             </div>
 
             {/* Right-center: Presentes Hoje + Ausências */}
-            <div className="lg:col-span-3 flex flex-col gap-4 sm:gap-6">
+            <div className="flex flex-col gap-6">
               <ModernStatCard
                 title="Presentes hoje"
                 value={animatedPresentToday}
@@ -443,7 +443,7 @@ const Dashboard = () => {
             </div>
 
             {/* Far right: Equipamentos Ativos (clean white card matching reference) */}
-            <div className="lg:col-span-3">
+            <div className="flex flex-col">
               <div className="h-full">
                 <GlassCard className="h-full flex flex-col items-center text-center justify-between py-8">
                   <div>
@@ -561,6 +561,7 @@ const Dashboard = () => {
           <SimpleTree className="w-16 h-16 grayscale" />
         </div>
       </div>
+          </div>
     </Layout>
   );
 };

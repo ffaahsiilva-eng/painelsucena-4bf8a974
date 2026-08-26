@@ -5,6 +5,8 @@ import { usePageCustomizations } from "@/hooks/usePageCustomizations";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useEditMode } from "@/contexts/EditModeContext";
+import { compressImage } from "@/utils/imageCompression";
+
 
 interface EditableIconProps {
   pageKey: string;
@@ -44,7 +46,7 @@ export const EditableIcon = ({
       const path = `cms/${pageKey}/${elementKey}-${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage
         .from("site-assets")
-        .upload(path, file, { upsert: true });
+        .upload(path, await compressImage(file), { upsert: true });
       if (upErr) throw upErr;
       const { data } = supabase.storage.from("site-assets").getPublicUrl(path);
       await upsertCustomization.mutateAsync({

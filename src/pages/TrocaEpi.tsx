@@ -29,6 +29,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandInput, CommandList, CommandEmpty, CommandItem } from "@/components/ui/command";
 import { getLogoBase64 } from "@/lib/pdfLogo";
 import { downloadPdfFromHtml } from "@/lib/pdfDownload";
+import { compressImage } from "@/utils/imageCompression";
+
 
 const EPI_ITEMS = [
   { id: "abafador_completo", label: "Abafador Completo", hasInput: false },
@@ -1240,7 +1242,7 @@ export default function TrocaEpi() {
       for (const file of Array.from(files)) {
         const ext = file.name.split(".").pop() || "jpg";
         const path = `epi-danificado/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-        const { error: uploadErr } = await supabase.storage.from("desvios").upload(path, file);
+        const { error: uploadErr } = await supabase.storage.from("desvios").upload(path, await compressImage(file));
         if (uploadErr) { toast.error("Erro ao enviar foto"); continue; }
         const { data: urlData } = supabase.storage.from("desvios").getPublicUrl(path);
         if (urlData?.publicUrl) newUrls.push(urlData.publicUrl);
@@ -1266,7 +1268,7 @@ export default function TrocaEpi() {
   ) => {
     try {
       const path = `wapi-requisicoes/${type}/${Date.now()}-${sanitizeShareFileName(fileBaseName)}.png`;
-      const { error: upErr } = await supabase.storage.from("desvios").upload(path, prebuiltFile, { contentType: "image/png", upsert: true });
+      const { error: upErr } = await supabase.storage.from("desvios").upload(path, await compressImage(prebuiltFile), { contentType: "image/png", upsert: true });
       if (upErr) throw upErr;
       const { data: urlData } = supabase.storage.from("desvios").getPublicUrl(path);
       const publicUrl = urlData?.publicUrl || "";

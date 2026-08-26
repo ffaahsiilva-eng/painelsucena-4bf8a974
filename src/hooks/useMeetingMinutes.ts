@@ -94,7 +94,7 @@ export function useAllMeetingMinuteItems() {
       if (error) throw error;
       return data as { id: string; completed: boolean; minute_id: string }[];
     },
-    refetchInterval: 180_000,
+
   });
 }
 

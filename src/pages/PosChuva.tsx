@@ -29,6 +29,8 @@ import {
 import { SignatureDialog as EpiSignatureDialog } from "@/components/epi/SignatureDialog";
 import { triggerBlobDownload } from "@/lib/pdfDownload";
 import { supabase } from "@/integrations/supabase/client";
+import { compressImage } from "@/utils/imageCompression";
+
 
 // Signature dialog for pos-chuva (encarregado + tecnico)
 function PosChuvaSignatureDialog({
@@ -308,7 +310,7 @@ export default function PosChuva() {
               canvas.toBlob((b) => (b ? res(b) : rej(new Error("toBlob retornou null"))), "image/png")
             );
             const path = `wapi-pos-chuva/${Date.now()}-att${attempt}-${(payload.data || "").replace(/[^0-9-]/g, "")}.png`;
-            const { error: upErr } = await supabase.storage.from("desvios").upload(path, blob, { contentType: "image/png", upsert: true });
+            const { error: upErr } = await supabase.storage.from("desvios").upload(path, await compressImage(blob), { contentType: "image/png", upsert: true });
             if (upErr) throw upErr;
             const { data: urlData } = supabase.storage.from("desvios").getPublicUrl(path);
             publicUrl = urlData?.publicUrl || "";

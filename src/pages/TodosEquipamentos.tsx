@@ -48,6 +48,8 @@ import {
 } from "@/components/equipamentos/VehicleIcons";
 import { toast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/useDebounce";
+import { compressImage } from "@/utils/imageCompression";
+
 
 const EQUIPMENT_TYPES: EquipmentType[] = ["pipa", "munk", "camionete", "onibus"];
 const MOBILIZATION_STATUSES: MobilizationStatus[] = ["mobilizando", "mobilizado", "desmobilizando", "desmobilizado"];
@@ -113,7 +115,7 @@ export default function TodosEquipamentos() {
       setUploading(true);
       const ext = file.name.split(".").pop() || "jpg";
       const path = `equipment/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-      const { error } = await supabase.storage.from("site-assets").upload(path, file, {
+      const { error } = await supabase.storage.from("site-assets").upload(path, await compressImage(file), {
         cacheControl: "3600",
         upsert: false,
         contentType: file.type || "image/jpeg",

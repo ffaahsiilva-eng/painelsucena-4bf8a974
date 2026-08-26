@@ -136,7 +136,7 @@ export const queryClient = new QueryClient({
       gcTime: 1000 * 60 * 60, // 1 hora
       refetchOnWindowFocus: false,
       refetchOnMount: false,
-      refetchOnReconnect: "always",
+      refetchOnReconnect: false,
       networkMode: "offlineFirst",
     },
     mutations: {
