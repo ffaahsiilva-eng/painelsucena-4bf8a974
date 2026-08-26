@@ -44,6 +44,8 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { FuelLevelGauge, type FuelLevel } from "./FuelLevelGauge";
+import { useQueryClient } from "@tanstack/react-query";
+import { useVehicleSelection } from "@/hooks/useVehicleSelection";
 import { useOfflineSyncV2 } from "@/hooks/useOfflineSyncV2";
 import { useCreateShiftRecord, useUpdateShiftRecord, useAddStatusToHistory, useShiftRecordByEquipment } from "@/hooks/useDailyShiftRecords";
 import { useCreateEquipmentMovement } from "@/hooks/useEquipmentMovements";
@@ -128,6 +130,7 @@ const getStatusLabel = (stopReason: string | null, defectDescription?: string | 
 
 export function DriverStatusButtons() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   // Guarda contra dupla submissão: se uma ação está em voo, ignore cliques repetidos
@@ -406,6 +409,14 @@ export function DriverStatusButtons() {
           started_at: now,
           changed_by_driver: currentDriverName || null,
         });
+
+        // Optimistic update
+        queryClient.setQueryData(["equipment"], (old: any) => {
+          if (!old) return old;
+          return old.map((eq: any) =>
+            eq.id === selectedVehicleId ? { ...eq, stop_reason: "end_of_shift", stop_start_time: now } : eq
+          );
+        });
       }
 
       // Upsert daily_shift_record com valores finais. Se o registro não existir
@@ -432,7 +443,7 @@ export function DriverStatusButtons() {
         shift_end_time: now,
       };
 
-      let savedShiftRecord: any = null;
+      let savedShiftRecordId = null;
       let shiftSuccess = false;
 
       if (isOnline) {
@@ -443,7 +454,7 @@ export function DriverStatusButtons() {
             .select("id")
             .maybeSingle();
           if (upsertErr) throw upsertErr;
-          savedShiftRecord = data;
+          savedShiftRecordId = data?.id || null;
           shiftSuccess = true;
         } catch (err) {
           console.warn("Online upsert shift record failed, will save offline", err);
@@ -458,14 +469,16 @@ export function DriverStatusButtons() {
       }
 
       // Garante dados frescos do equipamento para decidir/gerar PNG.
-      const { data: freshEquipment } = await supabase
+      const { data: freshEquipment } = isOnline ? await supabase
         .from("equipment")
         .select("*")
         .eq("id", selectedVehicleId)
-        .maybeSingle();
+        .maybeSingle() : { data: null };
       const equipmentForPng = (freshEquipment as any) || selectedVehicle;
+      
       // Parte Diária PNG é gerada para TODOS os equipamentos no fim de turno (padrão).
-      const shouldGeneratePng = true;
+      // Porém, offline não conseguimos gerar o PNG (pois a edge function precisa do Storage)
+      const shouldGeneratePng = isOnline;
       let parteDiariaUrl: string | null = null;
       if (shouldGeneratePng) {
         toast.info("Gerando Parte Diária para envio...");
@@ -485,36 +498,35 @@ export function DriverStatusButtons() {
         }
       }
 
-      if (parteDiariaUrl) {
-        const wapiBody = {
-          equipmentId: selectedVehicleId,
-          equipmentName: selectedVehicle.name,
-          plate: selectedVehicle.plate,
-          newStatus: "end_of_shift",
-          previousStatus: currentStatus,
-          driverName: currentDriverName || null,
-          extraInfo: `*Combustível final:* ${getFuelLevelLabel(endShiftFuelLevel)}${endShiftHorimeter ? `\n*Horímetro:* ${endShiftHorimeter}` : ""}${endShiftKm ? `\n*KM:* ${endShiftKm}` : ""}`,
-          shiftRecordId: savedShiftRecord?.id || null,
-          imageUrl: parteDiariaUrl,
-          imageCaption: `📄 *PARTE DIÁRIA*\n${selectedVehicle.name} — ${selectedVehicle.plate}\nMotorista: ${currentDriverName || "—"}`,
-          timestamp: new Date().toISOString(),
-        };
-        try {
-          if (isOnline) {
-            const notifyUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wapi-driver-status-notify`;
-            const resp = await fetch(notifyUrl, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              keepalive: true,
-              body: JSON.stringify(wapiBody),
-            });
-            if (!resp.ok) console.warn("wapi notify returned", resp.status);
-          } else {
-            await addPendingAction("wapi_invoke", { functionName: "wapi-driver-status-notify", body: wapiBody });
-          }
-        } catch (err) {
-          console.warn("wapi-driver-status-notify error", err);
+      const wapiBody = {
+        equipmentId: selectedVehicleId,
+        equipmentName: selectedVehicle.name,
+        plate: selectedVehicle.plate,
+        newStatus: "end_of_shift",
+        previousStatus: currentStatus,
+        driverName: currentDriverName || null,
+        extraInfo: `*Combustível final:* ${getFuelLevelLabel(endShiftFuelLevel)}${endShiftHorimeter ? `\n*Horímetro:* ${endShiftHorimeter}` : ""}${endShiftKm ? `\n*KM:* ${endShiftKm}` : ""}`,
+        shiftRecordId: savedShiftRecordId || null,
+        imageUrl: parteDiariaUrl,
+        imageCaption: parteDiariaUrl ? `📄 *PARTE DIÁRIA*\n${selectedVehicle.name} — ${selectedVehicle.plate}\nMotorista: ${currentDriverName || "—"}` : undefined,
+        timestamp: now,
+      };
+      
+      try {
+        if (isOnline) {
+          const notifyUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wapi-driver-status-notify`;
+          const resp = await fetch(notifyUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            keepalive: true,
+            body: JSON.stringify(wapiBody),
+          });
+          if (!resp.ok) console.warn("wapi notify returned", resp.status);
+        } else {
+          await addPendingAction("wapi_invoke", { functionName: "wapi-driver-status-notify", body: wapiBody });
         }
+      } catch (err) {
+        console.warn("wapi-driver-status-notify error", err);
       }
 
       // Fim de Turno does NOT register as equipment exit (saída)
@@ -740,6 +752,14 @@ export function DriverStatusButtons() {
           stop_reason: "none",
           stop_start_time: null,
         });
+        
+        // Optimistic update
+        queryClient.setQueryData(["equipment"], (old: any) => {
+          if (!old) return old;
+          return old.map((eq: any) =>
+            eq.id === selectedVehicleId ? { ...eq, stop_reason: "none", stop_start_time: null } : eq
+          );
+        });
       }
 
       setShowStartShiftDialog(false);
@@ -904,6 +924,15 @@ export function DriverStatusButtons() {
           <span>Salvo offline: {statusLabels[newStatus] || newStatus}</span>
         </div>
       );
+
+      // Optimistic update
+      queryClient.setQueryData(["equipment"], (old: any) => {
+        if (!old) return old;
+        return old.map((eq: any) =>
+          eq.id === selectedVehicleId ? { ...eq, stop_reason: newStatus, stop_start_time: newStatus !== "none" ? now : null } : eq
+        );
+      });
+
       await commitDriverAction(clientActionId);
       setIsUpdating(false);
       release(statusKey);
