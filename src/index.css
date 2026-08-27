@@ -3733,6 +3733,7 @@ html:not(.dark) p.dashboard-subtitle,
 html:not(.dark) .dgv4-heading h1,
 html:not(.dark) .dgv4-heading p {
   color: #000000 !important;
+  text-shadow: none !important;
 }
 
 html.dark h1.dashboard-title,

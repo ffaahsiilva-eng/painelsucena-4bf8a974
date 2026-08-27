@@ -169,7 +169,7 @@ if (typeof window !== "undefined") {
 
 const App = () => (
   <ErrorBoundary>
-    <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark" enableSystem={false}>
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
       <LayoutModeProvider>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
