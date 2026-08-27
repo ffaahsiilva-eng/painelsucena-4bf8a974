@@ -127,11 +127,11 @@ html[data-layout="legacy"],
 html[data-layout="legacy"].dark {
   /* User defined tokens */
   --layout-bg: #090b0c;
-  --surface: rgba(12, 14, 16, 0.78);
-  --surface-strong: rgba(10, 12, 14, 0.90);
+  --surface: rgba(8, 10, 11, 0.92);
+  --surface-strong: rgba(6, 8, 9, 0.96);
   --text-primary: #f2f2f2;
   --text-secondary: #c1c1c1;
-  --layout-border: rgba(192, 145, 45, 0.30);
+  --layout-border: rgba(192, 145, 45, 0.35);
   --layout-accent: #e4bd42;
   --layout-accent-light: #ffe55a;
   --layout-sidebar: rgba(7, 8, 9, 0.95);
@@ -158,22 +158,26 @@ html[data-layout="legacy"].dark body {
 }
 html[data-layout="legacy"] .bg-card, 
 html[data-layout="legacy"] .glass-card,
+html[data-layout="legacy"] .dgv4-card,
 html[data-layout="legacy"] [class*="bg-card"],
 html[data-layout="legacy"].dark .bg-card, 
 html[data-layout="legacy"].dark .glass-card,
+html[data-layout="legacy"].dark .dgv4-card,
 html[data-layout="legacy"].dark [class*="bg-card"] {
   background: var(--surface) !important;
-  border-color: var(--layout-border) !important;
+  border: 1px solid var(--layout-border) !important;
   color: var(--text-primary) !important;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
 }
 html[data-layout="legacy"] .bg-card *,
 html[data-layout="legacy"] .glass-card *,
+html[data-layout="legacy"] .dgv4-card *,
 html[data-layout="legacy"].dark .bg-card *,
-html[data-layout="legacy"].dark .glass-card * {
-  border-color: rgba(255,255,255,0.08);
+html[data-layout="legacy"].dark .glass-card *,
+html[data-layout="legacy"].dark .dgv4-card * {
+  border-color: rgba(192, 145, 45, 0.15);
 }
 html[data-layout="legacy"] h1, 
 html[data-layout="legacy"] h2, 
@@ -255,3 +259,95 @@ html[data-layout="legacy"] .sucena-bg-overlay,
 html[data-layout="legacy"].dark .sucena-bg-overlay {
   background: rgba(0, 0, 0, 0.35);
 }
+
+/* ============================================================
+   DASHBOARD V4 (.dgv4-card) LEGACY OVERRIDES
+   ============================================================ */
+html[data-layout="legacy"] .dgv4-card,
+html[data-layout="legacy"].dark .dgv4-card {
+  background: var(--surface) !important;
+  border: 1px solid var(--layout-border) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8) !important;
+}
+
+html[data-layout="legacy"] .dgv4-card-title,
+html[data-layout="legacy"] .dgv4-temp,
+html[data-layout="legacy"] .dgv4-temp-row p,
+html[data-layout="legacy"] .dgv4-weather-stats b,
+html[data-layout="legacy"] .dgv4-employee-body strong,
+html[data-layout="legacy"] .dgv4-small-number,
+html[data-layout="legacy"] .dgv4-goal-counts strong,
+html[data-layout="legacy"] .dgv4-equip-number,
+html[data-layout="legacy"] .dgv4-equip-stat b,
+html[data-layout="legacy"].dark .dgv4-card-title,
+html[data-layout="legacy"].dark .dgv4-temp,
+html[data-layout="legacy"].dark .dgv4-temp-row p,
+html[data-layout="legacy"].dark .dgv4-weather-stats b,
+html[data-layout="legacy"].dark .dgv4-employee-body strong,
+html[data-layout="legacy"].dark .dgv4-small-number,
+html[data-layout="legacy"].dark .dgv4-goal-counts strong,
+html[data-layout="legacy"].dark .dgv4-equip-number,
+html[data-layout="legacy"].dark .dgv4-equip-stat b {
+  color: var(--text-primary) !important;
+}
+
+html[data-layout="legacy"] .dgv4-progress-title small,
+html[data-layout="legacy"] .dgv4-progress-title button,
+html[data-layout="legacy"] .dgv4-card-title button,
+html[data-layout="legacy"] .dgv4-weather-head,
+html[data-layout="legacy"] .dgv4-weather-stats span,
+html[data-layout="legacy"] .dgv4-employee-body span,
+html[data-layout="legacy"] .dgv4-goal-counts span,
+html[data-layout="legacy"] .dgv4-caption,
+html[data-layout="legacy"] .dgv4-axis,
+html[data-layout="legacy"] .dgv4-equip-stat span,
+html[data-layout="legacy"] .dgv4-equip-footer,
+html[data-layout="legacy"].dark .dgv4-progress-title small,
+html[data-layout="legacy"].dark .dgv4-progress-title button,
+html[data-layout="legacy"].dark .dgv4-card-title button,
+html[data-layout="legacy"].dark .dgv4-weather-head,
+html[data-layout="legacy"].dark .dgv4-weather-stats span,
+html[data-layout="legacy"].dark .dgv4-employee-body span,
+html[data-layout="legacy"].dark .dgv4-goal-counts span,
+html[data-layout="legacy"].dark .dgv4-caption,
+html[data-layout="legacy"].dark .dgv4-axis,
+html[data-layout="legacy"].dark .dgv4-equip-stat span,
+html[data-layout="legacy"].dark .dgv4-equip-footer {
+  color: var(--text-secondary) !important;
+}
+
+html[data-layout="legacy"] .dgv4-weather-icon,
+html[data-layout="legacy"] .dgv4-ghost-users,
+html[data-layout="legacy"].dark .dgv4-weather-icon,
+html[data-layout="legacy"].dark .dgv4-ghost-users {
+  color: var(--text-secondary) !important;
+  opacity: 0.6;
+}
+
+/* Fix specific inner elements (Rings and Equipment Count) */
+html[data-layout="legacy"] .dgv4-ring-center strong,
+html[data-layout="legacy"] .dgv4-equipment-count strong,
+html[data-layout="legacy"].dark .dgv4-ring-center strong,
+html[data-layout="legacy"].dark .dgv4-equipment-count strong {
+  color: var(--text-primary) !important;
+}
+
+html[data-layout="legacy"] .dgv4-ring-center span,
+html[data-layout="legacy"] .dgv4-equipment-count span,
+html[data-layout="legacy"] .dgv4-equipment-count p,
+html[data-layout="legacy"].dark .dgv4-ring-center span,
+html[data-layout="legacy"].dark .dgv4-equipment-count span,
+html[data-layout="legacy"].dark .dgv4-equipment-count p {
+  color: var(--text-secondary) !important;
+}
+
+/* Make ring inactive track visible on dark background */
+html[data-layout="legacy"] .dgv4-ring circle:first-child,
+html[data-layout="legacy"] .dgv4-equipment-ring circle:first-child,
+html[data-layout="legacy"].dark .dgv4-ring circle:first-child,
+html[data-layout="legacy"].dark .dgv4-equipment-ring circle:first-child {
+  stroke: rgba(255, 255, 255, 0.08) !important;
+}
+
