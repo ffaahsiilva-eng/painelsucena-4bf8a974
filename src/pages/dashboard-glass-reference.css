@@ -40,11 +40,6 @@
   color: #000000 !important;
 }
 
-html.dark .dgv4-heading h1,
-html.dark .dgv4-heading p {
-  color: #ffffff !important;
-}
-
 .dgv4-date {
   margin-top: 9px;
   min-width: clamp(255px, 18.1vw, 303px);

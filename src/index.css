@@ -3732,7 +3732,12 @@ h1.dashboard-title,
 p.dashboard-subtitle,
 .dgv4-heading h1,
 .dgv4-heading p,
-.force-dark-title {
+.force-dark-title,
+html.dark h1.dashboard-title,
+html.dark p.dashboard-subtitle,
+html.dark .dgv4-heading h1,
+html.dark .dgv4-heading p,
+html.dark .force-dark-title {
   color: #000000 !important;
   text-shadow: none !important;
   -webkit-text-fill-color: initial !important;
