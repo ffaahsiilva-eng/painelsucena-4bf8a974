@@ -37,12 +37,12 @@
   font-size: clamp(15px, 1.05vw, 18px);
   line-height: 1.25;
   font-weight: 400;
-  color: #74797d;
+  color: #000000 !important;
 }
 
 html.dark .dgv4-heading h1,
 html.dark .dgv4-heading p {
-  color: #ffffff;
+  color: #ffffff !important;
 }
 
 .dgv4-date {
