@@ -95,18 +95,36 @@ export const PersistentSidebar = ({ children }: PersistentSidebarProps) => {
     return () => window.removeEventListener("login-transition", handler);
   }, [user]);
 
+  const DEFAULT_BG_URL =
+    "https://images.unsplash.com/photo-1542224566-6e85f2e6772f?auto=format&fit=crop&w=2560&q=80";
+  const cachedBgUrl = localStorage.getItem("sucena_global_bg_url");
+  const globalBgUrl = settings?.global_background_url || cachedBgUrl || DEFAULT_BG_URL;
+  const isVideoBg = /\.(mp4|webm|ogg|mov|m4v)(\?|$)/i.test(globalBgUrl);
+
+  useEffect(() => {
+    if (settings?.global_background_url) {
+      localStorage.setItem("sucena_global_bg_url", settings.global_background_url);
+    }
+  }, [settings?.global_background_url]);
+
   if (!layoutReady) {
     return (
-      <div className="h-screen w-full grid place-items-center bg-background" data-layout={layoutMode}>
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div className="sucena-app w-full app-shell" data-has-global-bg="true" data-layout={layoutMode}>
+        {isVideoBg ? (
+          <video src={globalBgUrl} autoPlay loop muted playsInline preload="metadata" className="sucena-bg-photo object-cover" />
+        ) : (
+          <div className="sucena-bg-photo" style={{ backgroundImage: `url(${globalBgUrl})` }} />
+        )}
+        <div className="sucena-bg-overlay" />
+        <div className="sucena-bg-haze" />
+        <div className="h-screen w-full grid place-items-center relative z-50">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
       </div>
     );
   }
 
-  const DEFAULT_BG_URL =
-    "https://images.unsplash.com/photo-1542224566-6e85f2e6772f?auto=format&fit=crop&w=2560&q=80";
-  const globalBgUrl = settings?.global_background_url || DEFAULT_BG_URL;
-  const isVideoBg = /\.(mp4|webm|ogg|mov|m4v)(\?|$)/i.test(globalBgUrl);
+
 
   return (
     <SidebarProvider defaultOpen={isAvatarBlocked ? false : !isMobile}>
