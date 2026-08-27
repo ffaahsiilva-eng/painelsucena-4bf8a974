@@ -24,7 +24,7 @@
 
 .dgv4-heading h1 {
   margin: 0;
-  font-family: Inter, Geist, Manrope, system-ui, sans-serif !important;
+  font-family: 'Cartefield', sans-serif !important;
   font-size: clamp(44px, 3.35vw, 56px);
   line-height: 0.98;
   font-weight: 400;
