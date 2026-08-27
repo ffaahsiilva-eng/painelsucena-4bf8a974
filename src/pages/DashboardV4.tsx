@@ -284,8 +284,8 @@ export default function DashboardV4() {
     <section className="dashboard-glass-v4">
       <div className="dgv4-heading">
         <div>
-          <h1 className="text-foreground">Dashboard</h1>
-          <p className="text-foreground">Visão geral da operação</p>
+          <h1 className="!text-black dark:!text-white">Dashboard</h1>
+          <p className="!text-black dark:!text-white">Visão geral da operação</p>
         </div>
 
         <button className="dgv4-date" type="button">
