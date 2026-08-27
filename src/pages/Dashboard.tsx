@@ -314,10 +314,10 @@ const Dashboard = () => {
               <EditablePageTitle
                 pageKey="dashboard"
                 defaultValue="Dashboard"
-                className="dashboard-title"
+                className="dashboard-title !text-black dark:!text-white"
                 as="h1"
               />
-              <p className="dashboard-subtitle">
+              <p className="dashboard-subtitle !text-black dark:!text-white">
                 Visão geral da operação
               </p>
             </div>
