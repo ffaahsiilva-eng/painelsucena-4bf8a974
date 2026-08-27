@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { Users, ClipboardCheck, AlertCircle, Activity, Calendar as CalendarIcon, Filter, ArrowUp, ArrowRight, Briefcase, RefreshCw } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useTheme } from "next-themes";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
@@ -88,8 +87,6 @@ const DashboardItemSkeleton = () => (
 );
 
 const Dashboard = () => {
-  const { resolvedTheme } = useTheme();
-  const isLight = resolvedTheme === "light";
   const { data: profile } = useProfile();
   const { settings } = useSiteSettings();
   const uiTheme = (profile as any)?.ui_theme || "classic";
@@ -319,9 +316,8 @@ const Dashboard = () => {
                 defaultValue="Dashboard"
                 className="dashboard-title text-foreground"
                 as="h1"
-                style={{ color: isLight ? "#000000" : "#ffffff" }}
               />
-              <p style={{ color: isLight ? "#000000" : "#ffffff" }} className="dashboard-subtitle text-foreground">
+              <p className="dashboard-subtitle text-foreground">
                 Visão geral da operação
               </p>
             </div>

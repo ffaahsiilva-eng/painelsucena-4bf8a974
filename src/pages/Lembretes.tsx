@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { DeleteConfirmation } from "@/components/ui/DeleteConfirmation";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useTheme } from "next-themes";
 import { Bell, Plus, Trash2, Users, User, Globe, Calendar, Clock, AlertCircle, Repeat, Filter, Pencil, LayoutGrid, List } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { EditablePageTitle } from "@/components/cms/EditablePageTitle";
@@ -55,8 +54,6 @@ const WEEKDAYS = [
 ];
 
 const Lembretes = () => {
-  const { resolvedTheme } = useTheme();
-  const isLight = resolvedTheme === "light";
   const { toast } = useToast();
   const { user } = useAuth();
   const { environment } = useEnvironment();
@@ -268,8 +265,8 @@ const Lembretes = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-6 sm:mb-8">
           <div>
-            <EditablePageTitle pageKey="lembretes" defaultValue="Lembretes" className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2 text-foreground" style={{ color: isLight ? "#000000" : "#ffffff" }} />
-            <p className="text-sm text-muted-foreground" style={{ color: isLight ? "#000000" : "#ffffff" }}>
+            <EditablePageTitle pageKey="lembretes" defaultValue="Lembretes" className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2 text-foreground" />
+            <p className="text-sm text-muted-foreground">
               Crie lembretes e mencione usuários
             </p>
           </div>

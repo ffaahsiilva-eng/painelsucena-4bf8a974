@@ -2,7 +2,6 @@ import React, { lazy, Suspense, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useTheme } from "next-themes";
 import {
   CalendarDays,
   ChevronDown,
@@ -281,15 +280,12 @@ export default function DashboardV4() {
     dateLabel: dateLabelStr,
   };
 
-  const { resolvedTheme } = useTheme();
-  const isLight = resolvedTheme === "light";
-
   return (
     <section className="dashboard-glass-v4">
       <div className="dgv4-heading">
         <div>
-          <h1 style={{ color: isLight ? "#000000" : "#ffffff" }} className="text-foreground">Dashboard</h1>
-          <p style={{ color: isLight ? "#000000" : "#ffffff" }} className="text-foreground">Visão geral da operação</p>
+          <h1 className="text-foreground">Dashboard</h1>
+          <p className="text-foreground">Visão geral da operação</p>
         </div>
 
         <button className="dgv4-date" type="button">
