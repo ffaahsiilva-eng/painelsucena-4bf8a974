@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { lazy, Suspense, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -24,6 +24,29 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useCurrentTemperature } from "@/hooks/useCurrentTemperature";
 import { usePlanejamentoMetas } from "@/hooks/usePlanejamentoMetas";
+
+// Seções completas do dashboard original, mantidas com dados e ações reais.
+// O visual é atualizado pelo escopo .dgv4-extended no CSS deste dashboard.
+const ReminderHighlightBanner = lazy(() => import("@/components/reminders/ReminderHighlightBanner").then(m => ({ default: m.ReminderHighlightBanner })));
+const BirthdayBanner = lazy(() => import("@/components/dashboard/BirthdayBanner"));
+const ASOExpiryBanner = lazy(() => import("@/components/dashboard/ASOExpiryBanner").then(m => ({ default: m.ASOExpiryBanner })));
+const MatrixAlertBanner = lazy(() => import("@/components/dashboard/MatrixAlertBanner").then(m => ({ default: m.MatrixAlertBanner })));
+const DDSHighlightCard = lazy(() => import("@/components/dds/DDSHighlightCard").then(m => ({ default: m.DDSHighlightCard })));
+const CampaignBanner = lazy(() => import("@/components/campaigns/CampaignBanner").then(m => ({ default: m.CampaignBanner })));
+const EquipmentStatusCard = lazy(() => import("@/components/dashboard/EquipmentStatusCard").then(m => ({ default: m.EquipmentStatusCard })));
+const RecentActivitiesCard = lazy(() => import("@/components/dashboard/RecentActivitiesCard").then(m => ({ default: m.RecentActivitiesCard })));
+const AttendanceTrendChart = lazy(() => import("@/components/dashboard/AttendanceTrendChart").then(m => ({ default: m.AttendanceTrendChart })));
+const MatrixGauge = lazy(() => import("@/components/dashboard/MatrixGauge").then(m => ({ default: m.MatrixGauge })));
+const AtaContratoProgressCard = lazy(() => import("@/components/dashboard/AtaContratoProgressCard").then(m => ({ default: m.AtaContratoProgressCard })));
+const MatrixSideChart = lazy(() => import("@/components/dashboard/MatrixSideChart").then(m => ({ default: m.MatrixSideChart })));
+
+const ExtendedSectionSkeleton = () => (
+  <div className="dgv4-extended-skeleton" aria-hidden="true">
+    <span />
+    <span />
+    <span />
+  </div>
+);
 
 type DashboardGlassData = {
   location?: string;
@@ -66,11 +89,8 @@ function Ring({
   const offset = c - (pct / 100) * c;
 
   return (
-    <div
-      className="dgv4-ring"
-      style={{ maxWidth: size, width: "100%", aspectRatio: "1 / 1" }}
-    >
-      <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`}>
+    <div className="dgv4-ring" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         <defs>
           <linearGradient id={`gold-${label}`} x1="0" x2="1">
             <stop offset="0%" stopColor="#a98247" />
@@ -387,6 +407,121 @@ export default function DashboardV4() {
             </p>
           </article>
         </div>
+      </div>
+
+      <div className="dgv4-extended" aria-label="Informações complementares do dashboard">
+        <section className="dgv4-extended-block" aria-labelledby="dgv4-alertas-title">
+          <div className="dgv4-section-heading">
+            <div>
+              <span className="dgv4-section-kicker">Acompanhamento</span>
+              <h2 id="dgv4-alertas-title">Alertas e pessoas</h2>
+            </div>
+            <p>Lembretes, aniversariantes e vencimentos importantes.</p>
+          </div>
+
+          <Suspense fallback={<ExtendedSectionSkeleton />}>
+            <div className="dgv4-legacy-surface dgv4-reminders-wrap">
+              <ReminderHighlightBanner />
+            </div>
+          </Suspense>
+
+          <div className="dgv4-extended-grid dgv4-extended-grid--people">
+            <Suspense fallback={<ExtendedSectionSkeleton />}>
+              <div className="dgv4-legacy-surface dgv4-birthday-wrap">
+                <BirthdayBanner />
+              </div>
+            </Suspense>
+            <Suspense fallback={<ExtendedSectionSkeleton />}>
+              <div className="dgv4-legacy-surface dgv4-aso-wrap">
+                <ASOExpiryBanner />
+              </div>
+            </Suspense>
+          </div>
+        </section>
+
+        <section className="dgv4-extended-block" aria-labelledby="dgv4-seguranca-title">
+          <div className="dgv4-section-heading">
+            <div>
+              <span className="dgv4-section-kicker">Segurança</span>
+              <h2 id="dgv4-seguranca-title">Matriz e DDS</h2>
+            </div>
+            <p>Pendências da matriz e programação dos DDS.</p>
+          </div>
+
+          <Suspense fallback={<ExtendedSectionSkeleton />}>
+            <div className="dgv4-legacy-surface dgv4-matrix-alert-wrap">
+              <MatrixAlertBanner />
+            </div>
+          </Suspense>
+          <Suspense fallback={<ExtendedSectionSkeleton />}>
+            <div className="dgv4-legacy-surface dgv4-dds-wrap">
+              <DDSHighlightCard />
+            </div>
+          </Suspense>
+        </section>
+
+        <section className="dgv4-extended-block" aria-labelledby="dgv4-operacao-title">
+          <div className="dgv4-section-heading">
+            <div>
+              <span className="dgv4-section-kicker">Operação</span>
+              <h2 id="dgv4-operacao-title">Campanhas e equipamentos</h2>
+            </div>
+            <p>Campanha do mês e situação detalhada dos equipamentos.</p>
+          </div>
+
+          <Suspense fallback={<ExtendedSectionSkeleton />}>
+            <div className="dgv4-legacy-surface dgv4-campaign-wrap">
+              <CampaignBanner />
+            </div>
+          </Suspense>
+          <Suspense fallback={<ExtendedSectionSkeleton />}>
+            <div className="dgv4-legacy-surface dgv4-equipment-status-wrap">
+              <EquipmentStatusCard />
+            </div>
+          </Suspense>
+        </section>
+
+        <section className="dgv4-extended-block dgv4-extended-block--analytics" aria-labelledby="dgv4-analises-title">
+          <div className="dgv4-section-heading">
+            <div>
+              <span className="dgv4-section-kicker">Indicadores</span>
+              <h2 id="dgv4-analises-title">Atividades e desempenho</h2>
+            </div>
+            <p>Histórico operacional, presença, matriz e acompanhamento contratual.</p>
+          </div>
+
+          <Suspense fallback={<ExtendedSectionSkeleton />}>
+            <div className="dgv4-legacy-surface dgv4-recent-wrap">
+              <RecentActivitiesCard />
+            </div>
+          </Suspense>
+
+          <div className="dgv4-analytics-grid">
+            <Suspense fallback={<ExtendedSectionSkeleton />}>
+              <div className="dgv4-legacy-surface dgv4-chart-wrap dgv4-chart-wrap--wide">
+                <AttendanceTrendChart />
+              </div>
+            </Suspense>
+            <Suspense fallback={<ExtendedSectionSkeleton />}>
+              <div className="dgv4-legacy-surface dgv4-chart-wrap dgv4-chart-wrap--gauge">
+                <MatrixGauge referenceDate={selectedDate} />
+              </div>
+            </Suspense>
+          </div>
+
+          <div className="dgv4-analytics-grid">
+            <Suspense fallback={<ExtendedSectionSkeleton />}>
+              <div className="dgv4-legacy-surface dgv4-chart-wrap dgv4-chart-wrap--wide">
+                <AtaContratoProgressCard />
+              </div>
+            </Suspense>
+            <Suspense fallback={<ExtendedSectionSkeleton />}>
+              <div className="dgv4-legacy-surface dgv4-chart-wrap dgv4-chart-wrap--gauge">
+                <MatrixSideChart />
+              </div>
+            </Suspense>
+          </div>
+        </section>
       </div>
     </section>
   );

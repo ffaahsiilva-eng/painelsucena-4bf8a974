@@ -14,6 +14,7 @@ import cipaLogo from "@/assets/cipa-logo.png.asset.json";
 import { ContractNumberBadge } from "./ContractNumberBadge";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { LayoutModeToggle } from "@/components/theme/LayoutModeToggle";
 
 
 /**
@@ -92,15 +93,18 @@ export function TopNavHeader() {
             );
           })}
         </ul>
-        <button
-          type="button"
-          onClick={() => signOut()}
-          className="sucena-topbar-logout"
-          aria-label="Sair"
-          title="Sair"
-        >
-          <LogOut className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-3 pl-2 pr-1 ml-auto">
+          <LayoutModeToggle />
+          <button
+            type="button"
+            onClick={() => signOut()}
+            className="sucena-topbar-logout"
+            aria-label="Sair"
+            title="Sair"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
+        </div>
       </div>
     </nav>
   );

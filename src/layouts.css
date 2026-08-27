@@ -1,0 +1,257 @@
+/* ============================================================
+   DUAL LAYOUT SYSTEM (MODERN / LEGACY)
+   ============================================================ */
+
+/* 
+  MODERN THEME (SOL) - Glass Claro 
+*/
+html[data-layout="modern"],
+html[data-layout="modern"].dark {
+  /* User defined tokens */
+  --layout-bg: #ececea;
+  --surface: rgba(255, 255, 255, 0.50);
+  --surface-strong: rgba(255, 255, 255, 0.62);
+  --text-primary: #2b2f31;
+  --text-secondary: #707579;
+  --layout-border: rgba(255, 255, 255, 0.65);
+  --layout-accent: #b58a48;
+  --layout-accent-light: #d6ae67;
+  --layout-sidebar: rgba(42, 45, 47, 0.88);
+
+  /* Mapping to Tailwind HSL tokens */
+  --background: 45 10% 92%;
+  --foreground: 200 6% 18%;
+  --card: 0 0% 100%;
+  --card-foreground: 200 6% 18%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 200 6% 18%;
+  --muted: 200 10% 90%;
+  --muted-foreground: 205 4% 46%;
+  --border: 0 0% 100%;
+  --primary: 40 45% 50%;
+  --primary-foreground: 0 0% 100%;
+}
+
+/* Base resets for modern */
+html[data-layout="modern"] body,
+html[data-layout="modern"].dark body {
+  background-color: var(--layout-bg);
+  color: var(--text-primary);
+}
+html[data-layout="modern"] .bg-card, 
+html[data-layout="modern"] .glass-card,
+html[data-layout="modern"] [class*="bg-card"],
+html[data-layout="modern"].dark .bg-card, 
+html[data-layout="modern"].dark .glass-card,
+html[data-layout="modern"].dark [class*="bg-card"] {
+  background: var(--surface) !important;
+  border-color: var(--layout-border) !important;
+  color: var(--text-primary) !important;
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+}
+html[data-layout="modern"] .bg-card *,
+html[data-layout="modern"] .glass-card *,
+html[data-layout="modern"].dark .bg-card *,
+html[data-layout="modern"].dark .glass-card * {
+  border-color: rgba(0,0,0,0.08);
+}
+html[data-layout="modern"] h1, 
+html[data-layout="modern"] h2, 
+html[data-layout="modern"] h3, 
+html[data-layout="modern"] h4, 
+html[data-layout="modern"] h5, 
+html[data-layout="modern"] h6,
+html[data-layout="modern"].dark h1, 
+html[data-layout="modern"].dark h2, 
+html[data-layout="modern"].dark h3, 
+html[data-layout="modern"].dark h4, 
+html[data-layout="modern"].dark h5, 
+html[data-layout="modern"].dark h6 {
+  color: var(--text-primary) !important;
+}
+html[data-layout="modern"] p,
+html[data-layout="modern"] span,
+html[data-layout="modern"].dark p,
+html[data-layout="modern"].dark span {
+  color: inherit;
+}
+html[data-layout="modern"] .text-muted-foreground,
+html[data-layout="modern"].dark .text-muted-foreground {
+  color: var(--text-secondary) !important;
+}
+html[data-layout="modern"] .sucena-topbar,
+html[data-layout="modern"].dark .sucena-topbar {
+  background: rgba(255, 255, 255, 0.7) !important;
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--layout-border);
+}
+html[data-layout="modern"] .sucena-topbar-link,
+html[data-layout="modern"].dark .sucena-topbar-link {
+  color: var(--text-primary) !important;
+}
+html[data-layout="modern"] .sucena-topbar-link[data-active="true"],
+html[data-layout="modern"].dark .sucena-topbar-link[data-active="true"] {
+  color: var(--layout-accent) !important;
+  border-bottom: 2px solid var(--layout-accent);
+}
+html[data-layout="modern"] .sucena-sidebar,
+html[data-layout="modern"].dark .sucena-sidebar {
+  background: var(--layout-sidebar) !important;
+}
+html[data-layout="modern"] input,
+html[data-layout="modern"] select,
+html[data-layout="modern"] textarea,
+html[data-layout="modern"].dark input,
+html[data-layout="modern"].dark select,
+html[data-layout="modern"].dark textarea {
+  background: rgba(255, 255, 255, 0.6) !important;
+  color: var(--text-primary) !important;
+  border-color: rgba(0,0,0,0.1) !important;
+}
+html[data-layout="modern"] input:focus,
+html[data-layout="modern"] select:focus,
+html[data-layout="modern"] textarea:focus,
+html[data-layout="modern"].dark input:focus,
+html[data-layout="modern"].dark select:focus,
+html[data-layout="modern"].dark textarea:focus {
+  border-color: var(--layout-accent-light) !important;
+  box-shadow: 0 0 0 2px rgba(214, 174, 103, 0.2) !important;
+}
+
+/* 
+  LEGACY THEME (LUA) - Dark Escuro Original
+*/
+html[data-layout="legacy"],
+html[data-layout="legacy"].dark {
+  /* User defined tokens */
+  --layout-bg: #090b0c;
+  --surface: rgba(12, 14, 16, 0.78);
+  --surface-strong: rgba(10, 12, 14, 0.90);
+  --text-primary: #f2f2f2;
+  --text-secondary: #c1c1c1;
+  --layout-border: rgba(192, 145, 45, 0.30);
+  --layout-accent: #e4bd42;
+  --layout-accent-light: #ffe55a;
+  --layout-sidebar: rgba(7, 8, 9, 0.95);
+
+  /* Mapping to Tailwind HSL tokens */
+  --background: 200 14% 4%;
+  --foreground: 0 0% 95%;
+  --card: 210 14% 5%;
+  --card-foreground: 0 0% 95%;
+  --popover: 210 14% 5%;
+  --popover-foreground: 0 0% 95%;
+  --muted: 210 10% 15%;
+  --muted-foreground: 0 0% 76%;
+  --border: 41 62% 46%; /* 192, 145, 45 */
+  --primary: 45 75% 58%; /* e4bd42 */
+  --primary-foreground: 0 0% 10%;
+}
+
+/* Base resets for legacy */
+html[data-layout="legacy"] body,
+html[data-layout="legacy"].dark body {
+  background-color: var(--layout-bg);
+  color: var(--text-primary);
+}
+html[data-layout="legacy"] .bg-card, 
+html[data-layout="legacy"] .glass-card,
+html[data-layout="legacy"] [class*="bg-card"],
+html[data-layout="legacy"].dark .bg-card, 
+html[data-layout="legacy"].dark .glass-card,
+html[data-layout="legacy"].dark [class*="bg-card"] {
+  background: var(--surface) !important;
+  border-color: var(--layout-border) !important;
+  color: var(--text-primary) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+html[data-layout="legacy"] .bg-card *,
+html[data-layout="legacy"] .glass-card *,
+html[data-layout="legacy"].dark .bg-card *,
+html[data-layout="legacy"].dark .glass-card * {
+  border-color: rgba(255,255,255,0.08);
+}
+html[data-layout="legacy"] h1, 
+html[data-layout="legacy"] h2, 
+html[data-layout="legacy"] h3, 
+html[data-layout="legacy"] h4, 
+html[data-layout="legacy"] h5, 
+html[data-layout="legacy"] h6,
+html[data-layout="legacy"].dark h1, 
+html[data-layout="legacy"].dark h2, 
+html[data-layout="legacy"].dark h3, 
+html[data-layout="legacy"].dark h4, 
+html[data-layout="legacy"].dark h5, 
+html[data-layout="legacy"].dark h6 {
+  color: var(--text-primary) !important;
+}
+html[data-layout="legacy"] p,
+html[data-layout="legacy"] span,
+html[data-layout="legacy"].dark p,
+html[data-layout="legacy"].dark span {
+  color: inherit;
+}
+html[data-layout="legacy"] .text-muted-foreground,
+html[data-layout="legacy"].dark .text-muted-foreground {
+  color: var(--text-secondary) !important;
+}
+html[data-layout="legacy"] .sucena-topbar,
+html[data-layout="legacy"].dark .sucena-topbar {
+  background: rgba(15, 15, 15, 0.9) !important;
+  border-bottom: 1px solid var(--layout-border);
+}
+html[data-layout="legacy"] .sucena-topbar-link,
+html[data-layout="legacy"].dark .sucena-topbar-link {
+  color: var(--text-primary) !important;
+}
+html[data-layout="legacy"] .sucena-topbar-link[data-active="true"],
+html[data-layout="legacy"].dark .sucena-topbar-link[data-active="true"] {
+  color: var(--layout-accent) !important;
+  text-shadow: 0 0 8px rgba(228, 189, 66, 0.5);
+}
+html[data-layout="legacy"] .sucena-sidebar,
+html[data-layout="legacy"].dark .sucena-sidebar {
+  background: var(--layout-sidebar) !important;
+}
+html[data-layout="legacy"] input,
+html[data-layout="legacy"] select,
+html[data-layout="legacy"] textarea,
+html[data-layout="legacy"].dark input,
+html[data-layout="legacy"].dark select,
+html[data-layout="legacy"].dark textarea {
+  background: rgba(0, 0, 0, 0.4) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--layout-border) !important;
+}
+html[data-layout="legacy"] input:focus,
+html[data-layout="legacy"] select:focus,
+html[data-layout="legacy"] textarea:focus,
+html[data-layout="legacy"].dark input:focus,
+html[data-layout="legacy"].dark select:focus,
+html[data-layout="legacy"].dark textarea:focus {
+  border-color: var(--layout-accent) !important;
+  box-shadow: 0 0 0 2px rgba(228, 189, 66, 0.2) !important;
+}
+
+/* Background image overrides */
+html[data-layout="modern"] .sucena-bg-photo,
+html[data-layout="modern"].dark .sucena-bg-photo {
+  filter: brightness(1.02) contrast(0.82) saturate(0.62);
+}
+html[data-layout="modern"] .sucena-bg-overlay,
+html[data-layout="modern"].dark .sucena-bg-overlay {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+html[data-layout="legacy"] .sucena-bg-photo,
+html[data-layout="legacy"].dark .sucena-bg-photo {
+  filter: brightness(0.54) contrast(1.05) saturate(0.85);
+}
+html[data-layout="legacy"] .sucena-bg-overlay,
+html[data-layout="legacy"].dark .sucena-bg-overlay {
+  background: rgba(0, 0, 0, 0.35);
+}

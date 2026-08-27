@@ -23,6 +23,7 @@ import { WhatsAppGate } from "@/components/auth/WhatsAppGate";
 import { LoginExpiryDialog } from "@/components/auth/LoginExpiryDialog";
 import { AnnouncementModal } from "@/components/announcements/AnnouncementModal";
 import { WapiBroadcastToaster } from "@/components/wapi/WapiBroadcastToaster";
+import { LayoutModeProvider } from "@/contexts/LayoutModeContext";
 import { ShiftPngBackfillRunner } from "@/components/driver/ShiftPngBackfillRunner";
 import loadingLogo from "@/assets/logo-principal.png";
 
@@ -169,6 +170,7 @@ if (typeof window !== "undefined") {
 const App = () => (
   <ErrorBoundary>
     <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark" enableSystem={false}>
+      <LayoutModeProvider>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
             <Toaster />
@@ -275,6 +277,7 @@ const App = () => (
             </BrowserRouter>
         </TooltipProvider>
       </QueryClientProvider>
+      </LayoutModeProvider>
     </ThemeProvider>
   </ErrorBoundary>
 );

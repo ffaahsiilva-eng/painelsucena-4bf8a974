@@ -413,24 +413,7 @@ export function AppSidebar({ lockedCollapsed = false }: { lockedCollapsed?: bool
         </div>
       )}
 
-      {!sidebarIsMobile && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (!lockedCollapsed) toggleSidebar();
-          }}
-          disabled={lockedCollapsed}
-          className={`sucena-sidebar-collapse absolute top-1/2 -translate-y-1/2 z-[101] hidden md:flex items-center justify-center ${
-            isCollapsed ? "-right-9" : "-right-4"
-          } ${lockedCollapsed ? "opacity-50 cursor-not-allowed" : ""}`}
-          aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"}
-        >
-          {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-        </Button>
-      )}
+
 
       <SidebarContent className="relative z-10 md:hidden">
         <ScrollArea className="flex-1">

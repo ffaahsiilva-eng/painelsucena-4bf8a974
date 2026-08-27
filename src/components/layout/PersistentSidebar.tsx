@@ -9,6 +9,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { Loader2 } from "lucide-react";
+import { useLayoutMode } from "@/contexts/LayoutModeContext";
 
 interface PersistentSidebarProps {
   children: ReactNode;
@@ -20,6 +21,7 @@ export const PersistentSidebar = ({ children }: PersistentSidebarProps) => {
   const { user, loading: authLoading } = useAuth();
   const { data: profile } = useProfile();
   const { settings } = useSiteSettings();
+  const { layoutMode } = useLayoutMode();
   const isMobile = useIsMobile();
   const location = useLocation();
   const [justCompletedTransition, setJustCompletedTransition] = useState(false);
@@ -95,7 +97,7 @@ export const PersistentSidebar = ({ children }: PersistentSidebarProps) => {
 
   if (!layoutReady) {
     return (
-      <div className="h-screen w-full grid place-items-center bg-background">
+      <div className="h-screen w-full grid place-items-center bg-background" data-layout={layoutMode}>
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
@@ -109,8 +111,9 @@ export const PersistentSidebar = ({ children }: PersistentSidebarProps) => {
   return (
     <SidebarProvider defaultOpen={isAvatarBlocked ? false : !isMobile}>
       <div
-        className={`sucena-app w-full ${hasDesktopChrome ? "sucena-app--chrome" : "sucena-app--plain"}`}
+        className={`sucena-app w-full ${hasDesktopChrome ? "sucena-app--chrome" : "sucena-app--plain"} app-shell`}
         data-has-global-bg="true"
+        data-layout={layoutMode}
       >
         {isVideoBg ? (
           <video

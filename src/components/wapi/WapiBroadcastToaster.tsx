@@ -144,6 +144,13 @@ export function WapiBroadcastToaster() {
           .gt("created_at", sinceIso)
           .order("created_at", { ascending: true })
           .limit(20);
+          
+        // Fallback: ping WAPI queue worker in case pg_cron is suspended/failing
+        fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wapi-queue-worker`, { 
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        }).catch(() => {});
+
         if (cancelled || error || !data) return;
         for (const row of data) {
           pushBroadcast(row as Broadcast);

@@ -619,6 +619,57 @@ const AdminWhatsApp = () => {
     }
   };
 
+  const handleResendYesterdayOrders = async () => {
+    try {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      yesterday.setHours(0, 0, 0, 0);
+
+      const endOfYesterday = new Date(yesterday);
+      endOfYesterday.setHours(23, 59, 59, 999);
+
+      const { data: orders, error } = await supabase
+        .from('orders')
+        .select('id, created_at, order_number')
+        .gte('created_at', yesterday.toISOString())
+        .lte('created_at', endOfYesterday.toISOString());
+
+      if (error) throw error;
+
+      if (!orders || orders.length === 0) {
+        toast.info("Nenhum pedido encontrado ontem");
+        return;
+      }
+
+      let successCount = 0;
+      for (const order of orders) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const accessToken = sessionData.session?.access_token;
+        
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wapi-order-notify`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            "Authorization": `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            orderId: order.id,
+            eventType: "created",
+          }),
+        });
+
+        if (response.ok) {
+          successCount++;
+        }
+      }
+
+      toast.success(`${successCount} de ${orders.length} pedidos de ontem reenviados com sucesso!`);
+    } catch (e: any) {
+      toast.error("Erro ao reenviar pedidos", { description: e.message });
+    }
+  };
+
   const handleTestDesvioDue = async () => {
     setTestingDesvioDue(true);
     try {
@@ -1620,6 +1671,12 @@ const AdminWhatsApp = () => {
               Requisitos: integração W-API habilitada e usuários com WhatsApp cadastrado no perfil. Quando "Enviar também para o grupo" está ativo,
               as mensagens vão para os números pessoais mencionados/solicitante <strong>e</strong> para o grupo configurado abaixo.
             </p>
+            <div className="mt-4 flex justify-end">
+              <Button onClick={handleResendYesterdayOrders} variant="secondary" className="gap-2">
+                <Send className="w-4 h-4" />
+                Reenviar Pedidos de Ontem
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
