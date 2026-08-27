@@ -44,7 +44,7 @@
   font-family: 'Weghorst', sans-serif;
 }
 
-.dgv4-heading h1, .dashboard-title {
+h1, .dashboard-title {
   font-family: 'Cartefield', sans-serif !important;
   font-weight: normal !important;
 }
