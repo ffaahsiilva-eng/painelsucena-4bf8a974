@@ -9,6 +9,13 @@
 @tailwind utilities;
 
 @font-face {
+  font-family: 'Shizuoka Cyberpunk';
+  src: url('/fonts/ShizuokaCyberpunk.otf') format('opentype');
+  unicode-range: U+0030-0039; /* Targets ONLY digits 0-9 */
+  font-display: swap;
+}
+
+@font-face {
   font-family: 'Amethast Stones';
   src: url('/__l5e/assets-v1/dbea8dfc-b595-4e28-81b1-804882c17ed5/AmethastStones-Regular.ttf') format('truetype');
   font-display: swap;

@@ -6,7 +6,7 @@
   margin: 0;
   padding: 0;
   color: #2c3032;
-  font-family: Inter, Geist, Manrope, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: 'Shizuoka Cyberpunk', Inter, Geist, Manrope, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .dashboard-glass-v4,
@@ -568,7 +568,7 @@
 .dgv4-section-heading h2 {
   margin: 0;
   color: #303436 !important;
-  font-family: Inter, Geist, Manrope, system-ui, sans-serif !important;
+  font-family: 'Shizuoka Cyberpunk', Inter, Geist, Manrope, system-ui, sans-serif !important;
   font-size: clamp(20px, 1.45vw, 25px);
   line-height: 1.05;
   font-weight: 520;
@@ -668,7 +668,7 @@
 .dgv4-extended h3,
 .dgv4-extended h4,
 .dgv4-extended [class*="CardTitle"] {
-  font-family: Inter, Geist, Manrope, system-ui, sans-serif !important;
+  font-family: 'Shizuoka Cyberpunk', Inter, Geist, Manrope, system-ui, sans-serif !important;
   color: #303436 !important;
   text-shadow: none !important;
 }
@@ -886,7 +886,7 @@
 .dgv4-extended .recharts-text,
 .dgv4-extended .recharts-cartesian-axis-tick-value {
   fill: #777d80 !important;
-  font-family: Inter, sans-serif !important;
+  font-family: 'Shizuoka Cyberpunk', Inter, sans-serif !important;
   font-size: 11px !important;
 }
 
