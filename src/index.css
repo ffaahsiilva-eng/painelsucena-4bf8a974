@@ -3727,18 +3727,24 @@ body {
   .sucena-module-tile { min-height:150px; }
 }
 
-/* FORCE DASHBOARD AND LEMBRETES TEXT COLORS TO BE DARK ALWAYS */
-h1.dashboard-title,
-p.dashboard-subtitle,
-.dgv4-heading h1,
-.dgv4-heading p,
-.force-dark-title,
+/* FORCE DASHBOARD AND LEMBRETES TEXT COLORS TO BE DARK IN LIGHT MODE */
+html:not(.dark) h1.dashboard-title,
+html:not(.dark) p.dashboard-subtitle,
+html:not(.dark) .dgv4-heading h1,
+html:not(.dark) .dgv4-heading p,
+html:not(.dark) .force-dark-title {
+  color: #000000 !important;
+  text-shadow: none !important;
+  -webkit-text-fill-color: initial !important;
+}
+
+/* AND WHITE IN DARK MODE */
 html.dark h1.dashboard-title,
 html.dark p.dashboard-subtitle,
 html.dark .dgv4-heading h1,
 html.dark .dgv4-heading p,
 html.dark .force-dark-title {
-  color: #000000 !important;
+  color: #ffffff !important;
   text-shadow: none !important;
   -webkit-text-fill-color: initial !important;
 }
