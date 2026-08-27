@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import * as E from "@/lib/whatsappEmojis";
@@ -74,7 +74,7 @@ export default function AtividadesII() {
   const [selectedDate, setSelectedDate] = useState<Date>(today);
   const selectedDateStr = format(selectedDate, "yyyy-MM-dd");
 
-  const { data: existingReport, isLoading: isLoadingReport } = useGabiaoReportByDate(selectedDateStr);
+  const { data: existingReport, isLoading: isLoadingReport, isFetching } = useGabiaoReportByDate(selectedDateStr);
   const { data: allReports } = useGabiaoReports();
   const saveReport = useSaveGabiaoReport();
   const deleteReport = useDeleteGabiaoReport();
@@ -151,8 +151,13 @@ export default function AtividadesII() {
   // Photo state
   const [photos, setPhotos] = useState<string[]>([]);
 
+  const prevDateRef = useRef<string | null>(null);
+
   // Load existing data when report changes
   useEffect(() => {
+    if (isLoadingReport || isFetching) return;
+    if (prevDateRef.current === selectedDateStr) return;
+
     if (existingReport) {
       const localServicoStr = existingReport.local_servico || "";
       
@@ -304,12 +309,12 @@ export default function AtividadesII() {
       setTransporteMateriaisQuantidade("");
       setAtividadesManuais("");
       setObservacoes("");
-      setObservacoes("");
       setPhotos([]);
       setGabiaoExtra({});
-      setPhotos([]);
     }
-  }, [existingReport, selectedDateStr]);
+
+    prevDateRef.current = selectedDateStr;
+  }, [existingReport, selectedDateStr, isLoadingReport, isFetching]);
 
   // Check access permissions - can view if encarregado_geral, encarregado_ii, planejador, engenheiro_planejamento, or admin
   const canView = authReady && (

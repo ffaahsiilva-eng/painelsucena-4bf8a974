@@ -115,10 +115,8 @@ export const OnlineUsersFooter = ({ onUserClick, onToggleSidebar, isSidebarOpen,
   return (
     <div className={cn(
       "sucena-online-footer fixed bottom-0 right-0 left-0 z-40 overflow-visible transition-[left] duration-200 ease-linear safe-area-bottom-fixed",
-      isMinimized ? "bg-transparent" : "bg-sidebar text-sidebar-foreground border-t-0",
-      "flex items-center",
-      !isMinimized && "before:content-[''] before:absolute before:left-0 before:right-0 before:-top-10 before:h-10 before:pointer-events-none",
-      !isMinimized && "before:bg-[linear-gradient(to_top,hsl(var(--sidebar-background))_0%,hsl(var(--sidebar-background)/0.65)_45%,hsl(var(--sidebar-background)/0.25)_80%,transparent_100%)]"
+      isMinimized ? "bg-transparent" : "text-sidebar-foreground border-none",
+      "flex items-center"
     )}>
 
       {!isMinimized && (
@@ -130,7 +128,7 @@ export const OnlineUsersFooter = ({ onUserClick, onToggleSidebar, isSidebarOpen,
           <img loading="lazy" decoding="async"
             src={settings?.logo_url || logoPrincipal}
             alt="Logo"
-            className="sucena-footer-logo h-11 max-w-[170px] object-contain mb-3"
+            className="sucena-footer-logo h-6 max-w-[120px] object-contain mb-0"
           />
         </Link>
       )}
@@ -151,7 +149,7 @@ export const OnlineUsersFooter = ({ onUserClick, onToggleSidebar, isSidebarOpen,
       </button>
 
       {!isMinimized && (
-        <div className="flex w-full min-w-0 items-center gap-1 md:gap-3 px-2 md:px-4 py-1 sm:py-2 overflow-hidden">
+        <div className="flex w-full min-w-0 items-center gap-1 md:gap-3 px-2 md:px-4 py-0 overflow-hidden">
           <div className="hidden md:flex shrink-0 items-center gap-2">
             <TooltipProvider delayDuration={0}>
               <Tooltip>
@@ -161,48 +159,6 @@ export const OnlineUsersFooter = ({ onUserClick, onToggleSidebar, isSidebarOpen,
                 </TooltipTrigger>
               </Tooltip>
             </TooltipProvider>
-            {isAdmin && (
-              <TooltipProvider delayDuration={0}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Link
-                      to="/admin"
-                      className="h-9 w-9 rounded-full flex items-center justify-center transition-transform hover:scale-110 relative"
-                      aria-label="Painel Admin"
-                    >
-                      <img loading="lazy" decoding="async" src={admIcon.url} alt="Admin" className="h-20 w-20 object-contain drop-shadow-[0_0_10px_rgba(255,255,255,0.8)] absolute" />
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="bg-card border text-[11px]">
-                    Painel Admin
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-            {canEdit && (
-              <TooltipProvider delayDuration={0}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      onClick={toggleEditMode}
-                      className={cn(
-                        "h-9 w-9 rounded-full flex items-center justify-center transition-all active:scale-95 border-none shadow-none bg-transparent hover:bg-secondary/20",
-                        isEditMode
-                          ? "text-primary"
-                          : "text-secondary-foreground"
-                      )}
-                      aria-label={isEditMode ? "Sair do modo edição" : "Ativar modo edição"}
-                    >
-                      {isEditMode ? <PencilOff className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="bg-card border text-[11px]">
-                    {isEditMode ? "Sair do modo edição" : "Ativar modo edição"}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
 
           </div>
           <div className="flex-1 min-w-0 overflow-hidden flex items-center justify-end gap-4">

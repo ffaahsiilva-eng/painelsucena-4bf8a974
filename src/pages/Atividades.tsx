@@ -1,5 +1,5 @@
 import { bermaLabel } from "@/lib/bermaLabel";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import * as E from "@/lib/whatsappEmojis";
 import { copyAndShareWhatsApp, copyToClipboard } from "@/lib/copyAndShare";
@@ -106,7 +106,7 @@ export default function Atividades() {
   const [selectedDate, setSelectedDate] = useState<Date>(today);
   const selectedDateStr = format(selectedDate, "yyyy-MM-dd");
 
-  const { data: existingReport, isLoading: isLoadingReport } = useJardinagemReportByDate(selectedDateStr);
+  const { data: existingReport, isLoading: isLoadingReport, isFetching } = useJardinagemReportByDate(selectedDateStr);
   const { data: allReports } = useJardinagemReports();
   const saveReport = useSaveJardinagemReport();
   const deleteReport = useDeleteJardinagemReport();
@@ -301,8 +301,15 @@ export default function Atividades() {
     profile?.cargo === "encarregado_i"
   );
 
+  const prevDateRef = useRef<string | null>(null);
+
   // Load existing report when date changes
   useEffect(() => {
+    if (isLoadingReport || isFetching) return;
+    
+    // If we already populated the form for this date, don't overwrite user edits
+    if (prevDateRef.current === selectedDateStr) return;
+
     if (existingReport) {
       setLocalFaixa(existingReport.local_faixa || "FAIXA 2");
       setRocagem(existingReport.rocagem_m2?.toString() || "");
@@ -370,7 +377,9 @@ export default function Atividades() {
       setAtividadesManuais(""); setAtividadesManuaisFaixa(""); setAtividadesManuaisBerma("");
       setPhotos([]); setExtraEntries({});
     }
-  }, [existingReport, selectedDateStr]);
+
+    prevDateRef.current = selectedDateStr;
+  }, [existingReport, selectedDateStr, isLoadingReport, isFetching]);
 
   // Show loading while checking permissions
   if (!authReady || isLoadingProfile) {

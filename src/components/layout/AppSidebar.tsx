@@ -454,55 +454,97 @@ export function AppSidebar({ lockedCollapsed = false }: { lockedCollapsed?: bool
 
       <SidebarFooter className={`sucena-sidebar-footer border-none relative z-10 safe-area-inset-bottom ${isCollapsed ? "p-2" : "px-4 pb-7"}`}>
         {user ? (
-          <div className={`sucena-sidebar-actions ${isCollapsed ? "flex-col" : "flex-row"}`}>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => navigate("/configuracoes")}
-                    className="sucena-sidebar-action-icon"
-                    aria-label="Configurações"
-                  >
-                    <Settings className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Configurações</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+          <div className="flex flex-col gap-2 w-full">
+            <div className={`sucena-sidebar-actions ${isCollapsed ? "flex-col" : "flex-row"}`}>
+              {isAdmin && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Link
+                        to="/admin"
+                        className="sucena-sidebar-action-icon flex items-center justify-center transition-transform hover:scale-110 relative rounded-md"
+                        aria-label="Painel Admin"
+                      >
+                        <img loading="lazy" decoding="async" src={admIconAsset.url} alt="Admin" className="h-6 w-6 object-contain drop-shadow-[0_0_10px_rgba(255,255,255,0.8)] absolute" />
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent>Painel Admin</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
 
-            {isAdmin && isEditMode && (
-              <>
-                <input
-                  ref={logoEditRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleLogoEditUpload}
-                  className="hidden"
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => logoEditRef.current?.click()}
-                  className="sucena-sidebar-action-icon"
-                  aria-label="Alterar logo"
-                  title="Alterar logo"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-              </>
-            )}
+              {canEdit && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={toggleEditMode}
+                        className={`sucena-sidebar-action-icon ${isEditMode ? "text-primary" : ""}`}
+                        aria-label={isEditMode ? "Sair do modo edição" : "Ativar modo edição"}
+                      >
+                        {isEditMode ? <PencilOff className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{isEditMode ? "Sair do modo edição" : "Ativar modo edição"}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
 
-            <Button
-              variant="ghost"
-              className={`sucena-sidebar-logout ${isCollapsed ? "h-9 w-9 p-0" : ""}`}
-              onClick={handleSignOut}
-              title="Sair"
-            >
-              <LogOut className="h-4 w-4" />
-              {!isCollapsed && <span>SAIR</span>}
-            </Button>
+            <div className={`sucena-sidebar-actions justify-between ${isCollapsed ? "flex-col" : "flex-row"}`}>
+              <div className="flex items-center gap-1">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => navigate("/configuracoes")}
+                        className="sucena-sidebar-action-icon"
+                        aria-label="Configurações"
+                      >
+                        <Settings className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Configurações</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                {isAdmin && isEditMode && (
+                  <>
+                    <input
+                      ref={logoEditRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoEditUpload}
+                      className="hidden"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => logoEditRef.current?.click()}
+                      className="sucena-sidebar-action-icon"
+                      aria-label="Alterar logo"
+                      title="Alterar logo"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
+              </div>
+
+              <Button
+                variant="ghost"
+                className={`sucena-sidebar-logout ${isCollapsed ? "h-9 w-9 p-0" : ""}`}
+                onClick={handleSignOut}
+                title="Sair"
+              >
+                <LogOut className="h-4 w-4" />
+                {!isCollapsed && <span>SAIR</span>}
+              </Button>
+            </div>
           </div>
         ) : (
           <SidebarMenu>
