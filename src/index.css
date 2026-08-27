@@ -3727,3 +3727,17 @@ body {
   .sucena-module-tile { min-height:150px; }
 }
 
+/* FORCE DASHBOARD TEXT COLORS TO OBEY LIGHT/DARK MODE REGARDLESS OF LAYOUT */
+html:not(.dark) h1.dashboard-title,
+html:not(.dark) p.dashboard-subtitle,
+html:not(.dark) .dgv4-heading h1,
+html:not(.dark) .dgv4-heading p {
+  color: #000000 !important;
+}
+
+html.dark h1.dashboard-title,
+html.dark p.dashboard-subtitle,
+html.dark .dgv4-heading h1,
+html.dark .dgv4-heading p {
+  color: #ffffff !important;
+}
