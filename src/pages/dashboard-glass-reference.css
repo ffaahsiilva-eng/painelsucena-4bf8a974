@@ -29,7 +29,7 @@
   line-height: 0.98;
   font-weight: 400;
   letter-spacing: -0.045em;
-  color: #2b2f31;
+  color: #000000 !important;
 }
 
 .dgv4-heading p {
