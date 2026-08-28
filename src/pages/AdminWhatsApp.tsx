@@ -59,7 +59,7 @@ const AdminWhatsApp = () => {
   const [enabled, setEnabled] = useState(false);
   const [delaySeconds, setDelaySeconds] = useState<number>(5);
   const [groupId, setGroupId] = useState("");
-  const [reroutePrivateToGroup, setReroutePrivateToGroup] = useState(true);
+  const [reroutePrivateToGroup, setReroutePrivateToGroup] = useState(false);
   const [message, setMessage] = useState("");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -168,7 +168,7 @@ const AdminWhatsApp = () => {
       setDelaySeconds(typeof cfg.delay_seconds === "number" ? cfg.delay_seconds : 5);
       setGroupId(cfg.group_id || "");
       const c = cfg as unknown as Record<string, unknown>;
-      setReroutePrivateToGroup((c.reroute_private_to_group as boolean | null) !== false);
+      setReroutePrivateToGroup(!!c.reroute_private_to_group);
       setGroupIdRequisitions((c.group_id_requisitions as string | null) || "");
       setGroupIdReminders((c.group_id_reminders as string | null) || "");
       setGroupIdAso((c.group_id_aso as string | null) || "");
@@ -670,6 +670,27 @@ const AdminWhatsApp = () => {
     }
   };
 
+  const handleResendFailedToday = async () => {
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const { data, error } = await supabase
+        .from('wapi_outbox')
+        .update({ status: 'pending', attempts: 0, last_error: null })
+        .eq('status', 'failed')
+        .gte('created_at', today.toISOString())
+        .select('id');
+
+      if (error) throw error;
+
+      toast.success(`${data?.length || 0} mensagem(ns) falha(s) de hoje foram re-enfileirada(s) com sucesso!`);
+      queryClient.invalidateQueries({ queryKey: ["wapi-logs"] });
+    } catch (e: any) {
+      toast.error("Erro ao re-enfileirar mensagens falhas", { description: e.message });
+    }
+  };
+
   const handleTestDesvioDue = async () => {
     setTestingDesvioDue(true);
     try {
@@ -1130,9 +1151,15 @@ const AdminWhatsApp = () => {
                 <Switch checked={enabled} onCheckedChange={setEnabled} id="wapi-enabled" />
                 <Label htmlFor="wapi-enabled">Integração habilitada</Label>
               </div>
-              <Button onClick={() => saveConfig.mutate()} disabled={saveConfig.isPending}>
-                <Save className="w-4 h-4 mr-2" /> Salvar Configuração
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button onClick={handleResendFailedToday} variant="secondary" className="gap-2">
+                  <Send className="w-4 h-4" />
+                  Reenviar Falhas de Hoje
+                </Button>
+                <Button onClick={() => saveConfig.mutate()} disabled={saveConfig.isPending}>
+                  <Save className="w-4 h-4 mr-2" /> Salvar Configuração
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

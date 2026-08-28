@@ -220,7 +220,7 @@ Deno.serve(async (req) => {
     // Envio para destinatários privados.
     // Se reroute_private_to_group estiver ativo (padrão), consolida em um único envio ao grupo.
     // Caso contrário, envia individualmente para cada número privado.
-    const rerouteEnabled = (cfg as { reroute_private_to_group?: boolean }).reroute_private_to_group !== false;
+    const rerouteEnabled = (cfg as { reroute_private_to_group?: boolean }).reroute_private_to_group === true;
     const groupFallback = (cfg.group_id || "").trim();
 
     if (rerouteEnabled) {

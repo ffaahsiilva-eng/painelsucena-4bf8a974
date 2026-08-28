@@ -153,7 +153,7 @@ Deno.serve(async (req) => {
       // Quando desligado, envia normalmente para o número privado.
       let targetPhone = pending.phone;
       let targetType = pending.target_type;
-      const rerouteEnabled = cfg.reroute_private_to_group !== false;
+      const rerouteEnabled = cfg.reroute_private_to_group === true;
       // Lembretes SEMPRE são enviados no privado (nunca reroteados).
       const reminderOrigins = new Set(["reminder", "reminder_snooze", "driver-app-reminder"]);
       const isReminder = reminderOrigins.has(String(pending.origin || ""));
