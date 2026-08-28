@@ -3045,7 +3045,7 @@ button.reminder-neon-btn-ghost:hover,
 :root {
   --sidebar-w: clamp(150px, 10.65vw, 178px);
   --topbar-h: 58px;
-  --footer-h: 103px;
+  --footer-h: 38px;
   --shell-gap: 36px;
   --content-left: 42px;
   --content-right: 71px;
@@ -3500,14 +3500,14 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  top: -60px;
+  top: -20px;
   z-index: -1;
   pointer-events: none;
   background: rgba(30, 32, 34, 0.75) !important;
   backdrop-filter: blur(16px) saturate(110%) !important;
   -webkit-backdrop-filter: blur(16px) saturate(110%) !important;
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 60px, black 100%);
-  mask-image: linear-gradient(to bottom, transparent 0%, black 60px, black 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20px, black 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, black 20px, black 100%);
 }
 
 .sucena-online-footer::after {
@@ -3522,12 +3522,12 @@ body {
 }
 
 .sucena-footer-logo-link {
-  bottom: 8px !important;
+  bottom: 6px !important;
 }
 
 .sucena-footer-logo {
-  height: 43px !important;
-  max-width: 155px !important;
+  height: 26px !important;
+  max-width: 120px !important;
   margin-bottom: 0 !important;
   opacity: .84;
   filter: none !important;
@@ -3657,7 +3657,7 @@ body {
     --shell-gap:36px;
     --content-left:42px;
     --content-right:48px;
-    --footer-h:45px;
+    --footer-h:30px;
   }
 }
 
@@ -3668,7 +3668,7 @@ body {
     --shell-gap:clamp(14px,1.9vw,28px);
     --content-left:clamp(14px,1.9vw,28px);
     --content-right:clamp(14px,1.9vw,28px);
-    --footer-h:clamp(45px,6vh,50px);
+    --footer-h:clamp(30px,4vh,35px);
   }
   .sucena-sidebar-header { padding-top:clamp(20px,4vh,40px) !important; }
   .sucena-contract-block { padding-left:clamp(18px,2vw,28px); }
@@ -3708,8 +3708,8 @@ body {
   .sucena-topbar-logout { flex-basis:clamp(28px,2.6vw,36px); width:clamp(28px,2.6vw,36px); height:clamp(34px,4.8vh,40px); }
 
   .sucena-online-footer > div:not([role="dialog"]) { min-height:var(--footer-h); padding-top:0px !important; padding-bottom:0px !important; }
-  .sucena-footer-logo { height:clamp(31px,4.5vh,38px) !important; }
-  .sucena-footer-refresh,.sucena-footer-color { min-height:32px !important; font-size:clamp(9px,.75vw,11px) !important; }
+  .sucena-footer-logo { height:clamp(20px,3vh,24px) !important; }
+  .sucena-footer-refresh,.sucena-footer-color { min-height:26px !important; font-size:clamp(9px,.75vw,11px) !important; }
 
   .sucena-module-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:clamp(14px,1.5vw,22px); }
   .sucena-module-tile { min-height:clamp(145px,20vh,178px); padding:clamp(15px,1.5vw,22px); }
@@ -3717,7 +3717,7 @@ body {
 
 /* Tablet: só abaixo de 1024px reorganiza */
 @media (min-width: 768px) and (max-width: 1023px) {
-  :root { --sidebar-w:78px; --shell-gap:14px; --content-left:16px; --content-right:16px; --footer-h:40px; }
+  :root { --sidebar-w:78px; --shell-gap:14px; --content-left:16px; --content-right:16px; --footer-h:30px; }
   .sucena-content--chrome { top:96px; bottom:72px; }
   .sucena-topbar { top:12px; right:12px; height:50px; min-height:50px; }
   .sucena-topbar-link { min-height:38px; padding-left:4px; padding-right:4px; font-size:9px; }
@@ -3725,7 +3725,7 @@ body {
 }
 
 @media (max-width: 767px) {
-  :root { --sidebar-w:0px; --footer-h:40px; }
+  :root { --sidebar-w:0px; --footer-h:30px; }
   .sucena-app--chrome { position:relative; min-height:100vh; overflow-x:hidden; overflow-y:auto; }
   .sucena-main--chrome { position:relative; inset:auto; min-height:100vh; overflow:visible; }
   .sucena-content--chrome { position:relative; inset:auto; min-height:100vh; padding:84px 16px calc(84px + env(safe-area-inset-bottom)) !important; overflow:visible; }

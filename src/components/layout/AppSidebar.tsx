@@ -47,6 +47,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { NeonAvatar } from "@/components/ui/NeonAvatar";
 import { toast } from "sonner";
 import { SidebarBackground } from "./SidebarBackground";
+import { ForbiddenColorButton } from "./ForbiddenColorButton";
 import { formatCargoLabel } from "@/lib/cargoUtils";
 import sidebarCollapsedLogo from "@/assets/sidebar-collapsed-logo.png";
 import admIconAsset from "@/assets/adm-icon.png.asset.json";
@@ -410,6 +411,22 @@ export function AppSidebar({ lockedCollapsed = false }: { lockedCollapsed?: bool
             <p className="sucena-sidebar-role">{formatCargoLabel(profile?.cargo) || "Membro"}</p>
           </div>
           <div className="sucena-sidebar-divider" />
+          
+          <div className="mt-4 flex justify-center w-full relative z-10 px-1 lg:px-2">
+            <button
+              onClick={async () => {
+                await hardRefreshToLatest({ clearVisualState: true });
+              }}
+              className="sucena-sidebar-refresh flex w-[95%] lg:w-[90%] justify-center items-center gap-1 lg:gap-1.5 px-1 lg:px-2 py-1.5 rounded-full bg-[#2a2d30]/90 border border-white/10 shadow-lg hover:bg-black/60 transition-colors"
+              aria-label="Recarregar sistema"
+            >
+              <RefreshCw className="h-2.5 w-2.5 lg:h-3.5 lg:w-3.5 flex-shrink-0 text-white animate-[spin_10s_linear_infinite] hover:animate-[spin_2s_linear_infinite]" />
+              <div className="text-[8px] sm:text-[9px] lg:text-[10px] font-bold tracking-tight uppercase !text-white !block truncate" style={{ color: 'white', display: 'block' }}>
+                Recarregar
+              </div>
+            </button>
+          </div>
+          <ForbiddenColorButton />
         </div>
       )}
 

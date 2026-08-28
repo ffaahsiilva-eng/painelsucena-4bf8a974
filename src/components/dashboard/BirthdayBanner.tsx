@@ -213,11 +213,11 @@ const BirthdayBanner = () => {
                     key={person.id}
                     className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm ${
                       isToday
-                        ? "bg-gradient-to-r from-yellow-200 to-pink-200 dark:from-yellow-500/30 dark:to-pink-500/30 ring-1 ring-pink-400/60"
-                        : "bg-white/60 dark:bg-gray-800/60"
+                        ? "bg-gradient-to-r from-yellow-200 to-pink-200 dark:from-yellow-500/30 dark:to-pink-500/30 ring-1 ring-pink-400/60 !text-slate-900 dark:!text-white"
+                        : "!bg-slate-800/80 !text-white"
                     }`}
                   >
-                    <Badge variant={isToday ? "default" : "outline"} className="shrink-0 min-w-[40px] justify-center">
+                    <Badge variant={isToday ? "default" : "outline"} className={`shrink-0 min-w-[40px] justify-center ${!isToday ? "!border-slate-500 !text-white" : ""}`}>
                       {day.toString().padStart(2, "0")}
                     </Badge>
                     <span className="truncate font-medium">{person.nome}</span>

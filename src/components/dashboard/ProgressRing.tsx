@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useId } from "react";
 import { cn } from "@/lib/utils";
 
 interface ProgressRingProps {
@@ -21,6 +21,7 @@ export function ProgressRing({
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
   const offset = circumference - (progress / 100) * circumference;
+  const gradientId = useId();
 
   return (
     <div className={cn("relative flex items-center justify-center", className)} style={{ width: size, height: size }}>
@@ -34,7 +35,7 @@ export function ProgressRing({
           cy={size / 2}
         />
         <circle
-          stroke="url(#goldGradient)"
+          stroke={`url(#${gradientId})`}
           fill="transparent"
           strokeWidth={strokeWidth}
           strokeLinecap="round"
@@ -46,7 +47,7 @@ export function ProgressRing({
           className="transition-all duration-700 ease-out"
         />
         <defs>
-          <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#A67D3D" />
             <stop offset="100%" stopColor="#D4AC63" />
           </linearGradient>

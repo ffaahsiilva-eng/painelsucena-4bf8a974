@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useState, useMemo } from "react";
+import React, { lazy, Suspense, useState, useMemo, useId } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -24,6 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useCurrentTemperature } from "@/hooks/useCurrentTemperature";
 import { usePlanejamentoMetas } from "@/hooks/usePlanejamentoMetas";
+import { useAnimatedNumber } from "@/hooks/useAnimatedNumber";
 
 // Seções completas do dashboard original, mantidas com dados e ações reais.
 // O visual é atualizado pelo escopo .dgv4-extended no CSS deste dashboard.
@@ -86,13 +87,15 @@ function Ring({
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const pct = Math.max(0, Math.min(100, Number(value) || 0));
-  const offset = c - (pct / 100) * c;
+  const animatedPct = useAnimatedNumber(pct, 1500);
+  const offset = c - (animatedPct / 100) * c;
+  const gradientId = useId();
 
   return (
     <div className="dgv4-ring" style={{ width: size, height: size }}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         <defs>
-          <linearGradient id={`gold-${label}`} x1="0" x2="1">
+          <linearGradient id={gradientId} x1="0" x2="1">
             <stop offset="0%" stopColor="#a98247" />
             <stop offset="100%" stopColor="#d8b36e" />
           </linearGradient>
@@ -110,7 +113,7 @@ function Ring({
           cy={size / 2}
           r={r}
           fill="none"
-          stroke={`url(#gold-${label})`}
+          stroke={`url(#${gradientId})`}
           strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={c}
@@ -119,7 +122,7 @@ function Ring({
         />
       </svg>
       <div className="dgv4-ring-center">
-        <strong>{pct}%</strong>
+        <strong>{animatedPct}%</strong>
         <span>{label}</span>
       </div>
     </div>
@@ -259,6 +262,16 @@ export default function DashboardV4() {
 
   const dateLabelStr = format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
 
+  const animatedEmployees = useAnimatedNumber(totalEmployees, 1500);
+  const animatedGoalsTotal = useAnimatedNumber(planejamentoSummary.goalsTotal, 1500);
+  const animatedGoalsDone = useAnimatedNumber(planejamentoSummary.goalsDone, 1500);
+  const animatedGoalsRemaining = useAnimatedNumber(planejamentoSummary.goalsRemaining, 1500);
+  const animatedPresent = useAnimatedNumber(presentToday, 1500);
+  const animatedAbsences = useAnimatedNumber(absentToday, 1500);
+  const animatedExternal = useAnimatedNumber(externalToday as number, 1500);
+  const animatedEquipmentActive = useAnimatedNumber(inOperation, 1500);
+  const animatedEquipmentTotal = useAnimatedNumber(totalEquip, 1500);
+
   const d = {
     location: "Barcarena – Vila do Conde",
     temperature: currentWeather?.temperature ?? "26",
@@ -266,17 +279,17 @@ export default function DashboardV4() {
     feelsLike: currentWeather?.apparentTemp ?? "30",
     humidity: currentWeather?.humidity ?? "90",
     wind: "12",
-    employees: totalEmployees,
+    employees: animatedEmployees,
     progress: planejamentoSummary.progress,
-    goalsTotal: planejamentoSummary.goalsTotal,
-    goalsDone: planejamentoSummary.goalsDone,
-    goalsRemaining: planejamentoSummary.goalsRemaining,
-    present: presentToday,
-    absences: absentToday,
-    external: externalToday,
+    goalsTotal: animatedGoalsTotal,
+    goalsDone: animatedGoalsDone,
+    goalsRemaining: animatedGoalsRemaining,
+    present: animatedPresent,
+    absences: animatedAbsences,
+    external: animatedExternal,
     equipmentPercent: equipPercent,
-    equipmentActive: inOperation,
-    equipmentTotal: totalEquip,
+    equipmentActive: animatedEquipmentActive,
+    equipmentTotal: animatedEquipmentTotal,
     dateLabel: dateLabelStr,
   };
 

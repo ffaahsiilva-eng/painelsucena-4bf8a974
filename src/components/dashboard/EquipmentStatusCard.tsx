@@ -69,9 +69,9 @@ const EquipmentList = ({ equipment, emptyMessage }: EquipmentListProps) => {
             >
               {getEquipmentTypeLabel(eq.equipment_type)}
             </Badge>
-            <span className="font-medium text-sm">{eq.name}</span>
+            <span className="font-medium text-sm dark:!text-slate-100">{eq.name}</span>
           </div>
-          <span className="text-xs text-muted-foreground">{eq.plate}</span>
+          <span className="text-xs text-muted-foreground dark:!text-slate-300">{eq.plate}</span>
         </div>
       ))}
     </div>
@@ -242,7 +242,7 @@ export function EquipmentStatusCard() {
             />
             <Link
               to="/equipamentos"
-              className="block mt-4 text-xs text-center text-muted-foreground hover:text-foreground transition-colors"
+              className="block mt-4 text-xs text-center text-muted-foreground hover:text-foreground dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
             >
               Ver todos os equipamentos →
             </Link>
@@ -270,7 +270,7 @@ export function EquipmentStatusCard() {
             />
             <Link
               to="/equipamentos"
-              className="block mt-4 text-xs text-center text-muted-foreground hover:text-foreground transition-colors"
+              className="block mt-4 text-xs text-center text-muted-foreground hover:text-foreground dark:!text-slate-400 dark:hover:!text-slate-200 transition-colors"
             >
               Ver todos os equipamentos →
             </Link>

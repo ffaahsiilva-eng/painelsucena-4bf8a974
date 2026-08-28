@@ -107,7 +107,7 @@ const ModernStatCard = ({
         <p className="text-[13px] font-semibold text-[#6D7175] uppercase tracking-widest mb-1">{title}</p>
         <div className="flex flex-col items-center justify-center flex-1 min-w-0 py-2">
           <div className="flex flex-col items-center min-w-0 z-10 my-4">
-            <span className="text-[52px] text-[#292C2E] leading-none font-extrabold tracking-tight px-2">
+            <span className="text-[52px] text-[#292C2E] leading-none font-extrabold px-2">
               {value}
             </span>
             {percentage > 0 && (
@@ -128,7 +128,7 @@ const ModernStatCard = ({
         <div>
           <p className="text-[13px] font-semibold text-[#6D7175] uppercase tracking-widest">{title}</p>
           <div className="flex items-baseline gap-1.5 mt-2">
-            <span className="text-4xl text-[#292C2E] leading-none font-extrabold tracking-tight">
+            <span className="text-4xl text-[#292C2E] leading-none font-extrabold">
               {value}
             </span>
             {percentage > 0 && (

@@ -65,8 +65,8 @@ export function ASOExpiryBanner() {
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{item.colaboradorNome}</p>
-                      <Badge variant="secondary" className="text-xs mt-1">
+                      <p className="font-medium text-sm truncate !text-slate-900 dark:!text-white">{item.colaboradorNome}</p>
+                      <Badge variant="secondary" className="text-xs mt-1 !bg-slate-700 !text-white border-none">
                         ASO
                       </Badge>
                     </div>
@@ -78,14 +78,14 @@ export function ASOExpiryBanner() {
                   </div>
 
                   <div className="flex items-center gap-2 mt-2">
-                    <Badge variant={isUrgent ? "destructive" : "secondary"}>
+                    <Badge variant={isUrgent ? "destructive" : "secondary"} className={!isUrgent ? "!bg-slate-700 !text-white border-none" : ""}>
                       {item.diasRestantes === 0
                         ? "Vence hoje!"
                         : item.diasRestantes === 1
                         ? "Vence amanhã"
                         : `${item.diasRestantes} dias`}
                     </Badge>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-muted-foreground dark:!text-slate-300">
                       {item.validade}
                     </span>
                   </div>

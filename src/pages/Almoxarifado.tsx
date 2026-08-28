@@ -18,7 +18,7 @@ const Almoxarifado = () => {
     <Layout>
       <div className="w-full">
         <div className="mb-10">
-          <h1 className="sucena-page-title text-center md:text-left">Almoxarifado</h1>
+          <h1 className="dashboard-title text-center md:text-left text-[44px] md:text-[56px] leading-[0.98] tracking-[-0.045em] !text-black dark:!text-white">Almoxarifado</h1>
           <p className="sucena-page-subtitle text-center md:text-left">Gestão de estoque, pedidos e requisições</p>
         </div>
 
