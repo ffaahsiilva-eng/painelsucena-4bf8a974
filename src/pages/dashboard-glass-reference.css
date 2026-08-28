@@ -519,6 +519,11 @@
   .dgv4-card {
     min-height: 190px;
   }
+
+  .dgv4-extended-grid--people,
+  .dgv4-analytics-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ============================================================

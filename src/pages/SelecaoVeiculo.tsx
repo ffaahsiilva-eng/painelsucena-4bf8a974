@@ -263,7 +263,7 @@ export default function SelecaoVeiculo() {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         {/* Header */}
-        <header className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm border-b shadow-sm">
+        <header className="sticky top-0 z-10 bg-card/95  border-b shadow-sm">
           <div className="flex items-center justify-between p-3">
             <div className="flex items-center gap-3">
               <Truck className="h-6 w-6 text-primary" />
@@ -368,7 +368,7 @@ export default function SelecaoVeiculo() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm border-b shadow-sm safe-area-inset-top">
+      <header className="sticky top-0 z-10 bg-card/95  border-b shadow-sm safe-area-inset-top">
         <div className="flex items-center justify-between p-3">
           <div className="flex items-center gap-3">
             <Truck className="h-6 w-6 text-primary" />

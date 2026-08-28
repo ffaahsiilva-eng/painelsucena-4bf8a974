@@ -353,7 +353,7 @@ export default function PontosAbastecimento() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm border-b shadow-sm">
+      <header className="sticky top-0 z-10 bg-card/95  border-b shadow-sm">
         <div className="flex items-center gap-2 p-2 sm:p-3">
           <Button
             variant="ghost"

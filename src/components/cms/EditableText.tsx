@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Pencil, Check, X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePageCustomizations } from "@/hooks/usePageCustomizations";
 import { toast } from "sonner";
@@ -102,7 +102,6 @@ export const EditableText = ({
       title="Clique para editar"
     >
       {displayValue}
-      <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-70 text-primary transition-opacity flex-shrink-0" />
     </Tag>
   );
 };

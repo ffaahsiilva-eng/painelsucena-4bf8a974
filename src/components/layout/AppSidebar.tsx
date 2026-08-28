@@ -472,17 +472,19 @@ export function AppSidebar({ lockedCollapsed = false }: { lockedCollapsed?: bool
       <SidebarFooter className={`sucena-sidebar-footer border-none relative z-10 safe-area-inset-bottom ${isCollapsed ? "p-2" : "px-4 pb-7"}`}>
         {user ? (
           <div className="flex flex-col gap-2 w-full">
-            <div className={`sucena-sidebar-actions ${isCollapsed ? "flex-col" : "flex-row"}`}>
+            <div className={`sucena-sidebar-actions justify-center ${isCollapsed ? "flex-col" : "flex-row"}`}>
               {isAdmin && (
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Link
                         to="/admin"
-                        className="sucena-sidebar-action-icon flex items-center justify-center transition-transform hover:scale-110 relative rounded-md"
+                        className="sucena-sidebar-action-icon w-auto px-2 flex items-center justify-center transition-transform hover:scale-110 relative rounded-md"
                         aria-label="Painel Admin"
                       >
-                        <img loading="lazy" decoding="async" src={admIconAsset.url} alt="Admin" className="h-6 w-6 object-contain drop-shadow-[0_0_10px_rgba(255,255,255,0.8)] absolute" />
+                        <span className="text-[10px] font-bold text-[#b58a48] uppercase tracking-wider bg-[#b58a48]/10 border border-[#b58a48]/30 px-2 py-0.5 rounded shadow-[0_0_10px_rgba(181,138,72,0.2)] whitespace-nowrap">
+                          ADMIN
+                        </span>
                       </Link>
                     </TooltipTrigger>
                     <TooltipContent>Painel Admin</TooltipContent>
@@ -490,24 +492,6 @@ export function AppSidebar({ lockedCollapsed = false }: { lockedCollapsed?: bool
                 </TooltipProvider>
               )}
 
-              {canEdit && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={toggleEditMode}
-                        className={`sucena-sidebar-action-icon ${isEditMode ? "text-primary" : ""}`}
-                        aria-label={isEditMode ? "Sair do modo edição" : "Ativar modo edição"}
-                      >
-                        {isEditMode ? <PencilOff className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>{isEditMode ? "Sair do modo edição" : "Ativar modo edição"}</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
             </div>
 
             <div className={`sucena-sidebar-actions justify-between ${isCollapsed ? "flex-col" : "flex-row"}`}>

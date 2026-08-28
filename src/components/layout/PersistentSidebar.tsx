@@ -3,7 +3,8 @@ import { useLocation } from "react-router-dom";
 import { AppSidebar } from "./AppSidebar";
 import { TopNavHeader } from "./TopNavHeader";
 import { DockNavigation } from "./DockNavigation";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { MobileTopNav } from "./MobileTopNav";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -165,13 +166,7 @@ export const PersistentSidebar = ({ children }: PersistentSidebarProps) => {
           }`}
         >
           {hasDesktopChrome && !isAvatarBlocked && !isMobile && <TopNavHeader />}
-
-          {!isDriver && hasDesktopChrome && (
-            <SidebarTrigger
-              aria-label="Abrir menu"
-              className="fixed bottom-24 left-2 z-[101] md:hidden !h-8 !w-8 !min-h-0 !min-w-0 rounded-full bg-[#b58a48] text-white border border-white/60 shadow-lg p-0 flex items-center justify-center [&_svg]:!h-4 [&_svg]:!w-4"
-            />
-          )}
+          {hasDesktopChrome && !isAvatarBlocked && isMobile && <MobileTopNav />}
 
           <main className={`sucena-content ${hasDesktopChrome ? "sucena-content--chrome" : "sucena-content--plain"}`}>
             {children}

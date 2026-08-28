@@ -92,7 +92,7 @@ export function useRecentMovements(limit = 10) {
           if (m.movement_type === "entrada") {
             const { data: prev } = await supabase
               .from("equipment_movements")
-              .select("*")
+              .select("id, equipment_name, plate, movement_type, movement_date, movement_time, exit_reason, problem_description, observation, created_by, created_at, updated_at")
               .eq("plate", m.plate)
               .eq("movement_type", "saida")
               // It must be chronologically before the current movement
@@ -228,7 +228,7 @@ export function useCreateEquipmentMovement() {
         // most recent movement; otherwise the status keeps reflecting the latest record.
         const { data: allPlateMovements } = await supabase
           .from("equipment_movements")
-          .select("*")
+          .select("id, equipment_name, plate, movement_type, movement_date, movement_time, exit_reason, problem_description, observation, created_by, created_at, updated_at")
           .eq("plate", movement.plate)
           .order("movement_date", { ascending: false })
           .order("movement_time", { ascending: false })
@@ -490,7 +490,7 @@ export function useEquipmentCurrentlyIn() {
       // Get all movements ordered by date and time
       const { data, error } = await supabase
         .from("equipment_movements")
-        .select("*")
+        .select("id, equipment_name, plate, movement_type, movement_date, movement_time, exit_reason, problem_description, observation, created_by, created_at, updated_at")
         .order("movement_date", { ascending: true })
         .order("movement_time", { ascending: true });
 
@@ -529,7 +529,7 @@ export function useEquipmentOutByDate(date: string) {
       // Get all movements up to and including the given date
       const { data, error } = await supabase
         .from("equipment_movements")
-        .select("*")
+        .select("id, equipment_name, plate, movement_type, movement_date, movement_time, exit_reason, problem_description, observation, created_by, created_at, updated_at")
         .lte("movement_date", date)
         .order("movement_date", { ascending: true })
         .order("movement_time", { ascending: true });
@@ -567,7 +567,7 @@ export function useEquipmentInByDate(date: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("equipment_movements")
-        .select("*")
+        .select("id, equipment_name, plate, movement_type, movement_date, movement_time, exit_reason, problem_description, observation, created_by, created_at, updated_at")
         .lte("movement_date", date)
         .order("movement_date", { ascending: true })
         .order("movement_time", { ascending: true });
@@ -602,7 +602,7 @@ export function useWeeklyEquipmentMovements(startDate: string, endDate: string) 
     queryFn: async (): Promise<EquipmentMovement[]> => {
       const { data, error } = await supabase
         .from("equipment_movements")
-        .select("*")
+        .select("id, equipment_name, plate, movement_type, movement_date, movement_time, exit_reason, problem_description, observation, created_by, created_at, updated_at")
         .gte("movement_date", startDate)
         .lte("movement_date", endDate)
         .order("movement_date", { ascending: false })

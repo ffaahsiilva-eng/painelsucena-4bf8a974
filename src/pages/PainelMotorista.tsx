@@ -258,7 +258,7 @@ const PainelMotorista = () => {
       <OfflineBanner isOnline={isOnline} pendingCount={pendingCount} />
       
       {/* Compact Header for Mobile */}
-      <header className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm border-b shadow-sm safe-area-inset-top shrink-0">
+      <header className="sticky top-0 z-10 bg-card/95  border-b shadow-sm safe-area-inset-top shrink-0">
         <div className="flex items-center justify-between px-3 py-2.5">
           {/* Logo */}
           <img loading="lazy" decoding="async" 

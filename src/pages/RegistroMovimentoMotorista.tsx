@@ -342,7 +342,7 @@ export default function RegistroMovimentoMotorista() {
   return (
     <div className="min-h-screen h-screen flex flex-col bg-background overflow-hidden">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm border-b shadow-sm shrink-0 safe-area-inset-top">
+      <header className="sticky top-0 z-10 bg-card/95  border-b shadow-sm shrink-0 safe-area-inset-top">
         <div className="flex items-center gap-3 p-3">
           {!exitPending && (
             <Button 

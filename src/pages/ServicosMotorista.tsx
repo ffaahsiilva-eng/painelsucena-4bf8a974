@@ -106,7 +106,7 @@ const ServicosMotorista = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-      <header className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm border-b shadow-sm safe-area-inset-top">
+      <header className="sticky top-0 z-10 bg-card/95  border-b shadow-sm safe-area-inset-top">
         <div className="flex items-center gap-2 px-3 py-2.5">
           <Button
             variant="ghost"

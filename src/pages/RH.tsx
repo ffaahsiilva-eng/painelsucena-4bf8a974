@@ -706,7 +706,7 @@ const RH = () => {
                     </TableHead>
                     <TableHead className="w-32">Contato</TableHead>
                     {!permissionsLoading && canEditRH && (
-                      <TableHead className="w-[110px] sm:w-[130px] sticky right-0 bg-muted/80 backdrop-blur-sm shadow-[-4px_0_6px_-4px_rgba(0,0,0,0.4)] z-30">Ações</TableHead>
+                      <TableHead className="w-[110px] sm:w-[130px] sticky right-0 bg-muted/80  shadow-[-4px_0_6px_-4px_rgba(0,0,0,0.4)] z-30">Ações</TableHead>
 
                     )}
                   </TableRow>

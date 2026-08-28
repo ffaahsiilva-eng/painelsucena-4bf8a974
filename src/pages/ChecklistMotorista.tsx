@@ -131,7 +131,7 @@ const ChecklistMotorista = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-      <header className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm border-b shadow-sm">
+      <header className="sticky top-0 z-10 bg-card/95  border-b shadow-sm">
         <div className="flex items-center gap-2 px-3 py-2.5">
           <Button variant="ghost" size="icon" onClick={() => navigate("/painel-motorista")}>
             <ArrowLeft className="w-5 h-5" />

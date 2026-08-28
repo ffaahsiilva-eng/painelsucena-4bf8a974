@@ -134,8 +134,10 @@ h1, .dashboard-title {
 
   /* Touch targets confortáveis (>=44x44) em toque */
   @media (hover: none) and (pointer: coarse) {
-    button, [role="button"], a.btn, .tap-target {
+    button, [role="button"], a.btn, input, select, textarea, .tap-target {
       min-height: 44px;
+    }
+    button, [role="button"], a.btn, .tap-target {
       min-width: 44px;
     }
   }
@@ -235,7 +237,9 @@ h1, .dashboard-title {
 
 
 /* Smooth 120fps scrolling & Hardware Acceleration */
-html, body {
+html, body, #root {
+  width: 100%;
+  min-width: 0;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   overflow-x: hidden;
@@ -3754,4 +3758,37 @@ html[data-layout="legacy"] .force-dark-title {
   color: #ffffff !important;
   text-shadow: none !important;
   -webkit-text-fill-color: initial !important;
+}
+
+/* ============================================================
+   Mobile Performance Overrides
+   ============================================================ */
+@media (max-width: 767px) {
+  /* Reduce blur on glass elements to save GPU on mobile */
+  .dashboard-glass-v4,
+  .dgv4-card,
+  .dgv4-extended-skeleton,
+  .glass-card-dashboard,
+  .sucena-topbar,
+  [class*="backdrop-blur-"] {
+    backdrop-filter: blur(8px) saturate(110%) !important;
+    -webkit-backdrop-filter: blur(8px) saturate(110%) !important;
+  }
+
+  /* Simplify heavy glow animations to basic opacity pulses or static shadows */
+  .animate-neon-pulse {
+    animation: neonPulseMobile 3s ease-in-out infinite !important;
+  }
+  @keyframes neonPulseMobile {
+    0%, 100% { opacity: 0.9; }
+    50% { opacity: 1; }
+  }
+  .card-gold-glow,
+  .neon-glow-border,
+  .neon-glow-border-urgent,
+  .neon-glow-border-warning {
+    animation: none !important;
+    /* Static shadow fallback */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+  }
 }
