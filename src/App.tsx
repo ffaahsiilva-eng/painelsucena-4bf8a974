@@ -25,6 +25,7 @@ import { AnnouncementModal } from "@/components/announcements/AnnouncementModal"
 import { WapiBroadcastToaster } from "@/components/wapi/WapiBroadcastToaster";
 import { LayoutModeProvider } from "@/contexts/LayoutModeContext";
 import { ShiftPngBackfillRunner } from "@/components/driver/ShiftPngBackfillRunner";
+import { WapiQueuePinger } from "@/components/wapi/WapiQueuePinger";
 import loadingLogo from "@/assets/logo-principal.png";
 
 // Lazy-load ALL pages — only the current route's code is downloaded
@@ -189,6 +190,7 @@ const App = () => (
               <WapiBroadcastToaster />
               <ShiftPngBackfillRunner />
               <ScreensaverClock />
+              <WapiQueuePinger />
               <PersistentSidebar>
                 <VisualizadorProvider>
                 <ErrorBoundary>
