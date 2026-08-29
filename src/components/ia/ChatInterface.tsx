@@ -840,7 +840,7 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
           min-width: 40px;
           border: none;
           background: transparent;
-          color: #4EA6FF;
+          color: #1e6fd9;
           cursor: pointer;
           border-radius: 14px;
           transition: all .15s ease;
@@ -848,7 +848,7 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
         }
 
         .fluent-paperclip-btn:hover:not(:disabled) {
-          background: rgba(78,166,255,.10);
+          background: rgba(30,111,217,.12);
         }
 
         .fluent-paperclip-btn:disabled {
