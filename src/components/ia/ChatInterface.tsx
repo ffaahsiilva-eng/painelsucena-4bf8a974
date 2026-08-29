@@ -115,6 +115,30 @@ export const ChatInterface = () => {
         return;
       }
 
+      // Check cache before hitting API
+      const cacheKey = `ai_cache_${userMessageText.toLowerCase().trim()}`;
+      const cachedResponse = localStorage.getItem(cacheKey);
+      
+      if (cachedResponse) {
+        try {
+          const parsedCache = JSON.parse(cachedResponse);
+          // Expiration of 10 minutes (600,000 ms)
+          if (Date.now() - parsedCache.timestamp < 600000) {
+            setMessages((prev) => 
+              prev.map((msg) => 
+                msg.id === aiMessageId 
+                  ? { ...msg, text: parsedCache.text + "\n\n*(Resposta rápida do cache)*", isStreaming: false } 
+                  : msg
+              )
+            );
+            setIsLoading(false);
+            return;
+          }
+        } catch (e) {
+          // ignore cache errors
+        }
+      }
+
       // Assemble history correctly for Gemini API
       const contents: any[] = [];
       const history = messages.slice(-10); // get last 10 messages for context
@@ -231,6 +255,14 @@ export const ChatInterface = () => {
 
       if (!finalReply && loops >= 8) {
         finalReply = "Desculpe, precisei analisar muitas tabelas e o limite de consultas consecutivas foi atingido.";
+      }
+
+      // Save to cache if it's a valid answer
+      if (finalReply && !finalReply.includes("Não encontrei dados") && !finalReply.includes("Desculpe") && !finalReply.includes("Ocorreu um erro")) {
+        localStorage.setItem(cacheKey, JSON.stringify({
+          text: finalReply,
+          timestamp: Date.now()
+        }));
       }
 
       // Atualiza a interface com a resposta final
