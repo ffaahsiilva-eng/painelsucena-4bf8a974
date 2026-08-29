@@ -2542,7 +2542,7 @@ body {
 main, [data-scroll-container] {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  transform: translateZ(0);
+  will-change: scroll-position;
 }
 /* Images decode async by default to avoid blocking the main thread */
 img { content-visibility: auto; }
