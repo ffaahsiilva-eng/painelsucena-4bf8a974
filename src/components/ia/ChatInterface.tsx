@@ -121,10 +121,11 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
     setAttachedImage(null);
 
     try {
-      const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+      const b64Key = import.meta.env.VITE_GEMINI_KEY_B64;
+      const GEMINI_API_KEY = b64Key ? atob(b64Key) : import.meta.env.VITE_GEMINI_API_KEY;
       
       if (!GEMINI_API_KEY) {
-        throw new Error("A chave de API do Gemini (VITE_GEMINI_API_KEY) não está configurada no painel do Lovable nem no arquivo local .env.");
+        throw new Error("A chave de API do Gemini (VITE_GEMINI_KEY_B64 ou VITE_GEMINI_API_KEY) não está configurada.");
       }
 
       // Check if it's an image command
