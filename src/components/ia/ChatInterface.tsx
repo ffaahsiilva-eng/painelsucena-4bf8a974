@@ -171,7 +171,8 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
       let finalReply = "";
       let loops = 0;
 
-      while (!isFunctionCallDone && loops < 8) {
+      // Limitado a 3 loops para não estourar a cota gratuita do Gemini (15 req/min)
+      while (!isFunctionCallDone && loops < 3) {
         loops++;
         const response = await fetch(geminiEndpoint, {
           method: 'POST',
