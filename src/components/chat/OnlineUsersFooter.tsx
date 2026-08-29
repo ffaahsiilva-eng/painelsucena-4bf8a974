@@ -92,6 +92,29 @@ export const OnlineUsersFooter = ({ onUserClick, onToggleSidebar, isSidebarOpen,
             <button
               onClick={(e) => {
                 e.stopPropagation();
+                window.dispatchEvent(new Event("toggle-ia-chat"));
+              }}
+              className="sucena-footer-chat relative p-1 rounded-full transition-all group"
+              title="Assistente IA"
+            >
+              <svg viewBox="0 0 24 24" className={cn(
+                "w-6 h-6 object-contain cursor-pointer group-hover:scale-110 transition-transform"
+              )}>
+                <defs>
+                  <linearGradient id="gemini-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#4285F4"/>
+                    <stop offset="25%" stopColor="#9B72CB"/>
+                    <stop offset="50%" stopColor="#D96570"/>
+                    <stop offset="75%" stopColor="#D96570"/>
+                    <stop offset="100%" stopColor="#9B72CB"/>
+                  </linearGradient>
+                </defs>
+                <path d="M12 2C12 2 14.5 7.5 17 10C19.5 12.5 22 12 22 12C22 12 19.5 12.5 17 15C14.5 17.5 12 22 12 22C12 22 9.5 17.5 7 15C4.5 12.5 2 12 2 12C2 12 4.5 12.5 7 10C9.5 7.5 12 2 12 2Z" fill="url(#gemini-grad)"/>
+              </svg>
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
                 onToggleSidebar();
               }}
               className="sucena-footer-chat relative p-1 rounded-full transition-all group"
