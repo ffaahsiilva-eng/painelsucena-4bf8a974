@@ -888,23 +888,23 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
           width: 52px;
           height: 52px;
           min-width: 52px;
-          border: 1px solid rgba(143,204,255,.35);
+          border: 1px solid rgba(78,166,255,.45);
           border-radius: 18px;
-          background: linear-gradient(145deg, rgba(248,252,255,.85), rgba(230,244,255,.65));
-          color: #4EA6FF;
+          background: linear-gradient(145deg, #4EA6FF, #3a95ee);
+          color: white;
           cursor: pointer;
           flex-shrink: 0;
           transition: all .18s ease;
           box-shadow:
-            0 2px 10px rgba(78,166,255,.14),
-            inset 0 1px 0 rgba(255,255,255,.75);
+            0 3px 14px rgba(78,166,255,.28),
+            inset 0 1px 0 rgba(255,255,255,.18);
         }
 
         .fluent-send-btn:hover:not(:disabled) {
-          background: linear-gradient(145deg, rgba(240,250,255,.95), rgba(220,240,255,.80));
+          background: linear-gradient(145deg, #5eb0ff, #439df5);
           box-shadow:
-            0 4px 18px rgba(78,166,255,.22),
-            inset 0 1px 0 rgba(255,255,255,.85);
+            0 4px 18px rgba(78,166,255,.35),
+            inset 0 1px 0 rgba(255,255,255,.25);
           transform: translateY(-1px);
         }
 
