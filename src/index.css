@@ -3730,9 +3730,25 @@ body {
 
 @media (max-width: 767px) {
   :root { --sidebar-w:0px; --footer-h:30px; }
-  .sucena-app--chrome { position:relative; min-height:100vh; overflow-x:hidden; overflow-y:auto; }
-  .sucena-main--chrome { position:relative; inset:auto; min-height:100vh; overflow:visible; }
-  .sucena-content--chrome { position:relative; inset:auto; min-height:100vh; padding:84px 16px calc(84px + env(safe-area-inset-bottom)) !important; overflow:visible; }
+  
+  /* Let body handle scroll naturally on mobile */
+  html, body {
+    height: auto;
+    min-height: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Remove fixed constraints from app shell on mobile */
+  .sucena-app--chrome { position:relative; min-height:100vh; overflow:visible !important; }
+  .sucena-main--chrome { position:relative; inset:auto; min-height:100vh; overflow:visible !important; }
+  .sucena-content--chrome { 
+    position:relative; 
+    inset:auto; 
+    min-height:100vh; 
+    padding:84px 16px calc(84px + env(safe-area-inset-bottom)) !important; 
+    overflow:visible !important; 
+  }
+  
   .sucena-online-footer { left:0 !important; }
   .sucena-module-grid { grid-template-columns:1fr; gap:16px; margin-top:22px; }
   .sucena-module-tile { min-height:150px; }

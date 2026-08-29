@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const CHAT_MODEL = "google/gemini-2.5-flash";
@@ -9,8 +10,39 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Declaração da ferramenta de banco de dados para o Gemini
+const toolDeclaration = {
+  functionDeclarations: [
+    {
+      name: "query_database",
+      description: "Consulta o banco de dados do Supabase. Use esta ferramenta APENAS quando precisar de informações exatas e em tempo real sobre o painel. Se não souber a estrutura da tabela, faça uma query com limite baixo primeiro.",
+      parameters: {
+        type: "OBJECT",
+        properties: {
+          table: {
+            type: "STRING",
+            description: "Nome da tabela. Ex: equipment, equipment_movements, driver_daily_records, profiles, desvios"
+          },
+          select: {
+            type: "STRING",
+            description: "Colunas. Ex: '*' ou '*, equipment(name)'"
+          },
+          match: {
+            type: "OBJECT",
+            description: "Filtro de igualdade. Ex: {\"exit_reason\": \"manutencao_corretiva\"}"
+          },
+          limit: {
+            type: "INTEGER",
+            description: "Limite de resultados (max 50)"
+          }
+        },
+        required: ["table"]
+      }
+    }
+  ]
+};
+
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -29,24 +61,18 @@ serve(async (req) => {
       throw new Error("Nenhuma mensagem ou imagem foi fornecida.");
     }
 
-    // Check if it's an image generation command
+    // Image generation bypass
     const isImageCommand = message.toLowerCase().trim().startsWith("/imagem ");
-    
     if (isImageCommand) {
       const originalPrompt = message.substring(8).trim();
       let imagePrompt = originalPrompt;
-      
-      // 1. Melhorar o prompt usando o prprio Gemini
       try {
         const enhanceUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${GEMINI_API_KEY}`;
         const enhanceRes = await fetch(enhanceUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            contents: [{ 
-              role: "user", 
-              parts: [{ text: `Translate the following image generation prompt to English and dramatically enhance it to be a highly detailed, professional, cinematic, masterpiece Midjourney-style prompt. Output ONLY the final english prompt, nothing else, no quotes: ${originalPrompt}` }] 
-            }],
+            contents: [{ role: "user", parts: [{ text: `Translate and enhance to Midjourney-style english prompt, output ONLY prompt: ${originalPrompt}` }] }],
             generationConfig: { temperature: 0.7, maxOutputTokens: 200 }
           })
         });
@@ -56,140 +82,157 @@ serve(async (req) => {
             imagePrompt = enhanceData.candidates[0].content.parts[0].text.trim();
           }
         }
-      } catch (e) {
-        console.error("Erro ao melhorar o prompt, usando original:", e);
-      }
+      } catch (e) {}
       
       try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${GEMINI_API_KEY}`;
         const response = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            instances: [{ prompt: imagePrompt }],
-            parameters: { sampleCount: 1 }
-          })
+          body: JSON.stringify({ instances: [{ prompt: imagePrompt }], parameters: { sampleCount: 1 } })
         });
-
-        if (!response.ok) {
-          throw new Error("Imagen 3 API failed or not allowed on this tier");
-        }
-
+        if (!response.ok) throw new Error("Imagen API failed");
         const data = await response.json();
         const base64 = data.predictions?.[0]?.bytesBase64;
-        
-        if (!base64) {
-          throw new Error("No image data returned from API");
-        }
-
-        // Return base64 markdown
-        return new Response(
-          JSON.stringify({ text: `Aqui está a imagem que você pediu:\n\n![Imagem gerada](data:image/jpeg;base64,${base64})` }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        if (!base64) throw new Error("No image data");
+        return new Response(JSON.stringify({ text: `Aqui está a imagem que você pediu:\n\n![Imagem gerada](data:image/jpeg;base64,${base64})` }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       } catch (err) {
-        console.log("Fallback para Pollinations.ai devido a erro no Imagen 3:", err instanceof Error ? err.message : err);
-        // Fallback for when Imagen API is not enabled for the free tier key
-        const safePrompt = encodeURIComponent(imagePrompt + " masterpiece, high resolution, highly detailed, realistic, cinematic lighting");
+        const safePrompt = encodeURIComponent(imagePrompt + " masterpiece, high resolution");
         const fallbackUrl = `https://image.pollinations.ai/prompt/${safePrompt}?nologo=true&model=flux&seed=${Math.floor(Math.random()*10000)}`;
-        return new Response(
-          JSON.stringify({ text: `Aqui está a imagem que você pediu:\n\n![Imagem gerada](${fallbackUrl})` }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return new Response(JSON.stringify({ text: `Aqui está a imagem que você pediu:\n\n![Imagem gerada](${fallbackUrl})` }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
     }
 
-    // Prepare contents array with history and new message for standard text model
+    // Standard Chat with Function Calling
     const contents = [];
-    
     if (history && Array.isArray(history)) {
       contents.push(...history);
     }
     
     const userParts: any[] = [];
-    if (message && message.trim().length > 0) {
-      userParts.push({ text: message });
-    }
-    
+    if (message && message.trim().length > 0) userParts.push({ text: message });
     if (attachedImage && attachedImage.base64 && attachedImage.mimeType) {
-      userParts.push({
-        inlineData: {
-          mimeType: attachedImage.mimeType,
-          data: attachedImage.base64
-        }
-      });
+      userParts.push({ inlineData: { mimeType: attachedImage.mimeType, data: attachedImage.base64 } });
     }
     
-    contents.push({
+    contents.push({ role: "user", parts: userParts });
+
+    const systemInstruction = {
       role: "user",
-      parts: userParts
-    });
-
-    const gatewayMessages = [
-      {
-        role: "system",
-        content: "Você é um assistente virtual inteligente integrado a um painel de controle chamado SucenaPainel. Você sabe que o usuário pode gerar imagens se digitar /imagem seguido da descrição. Se ele pedir uma imagem sem o /imagem, avise-o amigavelmente para digitar /imagem seguido do que ele quer desenhar. Use formatação markdown sempre que útil.",
-      },
-      ...contents.map((item) => ({
-        role: item.role === "model" ? "assistant" : "user",
-        content: item.parts?.map((part: { text?: string }) => part.text).filter(Boolean).join("\n") || "",
-      })),
-    ];
-    
-    const response = LOVABLE_API_KEY
-      ? await fetch(AI_GATEWAY_URL, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: CHAT_MODEL,
-            messages: gatewayMessages,
-            temperature: 0.7,
-            max_tokens: 2048,
-          }),
-        })
-      : await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents,
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 2048,
-        },
-        systemInstruction: {
-          role: "user",
-          parts: [
-            {
-              text: "Você é um assistente virtual inteligente integrado a um painel de controle chamado SucenaPainel. Você sabe que o usuário pode gerar imagens se digitar /imagem seguido da descrição. Se ele pedir uma imagem sem o /imagem, avise-o amigavelmente para digitar /imagem seguido do que ele quer desenhar. Use formatação markdown sempre que útil."
-            }
-          ]
+      parts: [
+        {
+          text: "Você é um assistente virtual integrado ao painel SucenaPainel. Você consegue ler o banco de dados do sistema em tempo real chamando a ferramenta 'query_database'. Sempre que o usuário perguntar sobre dados operacionais (ex: quem saiu com o equipamento X, quais pipas foram pra manutenção, etc), use a ferramenta para consultar as tabelas (como equipment_movements, equipment, profiles, etc). Na tabela equipment_movements, os motivos de saída geralmente são 'manutencao_corretiva', 'manutencao_preventiva', etc. Se o usuário pedir imagem, oriente-o a usar '/imagem'. Seja amigável e responda em pt-br."
         }
-      }),
-    });
+      ]
+    };
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error("Gemini API Error:", errorData);
-      throw new Error(`Erro na API de IA: ${errorData.error?.message || response.statusText}`);
+    // Usaremos a API oficial do Gemini para suportar Function Calling de forma nativa
+    if (!GEMINI_API_KEY) {
+      throw new Error("Para integração profunda de banco de dados, é necessária a GEMINI_API_KEY do Google.");
     }
 
-    const data = await response.json();
+    const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+    
+    let isFunctionCallDone = false;
+    let finalReply = "";
+    
+    // Inicia cliente do supabase
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_ANON_KEY') || '';
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const replyText = LOVABLE_API_KEY
-      ? data.choices?.[0]?.message?.content
-      : data.candidates?.[0]?.content?.parts?.[0]?.text;
+    // Loop de requisição: permite até 2 chamadas sequenciais de função
+    let loops = 0;
+    while (!isFunctionCallDone && loops < 3) {
+      loops++;
+      const response = await fetch(geminiEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents,
+          generationConfig: { temperature: 0.2, maxOutputTokens: 2048 },
+          systemInstruction,
+          tools: [toolDeclaration]
+        }),
+      });
 
-    if (!replyText) {
-      throw new Error("A API não retornou nenhuma resposta.");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Erro na API do Gemini: ${errorData.error?.message || response.statusText}`);
+      }
+
+      const data = await response.json();
+      const firstCandidate = data.candidates?.[0];
+      const modelParts = firstCandidate?.content?.parts || [];
+
+      // Check if it requested a function call
+      const functionCallPart = modelParts.find((p: any) => p.functionCall);
+      
+      if (functionCallPart) {
+        const fnCall = functionCallPart.functionCall;
+        console.log("Gemini pediu para rodar ferramenta:", fnCall.name, fnCall.args);
+        
+        // Add the model's request to our history
+        contents.push({
+          role: "model",
+          parts: [{ functionCall: fnCall }]
+        });
+
+        // Execute DB Query
+        let dbResult = {};
+        if (fnCall.name === "query_database") {
+          try {
+            const table = fnCall.args.table;
+            const select = fnCall.args.select || '*';
+            const limit = Math.min(fnCall.args.limit || 15, 50); // limit max 50
+            const match = fnCall.args.match || {};
+            
+            let query = supabase.from(table).select(select);
+            
+            // apply equality matches
+            if (match && typeof match === 'object') {
+              for (const [k, v] of Object.entries(match)) {
+                query = query.eq(k, v);
+              }
+            }
+            
+            // Ordem decrescente de ID se não especificado nada mais
+            const { data: qData, error: qError } = await query.limit(limit).order('id', { ascending: false });
+            
+            if (qError) throw qError;
+            dbResult = { success: true, data: qData, count: qData?.length };
+          } catch (err: any) {
+            dbResult = { success: false, error: err.message };
+          }
+        } else {
+          dbResult = { success: false, error: "Função desconhecida." };
+        }
+
+        // Add the tool response back to history and loop again
+        contents.push({
+          role: "user",
+          parts: [{
+            functionResponse: {
+              name: fnCall.name,
+              response: { result: dbResult }
+            }
+          }]
+        });
+        
+      } else {
+        // No function call, we have the final text response
+        const textPart = modelParts.find((p: any) => p.text);
+        finalReply = textPart?.text || "Não consegui processar essa informação.";
+        isFunctionCallDone = true;
+      }
+    }
+
+    if (!finalReply && loops >= 3) {
+      finalReply = "Desculpe, o sistema tentou buscar muitas informações e atingiu o limite de consultas consecutivas.";
     }
 
     return new Response(
-      JSON.stringify({ text: replyText }),
+      JSON.stringify({ text: finalReply }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
 

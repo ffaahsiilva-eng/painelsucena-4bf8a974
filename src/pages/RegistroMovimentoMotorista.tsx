@@ -340,7 +340,7 @@ export default function RegistroMovimentoMotorista() {
   }
 
   return (
-    <div className="min-h-screen h-screen flex flex-col bg-background overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-card/95  border-b shadow-sm shrink-0 safe-area-inset-top">
         <div className="flex items-center gap-3 p-3">
@@ -370,7 +370,7 @@ export default function RegistroMovimentoMotorista() {
         )}
       </header>
 
-      <main className="flex-1 overflow-y-auto overscroll-contain">
+      <main className="flex-1">
         <div className="p-4 max-w-lg mx-auto space-y-4 pb-8 safe-area-inset-bottom">
         {/* Equipment Selection */}
         <Card>

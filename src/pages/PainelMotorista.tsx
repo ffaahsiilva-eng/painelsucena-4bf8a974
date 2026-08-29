@@ -253,7 +253,7 @@ const PainelMotorista = () => {
   ];
 
   return (
-    <div className="min-h-screen h-screen flex flex-col bg-gradient-to-b from-background to-muted/30 overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-muted/30">
       {/* Offline Banner */}
       <OfflineBanner isOnline={isOnline} pendingCount={pendingCount} />
       
@@ -330,7 +330,7 @@ const PainelMotorista = () => {
       </header>
 
       {/* Content - Scrollable container */}
-      <main className="flex-1 overflow-y-auto overscroll-contain">
+      <main className="flex-1">
         <div className="p-4 max-w-lg mx-auto space-y-4 pb-safe-area safe-area-inset-bottom">
         {/* Welcome Card */}
         <Card className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground border-none shadow-lg">
