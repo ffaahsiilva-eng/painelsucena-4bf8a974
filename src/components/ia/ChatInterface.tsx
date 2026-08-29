@@ -165,30 +165,51 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
         ]
       };
 
-      const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-      
       let isFunctionCallDone = false;
       let finalReply = "";
       let loops = 0;
+      
+      const modelsToTry = ["gemini-3.5-flash", "gemini-3.5-flash-8b", "gemini-3.5-pro"];
+
+      const fetchWithFallback = async (payload: any) => {
+        let lastError = null;
+        for (const model of modelsToTry) {
+          const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          
+          if (response.ok) {
+            return response;
+          }
+          
+          if (response.status === 503 || response.status === 429) {
+            console.warn(`Modelo ${model} retornou ${response.status}. Tentando fallback...`);
+            lastError = await response.json().catch(() => ({}));
+            // Espera 1 segundo antes de tentar o próximo para não dar rate limit em todos de uma vez
+            await new Promise(r => setTimeout(r, 1000));
+            continue;
+          }
+          
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(`Erro na API do Gemini (${model}): ${errorData.error?.message || response.statusText}`);
+        }
+        throw new Error(`Erro na API do Gemini: Sistema indisponível no momento. ${lastError?.error?.message || ''}`);
+      };
 
       // Limitado a 3 loops para não estourar a cota gratuita do Gemini (15 req/min)
       while (!isFunctionCallDone && loops < 3) {
         loops++;
-        const response = await fetch(geminiEndpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents,
-            generationConfig: { temperature: 0.2, maxOutputTokens: 2048 },
-            systemInstruction,
-            tools: [toolDeclaration]
-          }),
+        const response = await fetchWithFallback({
+          contents,
+          generationConfig: { temperature: 0.2, maxOutputTokens: 2048 },
+          systemInstruction,
+          tools: [toolDeclaration]
         });
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(`Erro na API do Gemini: ${errorData.error?.message || response.statusText}`);
-        }
+        // Erros HTTP e parse do response (o fallback cuida dos blocos de retry)
 
         const data = await response.json();
         const firstCandidate = data.candidates?.[0];
