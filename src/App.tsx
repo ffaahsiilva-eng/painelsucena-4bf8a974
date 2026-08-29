@@ -271,7 +271,6 @@ const App = () => (
                       <Route path="/atividade-prevista" element={<ProtectedRoute><AtividadePrevista /></ProtectedRoute>} />
                       <Route path="/cipa" element={<ProtectedRoute><CIPA /></ProtectedRoute>} />
                       <Route path="/ia" element={<ProtectedRoute><IAChat /></ProtectedRoute>} />
-                      <Route path="/escala-colaboradores" element={<ProtectedRoute><EscalaColaboradores /></ProtectedRoute>} />
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                       <Route path="*" element={<NotFound />} />
                     </Routes>
