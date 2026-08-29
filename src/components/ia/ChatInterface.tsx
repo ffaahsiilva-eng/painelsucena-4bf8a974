@@ -277,11 +277,20 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
 
     } catch (error: any) {
       console.error("Erro no chat:", error);
-      toast.error("Erro ao comunicar com a IA. " + (error.message || "Tente novamente."));
+      let errorMessage = error.message || "Verifique se você inseriu a VITE_GEMINI_API_KEY corretamente.";
+      let toastMessage = "Erro ao comunicar com a IA. " + (error.message || "Tente novamente.");
+      
+      const errStr = errorMessage.toLowerCase();
+      if (errStr.includes("quota") || errStr.includes("429") || errStr.includes("too many requests") || errStr.includes("overloaded")) {
+        errorMessage = "Opa! Estou recebendo muitas solicitações no momento e meu limite gratuito foi atingido. Por favor, aguarde um minutinho e tente novamente! ⏳";
+        toastMessage = "Limite de respostas atingido. Aguarde um instante.";
+      }
+
+      toast.error(toastMessage);
       setMessages((prev) => 
         prev.map((msg) => 
           msg.id === aiMessageId 
-            ? { ...msg, text: "Ocorreu um erro. " + (error.message || "Verifique se você inseriu a VITE_GEMINI_API_KEY corretamente."), isStreaming: false } 
+            ? { ...msg, text: errorMessage, isStreaming: false } 
             : msg
         )
       );
