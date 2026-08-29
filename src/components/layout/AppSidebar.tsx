@@ -83,7 +83,6 @@ export const allNavItems: NavItem[] = [
   { id: "meio-ambiente", icon: Leaf, label: "Meio Ambiente", path: "/meio-ambiente" },
   { id: "planejamento", icon: Target, label: "Planejamento", path: "/planejamento" },
   { id: "cipa", icon: Heart, label: "CIPA", path: "/cipa" },
-  { id: "ia", icon: Sparkles, label: "IA (Gemini)", path: "/ia" },
 ];
 
 // Sortable nav item component
