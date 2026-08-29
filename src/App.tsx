@@ -26,8 +26,9 @@ import { WapiBroadcastToaster } from "@/components/wapi/WapiBroadcastToaster";
 import { LayoutModeProvider } from "@/contexts/LayoutModeContext";
 import { ShiftPngBackfillRunner } from "@/components/driver/ShiftPngBackfillRunner";
 import { WapiQueuePinger } from "@/components/wapi/WapiQueuePinger";
-import { FloatingChatWidget } from "@/components/ia/FloatingChatWidget";
 import loadingLogo from "@/assets/logo-principal.png";
+
+const FloatingChatWidget = lazy(() => import("@/components/ia/FloatingChatWidget").then(m => ({ default: m.FloatingChatWidget })));
 
 // Lazy-load ALL pages — only the current route's code is downloaded
 const Index = lazy(() => import("./pages/Index"));
@@ -274,8 +275,10 @@ const App = () => (
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                       <Route path="*" element={<NotFound />} />
                     </Routes>
+                    <ErrorBoundary>
+                      <FloatingChatWidget />
+                    </ErrorBoundary>
                   </Suspense>
-                  <FloatingChatWidget />
                 </ErrorBoundary>
                 </VisualizadorProvider>
                 <PersistentFooter />
