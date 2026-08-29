@@ -178,7 +178,7 @@ export const ChatInterface = () => {
           // Adiciona a resposta de chamada de função da IA no histórico temporário
           contents.push({
             role: "model",
-            parts: [{ functionCall: fnCall }]
+            parts: modelParts
           });
 
           // Executa a busca no banco via Frontend (usando RLS)
