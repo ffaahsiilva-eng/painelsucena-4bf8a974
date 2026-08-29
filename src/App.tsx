@@ -26,6 +26,7 @@ import { WapiBroadcastToaster } from "@/components/wapi/WapiBroadcastToaster";
 import { LayoutModeProvider } from "@/contexts/LayoutModeContext";
 import { ShiftPngBackfillRunner } from "@/components/driver/ShiftPngBackfillRunner";
 import { WapiQueuePinger } from "@/components/wapi/WapiQueuePinger";
+import { FloatingChatWidget } from "@/components/ia/FloatingChatWidget";
 import loadingLogo from "@/assets/logo-principal.png";
 
 // Lazy-load ALL pages — only the current route's code is downloaded
@@ -269,10 +270,12 @@ const App = () => (
                       <Route path="/atividade-prevista" element={<ProtectedRoute><AtividadePrevista /></ProtectedRoute>} />
                       <Route path="/cipa" element={<ProtectedRoute><CIPA /></ProtectedRoute>} />
                       <Route path="/ia" element={<ProtectedRoute><IAChat /></ProtectedRoute>} />
+                      <Route path="/escala-colaboradores" element={<ProtectedRoute><EscalaColaboradores /></ProtectedRoute>} />
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </Suspense>
+                  <FloatingChatWidget />
                 </ErrorBoundary>
                 </VisualizadorProvider>
                 <PersistentFooter />
