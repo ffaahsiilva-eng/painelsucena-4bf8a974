@@ -516,26 +516,36 @@ const Dashboard = () => {
 
         {/* Draggable items */}
         {!isLoadingOrder && (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={sortableOrder}
-              strategy={verticalListSortingStrategy}
+          isEditMode ? (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
             >
-              <div className="space-y-4 cv-auto">
-                {sortableOrder.map((id) => (
-                  <DraggableDashboardItem key={id} id={id} isEditMode={isEditMode}>
-                    <div className="cv-auto" style={{ containIntrinsicSize: "0 200px" }}>
-                      {renderDashboardItem(id)}
-                    </div>
-                  </DraggableDashboardItem>
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
+              <SortableContext
+                items={sortableOrder}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-4 cv-auto">
+                  {sortableOrder.map((id) => (
+                    <DraggableDashboardItem key={id} id={id} isEditMode={isEditMode}>
+                      <div className="cv-auto" style={{ containIntrinsicSize: "0 200px" }}>
+                        {renderDashboardItem(id)}
+                      </div>
+                    </DraggableDashboardItem>
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          ) : (
+            <div className="space-y-4 cv-auto">
+              {sortableOrder.map((id) => (
+                <div key={id} className="cv-auto" style={{ containIntrinsicSize: "0 200px" }}>
+                  {renderDashboardItem(id)}
+                </div>
+              ))}
+            </div>
+          )
         )}
 
         {/* Recent activities row (mix real do sistema) */}
