@@ -146,7 +146,7 @@ export const ChatInterface = () => {
       let finalReply = "";
       let loops = 0;
 
-      while (!isFunctionCallDone && loops < 3) {
+      while (!isFunctionCallDone && loops < 8) {
         loops++;
         const response = await fetch(geminiEndpoint, {
           method: 'POST',
@@ -229,7 +229,7 @@ export const ChatInterface = () => {
         }
       }
 
-      if (!finalReply && loops >= 3) {
+      if (!finalReply && loops >= 8) {
         finalReply = "Desculpe, precisei analisar muitas tabelas e o limite de consultas consecutivas foi atingido.";
       }
 
