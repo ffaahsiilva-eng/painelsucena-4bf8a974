@@ -193,41 +193,66 @@ const BirthdayBanner = () => {
 
       {/* Month's birthdays (only on day 1) */}
       {monthBirthdays.length > 0 && (
-        <Card className="border border-purple-300/50 bg-gradient-to-r from-purple-50/50 to-pink-50/50 dark:from-purple-950/20 dark:to-pink-950/20 glass-card-dashboard">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <div className="p-2 bg-purple-400/20 rounded-full">
-                <PartyPopper className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+        <div className="relative w-full overflow-hidden rounded-2xl shadow-xl mt-4">
+          {/* Background Video */}
+          <video
+            src={birthdayBgVideo.url}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none opacity-80"
+          />
+          {/* Light overlay to make it look creamy like the image */}
+          <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-white/10 backdrop-blur-[2px]" />
+          
+          <div className="relative z-10 p-4 sm:p-5">
+            {/* Inner glass box */}
+            <div className="bg-white/40 backdrop-blur-md rounded-2xl border border-white/60 p-4 sm:p-5 shadow-sm">
+              
+              {/* Title */}
+              <div className="flex items-center gap-3 mb-5">
+                <span className="text-2xl drop-shadow-md">🎉</span>
+                <h3 className="text-[#0a192f] font-extrabold text-lg sm:text-xl tracking-tight">
+                  Aniversariantes de {monthNames[currentMonth - 1]}
+                </h3>
+                <div className="bg-[#0a192f] text-white rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold shadow-md">
+                  {monthBirthdays.length}
+                </div>
               </div>
-              <span>Aniversariantes de {monthNames[currentMonth - 1]}</span>
-              <Badge variant="secondary" className="ml-2">{monthBirthdays.length}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-              {monthBirthdays.map((person) => {
-                const { day } = parseBirthDate(person.dataNascimento);
-                const isToday = day === currentDay;
-                return (
-                  <div
-                    key={person.id}
-                    className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm ${
-                      isToday
-                        ? "bg-gradient-to-r from-yellow-200 to-pink-200 dark:from-yellow-500/30 dark:to-pink-500/30 ring-1 ring-pink-400/60 !text-slate-900 dark:!text-white"
-                        : "!bg-slate-800/80 !text-white"
-                    }`}
-                  >
-                    <Badge variant={isToday ? "default" : "outline"} className={`shrink-0 min-w-[40px] justify-center ${!isToday ? "!border-slate-500 !text-white" : ""}`}>
-                      {day.toString().padStart(2, "0")}
-                    </Badge>
-                    <span className="truncate font-medium">{person.nome}</span>
-                    {isToday && <span className="ml-auto text-xs">🎂</span>}
-                  </div>
-                );
-              })}
+
+              {/* List of pills */}
+              <div className="flex flex-wrap gap-2">
+                {monthBirthdays.map((person) => {
+                  const { day } = parseBirthDate(person.dataNascimento);
+                  const isToday = day === currentDay;
+                  
+                  return (
+                    <div
+                      key={person.id}
+                      className={`flex items-center rounded-full p-1 pr-4 shadow-[0_4px_10px_rgba(0,0,0,0.3)] border-t border-white/10 gap-3 ${
+                        isToday 
+                          ? "bg-gradient-to-b from-[#b58a48] to-[#8c652f]" 
+                          : "bg-gradient-to-b from-[#1c2742] to-[#0a1122]"
+                      }`}
+                    >
+                      <div className={`rounded-full px-3 py-1 flex items-center justify-center text-white font-bold text-sm shadow-inner ${
+                        isToday ? "bg-[#d6ae67]" : "bg-[#425078]"
+                      }`}>
+                        {day.toString().padStart(2, "0")}
+                      </div>
+                      <span className="text-white font-semibold text-sm uppercase tracking-wide truncate max-w-[130px] sm:max-w-[180px]">
+                        {person.nome.substring(0, 20)}{person.nome.length > 20 ? '...' : ''}
+                      </span>
+                      {isToday && <span className="ml-1 text-xs">🎂</span>}
+                    </div>
+                  );
+                })}
+              </div>
+
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   );

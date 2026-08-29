@@ -1,0 +1,392 @@
+[
+  {
+    "id": "d7fb60c4-d29e-4e94-b0b8-3f9f544cb778",
+    "item_number": "2.1",
+    "content": "Seção I – Documentação certificada",
+    "responsible": ""
+  },
+  {
+    "id": "9753f129-ebeb-4c31-9de0-3d52bfc4fe0f",
+    "item_number": "2.1.1",
+    "content": "Contrato e seus aditivos com o Cliente",
+    "responsible": "PREPOSTO/PLANEJAMENTO"
+  },
+  {
+    "id": "21ce6441-5dfa-4194-9f07-4f71b1ea82d0",
+    "item_number": "2.1.2",
+    "content": "Anotação de responsabilidade técnica – ARTs",
+    "responsible": "HSE"
+  },
+  {
+    "id": "ad537d16-e219-4427-97aa-810f6ba1a95d",
+    "item_number": "2.1.3",
+    "content": "Plano da Qualidade e Plano de Inspeção e Testes",
+    "responsible": "NA"
+  },
+  {
+    "id": "e7aac992-d653-4248-8481-d79a40311210",
+    "item_number": "2.1.4",
+    "content": "Registro de qualificação de mão-de-obra especializada",
+    "responsible": "HSE"
+  },
+  {
+    "id": "8dac2469-15e2-4949-85c9-da6f40e59da7",
+    "item_number": "2.1.5",
+    "content": "Procedimentos Operacionais/ Técnicos e de Ensaios/ Testes",
+    "responsible": "HSE"
+  },
+  {
+    "id": "5914c3ac-5fdc-452d-a0bb-26412a75c807",
+    "item_number": "2.1.6",
+    "content": "EPS – Especificação do Procedimento de Soldagem",
+    "responsible": "NA"
+  },
+  {
+    "id": "10b733bd-2245-40cc-83c2-fcaba8f49b01",
+    "item_number": "2.1.7",
+    "content": "RQPS – Registro de Qualificação do Procedimento de Soldagem",
+    "responsible": "NA"
+  },
+  {
+    "id": "eda50936-8de6-4dc0-8e40-89dd694c88af",
+    "item_number": "2.1.8",
+    "content": "RQS - Registro de Qualificação de Soldador",
+    "responsible": "NA"
+  },
+  {
+    "id": "e235d5fe-eee0-4d2d-8254-3fe9bc6fae7a",
+    "item_number": "2.1.9",
+    "content": "RSQ - Relação de Soldadores Qualificados",
+    "responsible": "NA"
+  },
+  {
+    "id": "512ca3d9-243a-4c12-a33a-1c92532a1e86",
+    "item_number": "2.1.10",
+    "content": "Controle de Desempenho de juntas soldadas",
+    "responsible": "NA"
+  },
+  {
+    "id": "1a1fbb4a-70d4-4cc4-9b76-d88eb9e7749b",
+    "item_number": "2.1.11",
+    "content": "Controle de Calibração e Certificados de calibração dos equipamentos de inspeção, medição e ensaio utilizados na realização do escopo",
+    "responsible": "NA"
+  },
+  {
+    "id": "61846be9-02cb-4f70-8a34-c308bb8ff810",
+    "item_number": "2.1.12",
+    "content": "Controle de recebimento de materiais críticos, Notas Fiscais e respectivos Certificados de Qualidade com rastreabilidade incluindo componentes e consumíveis",
+    "responsible": "MA"
+  },
+  {
+    "id": "e1e45f15-289e-4882-b884-df619df655e5",
+    "item_number": "2.1.13",
+    "content": "Não conformidades referente ao período da execução dos serviços prestados",
+    "responsible": "HSE"
+  },
+  {
+    "id": "5d4043bf-a98f-4841-be61-7a45f67f733e",
+    "item_number": "2.1.14",
+    "content": "Evidências de treinamentos realizados",
+    "responsible": "HSE"
+  },
+  {
+    "id": "6fbe9a84-8596-4bec-92aa-31ff6a694e0c",
+    "item_number": "2.1.15",
+    "content": "Relatórios de auditorias realizadas no decorrer da obra / execução dos serviços",
+    "responsible": "NA"
+  },
+  {
+    "id": "41d9bb0c-6a8f-44f2-a893-cbeb8fd6b727",
+    "item_number": "2.1.16",
+    "content": "Registros da Qualidade - Relatórios de Testes, Inspeções e demais registros que garantam que a contratada realizou as atividades conforme especificado (este item será dividido em pastas específicas, normalmente chamadas pastas “TOP-Turn-Over Packages” para os pacotes maiores, onde sua organização será através de áreas ou sistemas e subsistemas)",
+    "responsible": "NA"
+  },
+  {
+    "id": "8d159099-8ada-4745-ad94-5a478588f31c",
+    "item_number": "2.1.17",
+    "content": "Relatórios semanais e mensais (arquivo eletrônico em formato nativo - editável)",
+    "responsible": "PLANEJAMENTO"
+  },
+  {
+    "id": "00642146-b55c-487a-aaf0-8ff3d46b176b",
+    "item_number": "2.1.18",
+    "content": "Diário de Obra",
+    "responsible": "PLANEJAMENTO"
+  },
+  {
+    "id": "bbab18be-0fb5-4508-83ac-e0e9486d517c",
+    "item_number": "2.1.19",
+    "content": "Registro das consultas técnicas / Pedidos de informação emitidas durante a obra / execução dos serviços",
+    "responsible": "PREPOSTO"
+  },
+  {
+    "id": "001cf1af-e3b8-45b0-b69c-6175106025c5",
+    "item_number": "2.1.20",
+    "content": "Termos de Aceitação",
+    "responsible": "PREPOSTO/PLANEJAMENTO"
+  },
+  {
+    "id": "6b2eb02b-2a7b-42c1-ae10-e0ebe25fc06c",
+    "item_number": "2.1.21",
+    "content": "Atas de Reuniões",
+    "responsible": "PLANEJAMENTO"
+  },
+  {
+    "id": "a9e680af-997c-4dfb-8b52-d9a50ff320ba",
+    "item_number": "2.1.22",
+    "content": "Especificação Técnica quando gerada pela Contratada",
+    "responsible": "PREPOSTO"
+  },
+  {
+    "id": "b9022466-0717-404b-b5fd-ee537a5d2856",
+    "item_number": "2.1.23",
+    "content": "Desenhos “As Built” referente a projetos elaborados pela Contratada",
+    "responsible": "PLANEJAMENTO"
+  },
+  {
+    "id": "6e1074f3-2ab3-4c22-8ce3-3a91bbd3ec0f",
+    "item_number": "2.1.24",
+    "content": "Desenhos de origem de outro fornecedor emitidos no status “para Construção” que não tiveram ”Red-Line”, devem ter estampado um carimbo descrevendo “CONSTRUÍDO CONFORME PROJETO”",
+    "responsible": "PLANEJAMENTO"
+  },
+  {
+    "id": "175fa5f5-58ba-4c01-b004-0170dd517198",
+    "item_number": "2.1.25",
+    "content": "Desenho “Red-Line” (originais)",
+    "responsible": "PLANEJAMENTO"
+  },
+  {
+    "id": "81da19dd-c17e-46e5-8f28-7e4ee87b0b82",
+    "item_number": "2.2",
+    "content": "Seção II – Segurança, Saúde e Meio Ambiente",
+    "responsible": ""
+  },
+  {
+    "id": "7f2c74f7-e2f6-4975-9736-3cf5296571e5",
+    "item_number": "2.2.1",
+    "content": "Documentos de ordem ambiental que comprovem extração legal da matéria-prima referente a recursos minerais e florestais",
+    "responsible": "MA"
+  },
+  {
+    "id": "ea9f74c8-15de-4be9-bcb8-cebf43779f1f",
+    "item_number": "2.2.2",
+    "content": "Ata de Reunião inicial de Kick Off, para as contratadas",
+    "responsible": "PLANEJAMENTO"
+  },
+  {
+    "id": "945686ba-0f9d-4dc1-845a-bdd741e54155",
+    "item_number": "2.2.3",
+    "content": "Plano de Meio Ambiente, Segurança e Saúde Ocupacional",
+    "responsible": "MA"
+  },
+  {
+    "id": "52fa8065-02ec-41e9-920d-02e4e46f5e1f",
+    "item_number": "2.2.4",
+    "content": "Procedimentos de Meio Ambiente",
+    "responsible": "MA"
+  },
+  {
+    "id": "33cb1607-b276-4f82-8e27-bf6281107de3",
+    "item_number": "2.2.5",
+    "content": "Licenças/Alvarás/Certidões/Outorgas /Cadastro Técnico Federal do IBAMA (CTF)/ Documento de Origem Florestal (DOF) das Madeiras, dos Fornecedores e Prestadores de Serviço",
+    "responsible": "MA"
+  },
+  {
+    "id": "c1ecc94b-ebe7-4add-a9b4-9980c1cda371",
+    "item_number": "2.2.6",
+    "content": "Relatório mensal de Meio Ambiente",
+    "responsible": "MA"
+  },
+  {
+    "id": "73c4790b-714e-4365-ba9d-52eac51ab716",
+    "item_number": "2.2.7",
+    "content": "Relatório de Inspeção de Meio Ambiente (RIMA)",
+    "responsible": "MA"
+  },
+  {
+    "id": "9bd4336d-f07b-403f-8b6e-02f0c52073a2",
+    "item_number": "2.2.8",
+    "content": "Planilhas de Monitoramentos e Medições Mensais - (Consumo Hídrico/Geração de Resíduos/Geração de Efluente/Monitoramento de Fumaça Preta e Consumo de Diesel)",
+    "responsible": "MA"
+  },
+  {
+    "id": "e5c34bb8-16bc-4027-84b0-d3666868a912",
+    "item_number": "2.2.9",
+    "content": "Lista de Treinamentos, DDS e Campanhas de Meio Ambiente",
+    "responsible": "MA"
+  },
+  {
+    "id": "7d025099-e380-4c05-9577-b430b306ab81",
+    "item_number": "2.2.10",
+    "content": "Listas de Verificação e Check List de Meio Ambiente",
+    "responsible": "MA"
+  },
+  {
+    "id": "5407de4a-11f5-4bc7-a72f-057a74d0c04e",
+    "item_number": "2.2.11",
+    "content": "Manifesto de Transporte de Resíduos dos Resíduos Sólidos, Líquidos e Efluentes",
+    "responsible": "MA"
+  },
+  {
+    "id": "cd1fcb86-a206-4353-b694-86324297255a",
+    "item_number": "2.2.12",
+    "content": "Laudos de Potabilidade de Água",
+    "responsible": "MA"
+  },
+  {
+    "id": "91f5c061-ce1f-443f-98e0-eca5e98fa2aa",
+    "item_number": "2.2.13",
+    "content": "Inventário e FISPQ’s dos Produtos Químicos",
+    "responsible": "MA"
+  },
+  {
+    "id": "27d1621a-0417-427e-b9f1-3eea2063314a",
+    "item_number": "2.2.14",
+    "content": "Anotação de responsabilidade técnica – ARTs",
+    "responsible": "PREPOSTO"
+  },
+  {
+    "id": "eb91720e-d25d-44b3-b8af-21e7271368cc",
+    "item_number": "2.2.15",
+    "content": "Programa de Prevenção de Riscos Ambientais – PGR (arquivo eletrônico em formato nativo - editável)",
+    "responsible": "MA"
+  },
+  {
+    "id": "ada0ac89-b25c-4e77-b706-4bac2f77c255",
+    "item_number": "2.2.16",
+    "content": "Programa de Condições e Meio Ambiente de Trabalho na Indústria da Construção Civil – PCMAT (arquivo eletrônico em formato nativo - editável)",
+    "responsible": "MA"
+  },
+  {
+    "id": "f005d3a7-0910-4ef7-a1b0-96ac24296ff0",
+    "item_number": "2.2.17",
+    "content": "Programa de Controle Médico de Saúde Ocupacional – PCMSO (arquivo eletrônico em formato nativo - editável)",
+    "responsible": "HSE"
+  },
+  {
+    "id": "b168826f-22a7-40ce-ab42-6d3ba0e90099",
+    "item_number": "2.2.18",
+    "content": "Perfil Profissiográfico Previdenciário – PPP (arquivo eletrônico em formato nativo - editável)",
+    "responsible": "HSE"
+  },
+  {
+    "id": "a4e3405b-56ce-45e0-8b84-fb67581351a5",
+    "item_number": "2.2.19",
+    "content": "Programa de Proteção Respiratória – PPR (arquivo eletrônico em formato nativo - editável)",
+    "responsible": "HSE"
+  },
+  {
+    "id": "0b91112b-f6b8-4dfa-a1ac-b194ac4734ee",
+    "item_number": "2.2.20",
+    "content": "Laudo Ergonômico – PROERGO (arquivo eletrônico em formato nativo - editável)",
+    "responsible": "HSE"
+  },
+  {
+    "id": "b7c261ea-85c7-4ddf-8e55-142de14574e3",
+    "item_number": "2.2.21",
+    "content": "Programa de Conservação Auditiva – PCA (arquivo eletrônico em formato nativo - editável)",
+    "responsible": "HSE"
+  },
+  {
+    "id": "573dc508-3909-46e7-bc4f-ec88610af936",
+    "item_number": "2.2.22",
+    "content": "Relatório de Indicadores Pró Ativos e  Indicadores Reativos",
+    "responsible": "HSE"
+  },
+  {
+    "id": "c8d79b9f-20c4-4b53-a571-2d586830f347",
+    "item_number": "2.2.23",
+    "content": "Mapa de Risco e suas atualizações",
+    "responsible": "HSE"
+  },
+  {
+    "id": "cbb7a4c9-de50-41f0-965c-94c200b74ab8",
+    "item_number": "2.2.24",
+    "content": "Apresentação dos Quadros III, IV, V, VI da NR 4",
+    "responsible": "HSE"
+  },
+  {
+    "id": "cdf6190e-ca1a-477e-8593-9273d905f2f8",
+    "item_number": "2.2.25",
+    "content": "Apresentação das Análise de Quase Acidente e Incidentes",
+    "responsible": "HSE"
+  },
+  {
+    "id": "08a2110f-77b4-4b5f-b0c5-ed8bf0cac537",
+    "item_number": "2.2.26",
+    "content": "Carta do SESMT e suas atualizações",
+    "responsible": "HSE"
+  },
+  {
+    "id": "24576339-0bd3-485a-8eb0-a77a6d120098",
+    "item_number": "2.2.27",
+    "content": "Carta do Representante da CIPA ou o processo da CIPA (arquivo eletrônico em formato nativo - editável)",
+    "responsible": "HSE"
+  },
+  {
+    "id": "5542be1b-2e3a-4067-9b4b-129d2912cf04",
+    "item_number": "2.2.28",
+    "content": "PAE – Plano de Atendimento a Emergência (arquivo eletrônico em formato nativo - editável)",
+    "responsible": "HSE"
+  },
+  {
+    "id": "8318fd8b-1e29-48e2-981d-96ec8ab7ecd4",
+    "item_number": "2.2.29",
+    "content": "Cronograma dos DSMS",
+    "responsible": "HSE"
+  },
+  {
+    "id": "7510d67c-e9af-4cf9-8adc-ad3cc5199987",
+    "item_number": "2.2.30",
+    "content": "Cronograma das Campanhas de SSMA",
+    "responsible": "HSE"
+  },
+  {
+    "id": "32956bde-a381-4571-9401-699fbc81a1c9",
+    "item_number": "2.2.31",
+    "content": "Book das APR’s - Análise Preliminar de Riscos (Digital ao final do Contrato)",
+    "responsible": "HSE"
+  },
+  {
+    "id": "f6c6389a-01da-43d7-8880-08c4b3f5dcae",
+    "item_number": "2.2.32",
+    "content": "Comunicação Prévia de Instalação, junto à DRT",
+    "responsible": "HSE"
+  },
+  {
+    "id": "49fdb816-9897-41dd-a7f9-a1de4438cbe6",
+    "item_number": "2.2.33",
+    "content": "Ordem de serviço (arquivo eletrônico em formato nativo - editável)",
+    "responsible": "HSE"
+  },
+  {
+    "id": "2d164fe4-7c33-4183-b898-a1ab38f052ea",
+    "item_number": "2.2.34",
+    "content": "Fichas de EPIs atualizadas (arquivo eletrônico em formato nativo - editável)",
+    "responsible": "HSE"
+  },
+  {
+    "id": "9f573c0c-504b-44ac-becf-74ba0f865937",
+    "item_number": "2.2.35",
+    "content": "Evidência de treinamentos dos requisitos legais, incluindo PPRA e outros aplicáveis",
+    "responsible": "HSE"
+  },
+  {
+    "id": "4a340469-61eb-430c-80d6-cf26b6275ebf",
+    "item_number": "2.3",
+    "content": "Seção III - Gerais e Segurança, Saúde e Meio Ambiente (impressos)",
+    "responsible": ""
+  },
+  {
+    "id": "d1168183-58b2-49fa-92a4-c77ae698c219",
+    "item_number": "2.3.1",
+    "content": "Itens da Construção",
+    "responsible": "PLANEJAMENTO"
+  },
+  {
+    "id": "22a76567-630a-45e1-befd-490a3415cd2a",
+    "item_number": "2.3.2",
+    "content": "Itens de Segurança, Saúde e Meio Ambiente",
+    "responsible": "HSE"
+  }
+]

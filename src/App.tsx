@@ -96,6 +96,7 @@ const Equipamentos = lazy(() => import("./pages/Equipamentos"));
 const Planejamento = lazy(() => import("./pages/Planejamento"));
 const AtaReuniaoContrato = lazy(() => import("./pages/AtaReuniaoContrato"));
 const CIPA = lazy(() => import("./pages/CIPA"));
+const DataBookHydro = lazy(() => import("./pages/DataBookHydro"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Optimized PageLoader: Uses local logo immediately to avoid network blocking on FCP
@@ -245,6 +246,7 @@ const App = () => (
                       <Route path="/instacena" element={<ProtectedRoute><InstaCena /></ProtectedRoute>} />
                       <Route path="/inspecao-canteiro" element={<ProtectedRoute><InspecaoCanteiro /></ProtectedRoute>} />
                       <Route path="/calendario-hydro" element={<ProtectedRoute><CalendarioHydro /></ProtectedRoute>} />
+                      <Route path="/data-book-hydro" element={<ProtectedRoute><DataBookHydro /></ProtectedRoute>} />
                       <Route path="/games" element={<ProtectedRoute><Games /></ProtectedRoute>} />
                       <Route path="/desvios" element={<ProtectedRoute><Desvios /></ProtectedRoute>} />
                       

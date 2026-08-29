@@ -71,12 +71,7 @@ html[data-layout="modern"].dark h5,
 html[data-layout="modern"].dark h6 {
   color: var(--text-primary) !important;
 }
-html[data-layout="modern"] p,
-html[data-layout="modern"] span,
-html[data-layout="modern"].dark p,
-html[data-layout="modern"].dark span {
-  color: inherit;
-}
+/* Removido o color: inherit de p/span para não quebrar cores semânticas (vermelho, etc) */
 html[data-layout="modern"] .text-muted-foreground,
 html[data-layout="modern"].dark .text-muted-foreground {
   color: var(--text-secondary) !important;
@@ -193,12 +188,7 @@ html[data-layout="legacy"].dark h5,
 html[data-layout="legacy"].dark h6 {
   color: var(--text-primary) !important;
 }
-html[data-layout="legacy"] p,
-html[data-layout="legacy"] span,
-html[data-layout="legacy"].dark p,
-html[data-layout="legacy"].dark span {
-  color: inherit;
-}
+/* Removido o color: inherit de p/span para não quebrar cores semânticas (vermelho, etc) */
 html[data-layout="legacy"] .text-muted-foreground,
 html[data-layout="legacy"].dark .text-muted-foreground {
   color: var(--text-secondary) !important;
@@ -351,3 +341,71 @@ html[data-layout="legacy"].dark .dgv4-equipment-ring circle:first-child {
   stroke: rgba(255, 255, 255, 0.08) !important;
 }
 
+/* ============================================================
+   TAILWIND UTILITY OVERRIDES FOR LEGIBILITY
+   ============================================================ */
+
+/* For legacy layout (dark), force dark text utilities to be light */
+html[data-layout="legacy"] .text-slate-700, html[data-layout="legacy"].dark .text-slate-700,
+html[data-layout="legacy"] .text-slate-800, html[data-layout="legacy"].dark .text-slate-800,
+html[data-layout="legacy"] .text-slate-900, html[data-layout="legacy"].dark .text-slate-900,
+html[data-layout="legacy"] .text-gray-700, html[data-layout="legacy"].dark .text-gray-700,
+html[data-layout="legacy"] .text-gray-800, html[data-layout="legacy"].dark .text-gray-800,
+html[data-layout="legacy"] .text-gray-900, html[data-layout="legacy"].dark .text-gray-900,
+html[data-layout="legacy"] .text-zinc-700, html[data-layout="legacy"].dark .text-zinc-700,
+html[data-layout="legacy"] .text-zinc-800, html[data-layout="legacy"].dark .text-zinc-800,
+html[data-layout="legacy"] .text-zinc-900, html[data-layout="legacy"].dark .text-zinc-900,
+html[data-layout="legacy"] .text-neutral-700, html[data-layout="legacy"].dark .text-neutral-700,
+html[data-layout="legacy"] .text-neutral-800, html[data-layout="legacy"].dark .text-neutral-800,
+html[data-layout="legacy"] .text-neutral-900, html[data-layout="legacy"].dark .text-neutral-900,
+html[data-layout="legacy"] .text-stone-700, html[data-layout="legacy"].dark .text-stone-700,
+html[data-layout="legacy"] .text-stone-800, html[data-layout="legacy"].dark .text-stone-800,
+html[data-layout="legacy"] .text-stone-900, html[data-layout="legacy"].dark .text-stone-900 {
+  color: var(--text-primary) !important;
+}
+
+html[data-layout="legacy"] .text-slate-500, html[data-layout="legacy"].dark .text-slate-500,
+html[data-layout="legacy"] .text-slate-600, html[data-layout="legacy"].dark .text-slate-600,
+html[data-layout="legacy"] .text-gray-500, html[data-layout="legacy"].dark .text-gray-500,
+html[data-layout="legacy"] .text-gray-600, html[data-layout="legacy"].dark .text-gray-600,
+html[data-layout="legacy"] .text-zinc-500, html[data-layout="legacy"].dark .text-zinc-500,
+html[data-layout="legacy"] .text-zinc-600, html[data-layout="legacy"].dark .text-zinc-600,
+html[data-layout="legacy"] .text-neutral-500, html[data-layout="legacy"].dark .text-neutral-500,
+html[data-layout="legacy"] .text-neutral-600, html[data-layout="legacy"].dark .text-neutral-600,
+html[data-layout="legacy"] .text-stone-500, html[data-layout="legacy"].dark .text-stone-500,
+html[data-layout="legacy"] .text-stone-600, html[data-layout="legacy"].dark .text-stone-600 {
+  color: var(--text-secondary) !important;
+}
+
+/* For modern layout (light), force light text utilities to be dark */
+html[data-layout="modern"] .text-white, html[data-layout="modern"].dark .text-white,
+html[data-layout="modern"] .text-slate-100, html[data-layout="modern"].dark .text-slate-100,
+html[data-layout="modern"] .text-slate-200, html[data-layout="modern"].dark .text-slate-200,
+html[data-layout="modern"] .text-slate-300, html[data-layout="modern"].dark .text-slate-300,
+html[data-layout="modern"] .text-gray-100, html[data-layout="modern"].dark .text-gray-100,
+html[data-layout="modern"] .text-gray-200, html[data-layout="modern"].dark .text-gray-200,
+html[data-layout="modern"] .text-gray-300, html[data-layout="modern"].dark .text-gray-300,
+html[data-layout="modern"] .text-zinc-100, html[data-layout="modern"].dark .text-zinc-100,
+html[data-layout="modern"] .text-zinc-200, html[data-layout="modern"].dark .text-zinc-200,
+html[data-layout="modern"] .text-zinc-300, html[data-layout="modern"].dark .text-zinc-300,
+html[data-layout="modern"] .text-neutral-100, html[data-layout="modern"].dark .text-neutral-100,
+html[data-layout="modern"] .text-neutral-200, html[data-layout="modern"].dark .text-neutral-200,
+html[data-layout="modern"] .text-neutral-300, html[data-layout="modern"].dark .text-neutral-300,
+html[data-layout="modern"] .text-stone-100, html[data-layout="modern"].dark .text-stone-100,
+html[data-layout="modern"] .text-stone-200, html[data-layout="modern"].dark .text-stone-200,
+html[data-layout="modern"] .text-stone-300, html[data-layout="modern"].dark .text-stone-300 {
+  /* color: var(--text-primary) !important; */
+  /* Reverted to avoid breaking dark badges in modern mode, modern mode is mostly okay */
+}
+
+/* Força fonte preta em elementos específicos do layout moderno (como o card do DDS) */
+html[data-layout="modern"] .modern-text-black,
+html[data-layout="modern"].dark .modern-text-black {
+  color: #000000 !important;
+}
+
+/* Utilitário para forçar texto preto independentemente do tema */
+.force-black-text,
+.force-black-text * {
+  color: #000000 !important;
+}

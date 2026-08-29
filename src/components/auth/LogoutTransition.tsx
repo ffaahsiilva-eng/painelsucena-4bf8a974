@@ -146,14 +146,14 @@ export function LogoutTransition({ onComplete, userName, userAvatar, userCargo, 
           )}
 
           <div className="text-center space-y-4">
-            <p className="text-blue-400 text-base md:text-lg font-light tracking-[0.5em] uppercase opacity-70 animate-name-rise" style={{ animationDelay: "180ms" }}>
-              {isTimeout ? "Sessão Expirada" : "Até Logo"}
+            <p className="text-base md:text-lg font-light tracking-[0.5em] uppercase opacity-70 animate-name-rise" style={{ animationDelay: "180ms" }}>
+              <span className="!text-white" style={{ color: "white" }}>{isTimeout ? "Sessão Expirada" : "Até Logo"}</span>
             </p>
-            <h1 className="text-6xl md:text-8xl font-black text-white tracking-tight animate-name-rise" style={{ animationDelay: "340ms" }}>
-              {displayName}
+            <h1 className="text-6xl md:text-8xl font-black tracking-tight animate-name-rise" style={{ animationDelay: "340ms" }}>
+              <span className="!text-white" style={{ color: "white" }}>{displayName}</span>
             </h1>
-            <p className="text-slate-400 text-sm md:text-base font-medium tracking-[0.3em] uppercase pt-2 animate-name-rise" style={{ animationDelay: "520ms" }}>
-              {isTimeout ? "Desconectado por segurança" : "Saindo do sistema..."}
+            <p className="text-sm md:text-base font-medium tracking-[0.3em] uppercase pt-2 animate-name-rise" style={{ animationDelay: "520ms" }}>
+              <span className="!text-white" style={{ color: "white" }}>{isTimeout ? "Desconectado por segurança" : "Saindo do sistema..."}</span>
             </p>
           </div>
         </div>

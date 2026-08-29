@@ -59,6 +59,7 @@ const clearTransitionStorage = () => {
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [isSuccess, setIsSuccess] = useState(() => sessionStorage.getItem("loginTransitionInProgress") === "true");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -196,6 +197,7 @@ const Auth = () => {
     sessionStorage.setItem("loginTransitionInProgress", "true");
     sessionStorage.setItem("loginTransitionStage", "pending");
     dispatchTransitionEvent();
+    setIsSuccess(true);
 
     const loginStartedAt = performance.now();
     try {
@@ -219,6 +221,7 @@ const Auth = () => {
         if (error) {
           clearTransitionStorage();
           dispatchTransitionEvent();
+          setIsSuccess(false);
           const isNetworkError =
             /failed to fetch|network|load failed|timeout/i.test(error.message || "") ||
             (error as any)?.name === "AuthRetryableFetchError";
@@ -341,6 +344,7 @@ const Auth = () => {
             cargoOptions.find((c) => c.value === cargo)?.label || cargo;
           clearTransitionStorage();
           dispatchTransitionEvent();
+          setIsSuccess(false);
           toast({
             title: "Cargo já ocupado",
             description: `Já existe um usuário cadastrado como ${cargoLabel}.`,
@@ -360,6 +364,7 @@ const Auth = () => {
         if (error) {
           clearTransitionStorage();
           dispatchTransitionEvent();
+          setIsSuccess(false);
           if (error.message.includes("User already registered")) {
             toast({
               title: "Erro no cadastro",
@@ -388,6 +393,7 @@ const Auth = () => {
           if (profileError) {
             clearTransitionStorage();
             dispatchTransitionEvent();
+            setIsSuccess(false);
             toast({
               title: "Erro ao criar perfil",
               description: profileError.message,
@@ -421,6 +427,7 @@ const Auth = () => {
     } catch (error) {
       clearTransitionStorage();
       dispatchTransitionEvent();
+      setIsSuccess(false);
       toast({
         title: "Erro",
         description: "Ocorreu um erro inesperado. Tente novamente.",
@@ -429,6 +436,10 @@ const Auth = () => {
       setIsLoading(false);
     }
   };
+
+  if (isSuccess) {
+    return <div className="fixed inset-0 bg-[#010101] z-50" />;
+  }
 
   return (
     <div className="min-h-screen w-full relative overflow-hidden flex items-center justify-center">
@@ -459,8 +470,8 @@ const Auth = () => {
           </div>
           {previewName && (
             <div className="mt-3 animate-fade-in">
-              <span className="text-white/90 text-sm font-medium tracking-wide">
-                Olá, {previewName}!
+              <span className="text-sm font-medium tracking-wide">
+                <span className="!text-white" style={{ color: "white" }}>Olá, {previewName}!</span>
               </span>
             </div>
           )}
@@ -596,9 +607,9 @@ const Auth = () => {
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : isLogin ? (
-              "ENTRAR"
+              <span className="!text-white" style={{ color: "white" }}>ENTRAR</span>
             ) : (
-              "CADASTRAR"
+              <span className="!text-white" style={{ color: "white" }}>CADASTRAR</span>
             )}
           </Button>
 
@@ -610,9 +621,11 @@ const Auth = () => {
             <button
               type="button"
               onClick={() => setIsLogin(!isLogin)}
-              className="text-white/70 hover:text-white text-xs underline underline-offset-2 transition-colors"
+              className="text-xs underline underline-offset-2 transition-colors"
             >
-              {isLogin ? "Criar uma conta" : "Já tenho uma conta"}
+              <span className="!text-white" style={{ color: "white" }}>
+                {isLogin ? "Criar uma conta" : "Já tenho uma conta"}
+              </span>
             </button>
           </div>
         )}
