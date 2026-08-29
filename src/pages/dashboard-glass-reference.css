@@ -6,7 +6,7 @@
   margin: 0;
   padding: 0;
   color: #2c3032;
-  font-family: 'Kamali', Inter, Geist, Manrope, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: 'Reversal Bd', Inter, Geist, Manrope, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .dashboard-glass-v4,
@@ -673,7 +673,7 @@
 .dgv4-extended h3,
 .dgv4-extended h4,
 .dgv4-extended [class*="CardTitle"] {
-  font-family: 'Kamali', Inter, Geist, Manrope, system-ui, sans-serif !important;
+  font-family: 'Reversal Bd', Inter, Geist, Manrope, system-ui, sans-serif !important;
   color: #303436 !important;
   text-shadow: none !important;
 }

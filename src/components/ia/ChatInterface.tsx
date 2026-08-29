@@ -190,7 +190,7 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
         role: "user",
         parts: [
           {
-            text: "Você é um assistente virtual integrado ao painel SucenaPainel. Você consegue ler o banco de dados do sistema em tempo real chamando a ferramenta 'query_database'.\n\nDICA DE OURO: Para evitar bloqueios de limite de cota, NUNCA faça queries para descobrir as colunas. Use as seguintes estruturas conhecidas:\n- Tabela `equipment`: id, name, type, equipment_type, status, plate, brand, environment\n- Tabela `equipment_movements`: id, equipment_name, exit_reason (ex: 'manutencao_corretiva', 'operacao', 'manutencao_preventiva', 'comboio'), environment, created_at, created_by\n- Tabela `profiles`: id, full_name, cargo, environment\n\nATENÇÃO MÁXIMA 1: Faça APENAS UMA chamada de função. Se a consulta retornar vazia ([]), NÃO tente fazer outra busca, apenas responda 'Não encontrei dados'. NUNCA faça consultas em loop.\nATENÇÃO MÁXIMA 2: Sempre que houver alguma pergunta sobre informações internas sensíveis, dados financeiros, ou qualquer assunto exclusivo apenas para administradores, NÃO responda diretamente. Diga apenas para o usuário entrar em contato com o administrador do sistema.\n\nSeja amigável e responda em pt-br."
+            text: "Você é um assistente virtual integrado ao painel SucenaPainel. Você possui duas funções principais:\n1. Responder dúvidas e consultar informações reais do banco de dados do painel chamando a ferramenta 'query_database'.\n2. Ajudar de forma geral como uma IA avançada em qualquer outro assunto ou dúvida que o usuário tiver fora do sistema.\n\nDICA DE OURO: Para evitar bloqueios de limite de cota, NUNCA faça queries para descobrir as colunas. Use as seguintes estruturas conhecidas:\n- Tabela `equipment`: id, name, type, equipment_type, status, plate, brand, environment\n- Tabela `equipment_movements`: id, equipment_name, exit_reason, environment, created_at, created_by\n- Tabela `profiles`: id, full_name, cargo, environment\n- Tabela `rh_efetivo`: id, colaboradores (coluna JSONB contendo um array de colaboradores com nome, aso (inclui validade), funcao, etc), environment\n\nATENÇÃO MÁXIMA 1: Faça APENAS UMA chamada de função por vez. Se a consulta retornar vazia ([]), NÃO tente fazer outra busca na mesma hora, apenas responda 'Não encontrei dados'. NUNCA faça consultas em loop.\nATENÇÃO MÁXIMA 2: Sempre que houver alguma pergunta sobre informações internas sensíveis, dados financeiros, ou qualquer assunto exclusivo apenas para administradores, NÃO responda diretamente. Diga apenas para o usuário entrar em contato com o administrador do sistema.\n\nSeja amigável, criativo ao ajudar com assuntos gerais e sempre responda em pt-br."
           }
         ]
       };
@@ -199,7 +199,7 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
       let finalReply = "";
       let loops = 0;
       
-      const modelsToTry = ["gemini-3.5-flash", "gemini-3.5-flash-8b", "gemini-3.5-pro"];
+      const modelsToTry = ["gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-2.5-flash", "gemini-flash-latest", "gemini-pro-latest"];
 
       const fetchWithFallback = async (payload: any) => {
         let lastError = null;
@@ -215,7 +215,8 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
             return response;
           }
           
-          if (response.status === 503 || response.status === 429) {
+          // Fallback on rate limits, unavailability, OR not found (wrong model name)
+          if (response.status === 503 || response.status === 429 || response.status === 404 || response.status === 400) {
             console.warn(`Modelo ${model} retornou ${response.status}. Tentando fallback...`);
             lastError = await response.json().catch(() => ({}));
             // Espera 1 segundo antes de tentar o próximo para não dar rate limit em todos de uma vez
@@ -226,7 +227,7 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
           const errorData = await response.json().catch(() => ({}));
           throw new Error(`Erro na API do Gemini (${model}): ${errorData.error?.message || response.statusText}`);
         }
-        throw new Error(`Erro na API do Gemini: Sistema indisponível no momento. ${lastError?.error?.message || ''}`);
+        throw new Error(`Sistema indisponível no momento. (Detalhe: ${lastError?.error?.message || ''})`);
       };
 
       // Limitado a 3 loops para não estourar a cota gratuita do Gemini (15 req/min)
