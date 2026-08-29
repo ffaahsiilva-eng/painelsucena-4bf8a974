@@ -48,14 +48,43 @@ interface ChatInterfaceProps {
 }
 
 export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
-  const [messages, setMessages] = useState<Message[]>([
-    { id: "1", role: "model", text: "Olá! Sou a Inteligência Artificial do painel.\nComo posso ajudar você hoje?" }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [attachedImage, setAttachedImage] = useState<{ url: string; base64: string; mimeType: string } | null>(null);
   
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isHistoryLoaded, setIsHistoryLoaded] = useState(false);
+
   const scrollRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      const defaultMsg = [{ id: "1", role: "model" as const, text: "Olá! Sou a Inteligência Artificial do painel.\nComo posso ajudar você hoje?" }];
+      if (data.user) {
+        setUserId(data.user.id);
+        const saved = localStorage.getItem(`sucena_ai_history_${data.user.id}`);
+        if (saved) {
+          try {
+            setMessages(JSON.parse(saved));
+          } catch(e) {
+            setMessages(defaultMsg);
+          }
+        } else {
+          setMessages(defaultMsg);
+        }
+      } else {
+        setMessages(defaultMsg);
+      }
+      setIsHistoryLoaded(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (isHistoryLoaded && userId && messages.length > 0) {
+      localStorage.setItem(`sucena_ai_history_${userId}`, JSON.stringify(messages));
+    }
+  }, [messages, userId, isHistoryLoaded]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
