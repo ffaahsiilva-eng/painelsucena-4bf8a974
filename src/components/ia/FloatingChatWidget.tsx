@@ -42,8 +42,8 @@ export function FloatingChatWidget() {
 
         .fluent-chat-panel {
           position: fixed;
-          z-index: 80;
-          bottom: 56px;
+          z-index: 9999;
+          bottom: 24px;
           right: 24px;
           width: min(420px, calc(100vw - 32px));
           height: min(540px, calc(100vh - 80px));
