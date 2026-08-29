@@ -45,8 +45,8 @@ export function FloatingChatWidget() {
           z-index: 80;
           bottom: 56px;
           right: 24px;
-          width: min(560px, calc(100vw - 32px));
-          height: min(720px, calc(100vh - 80px));
+          width: min(420px, calc(100vw - 32px));
+          height: min(540px, calc(100vh - 80px));
           border-radius: 26px;
           overflow: hidden;
           animation: fluentSlideIn .28s cubic-bezier(.16,1,.3,1) both;
