@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { ChatInterface } from './ChatInterface';
 import { useLocation } from 'react-router-dom';
 
@@ -14,7 +12,7 @@ export function FloatingChatWidget() {
     return () => window.removeEventListener("toggle-ia-chat", handler);
   }, []);
 
-  // Hide on auth and driver pages
+  // Hide on auth page
   if (location.pathname === '/auth') {
     return null;
   }
@@ -22,24 +20,65 @@ export function FloatingChatWidget() {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed bottom-12 right-6 w-[420px] h-[600px] max-h-[calc(100vh-120px)] max-w-[calc(100vw-48px)] z-[70] bg-background border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 fade-in zoom-in-95 duration-200">
-      <div className="bg-primary text-primary-foreground p-3 font-medium flex items-center justify-between shrink-0 shadow-md z-10">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-yellow-300" />
-          <span>Assistente Sucena IA</span>
-        </div>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20 hover:text-white rounded-full" 
-          onClick={() => setIsOpen(false)}
-        >
-          <X className="w-5 h-5" />
-        </Button>
+    <>
+      {/* Backdrop overlay for mobile */}
+      <div
+        className="fluent-chat-backdrop"
+        onClick={() => setIsOpen(false)}
+      />
+      <div className="fluent-chat-panel">
+        <ChatInterface onClose={() => setIsOpen(false)} />
       </div>
-      <div className="flex-1 overflow-hidden relative">
-        <ChatInterface />
-      </div>
-    </div>
+
+      <style>{`
+        .fluent-chat-backdrop {
+          position: fixed;
+          inset: 0;
+          z-index: 79;
+          background: rgba(0,0,0,.08);
+          backdrop-filter: blur(2px);
+          animation: fluentFadeIn .2s ease-out both;
+        }
+
+        .fluent-chat-panel {
+          position: fixed;
+          z-index: 80;
+          bottom: 56px;
+          right: 24px;
+          width: min(560px, calc(100vw - 32px));
+          height: min(720px, calc(100vh - 80px));
+          border-radius: 26px;
+          overflow: hidden;
+          animation: fluentSlideIn .28s cubic-bezier(.16,1,.3,1) both;
+        }
+
+        @media (max-width: 640px) {
+          .fluent-chat-panel {
+            bottom: 8px;
+            right: 8px;
+            width: calc(100vw - 16px);
+            height: calc(100dvh - 72px);
+            max-height: calc(100dvh - 16px);
+            border-radius: 22px;
+          }
+        }
+
+        @keyframes fluentFadeIn {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+
+        @keyframes fluentSlideIn {
+          from {
+            opacity: 0;
+            transform: translateY(16px) scale(.97);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+      `}</style>
+    </>
   );
 }

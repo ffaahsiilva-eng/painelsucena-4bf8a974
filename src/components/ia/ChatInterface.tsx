@@ -1,7 +1,4 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sparkles, Send, User, Loader2, RefreshCw, Paperclip, X, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -46,9 +43,13 @@ const toolDeclaration = {
   ]
 };
 
-export const ChatInterface = () => {
+interface ChatInterfaceProps {
+  onClose?: () => void;
+}
+
+export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([
-    { id: "1", role: "model", text: "Olá! Sou a Inteligência Artificial do painel. Como posso ajudar você hoje?" }
+    { id: "1", role: "model", text: "Olá! Sou a Inteligência Artificial do painel.\nComo posso ajudar você hoje?" }
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -324,46 +325,52 @@ export const ChatInterface = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-background rounded-md border shadow-sm max-w-5xl mx-auto">
-      {/* Botões do topo */}
-      <div className="flex justify-end p-2 border-b bg-muted/20">
-        <Button variant="ghost" size="sm" onClick={clearChat} className="text-xs text-muted-foreground h-7">
-          <RefreshCw className="w-3 h-3 mr-1" /> Limpar conversa
-        </Button>
+    <div className="fluent-chat-root">
+      {/* ── Header ── */}
+      <div className="fluent-chat-header">
+        <button onClick={clearChat} className="fluent-clear-btn">
+          <RefreshCw className="fluent-clear-icon" />
+          <span>Limpar conversa</span>
+        </button>
+        {onClose && (
+          <button onClick={onClose} className="fluent-close-btn" aria-label="Fechar chat">
+            <X className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
-      <ScrollArea className="flex-1 p-4 overflow-y-auto" ref={scrollRef as any}>
-        <div className="space-y-6 pb-20 max-w-3xl mx-auto">
-          {messages.map((message) => (
-            <div 
-              key={message.id} 
+      {/* ── Messages area ── */}
+      <div className="fluent-chat-messages" ref={scrollRef}>
+        <div className="fluent-messages-inner">
+          {messages.map((message, idx) => (
+            <div
+              key={message.id}
               className={cn(
-                "flex gap-4",
-                message.role === "user" ? "justify-end" : "justify-start"
+                "fluent-msg-row",
+                message.role === "user" ? "fluent-msg-user" : "fluent-msg-ai"
               )}
+              style={{ animationDelay: `${Math.min(idx * 40, 200)}ms` }}
             >
               {message.role === "model" && (
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
-                  <Sparkles className="w-4 h-4 text-primary" />
+                <div className="fluent-ai-avatar">
+                  <Sparkles className="fluent-ai-avatar-icon" />
                 </div>
               )}
-              
-              <div 
+
+              <div
                 className={cn(
-                  "px-4 py-3 rounded-2xl max-w-[85%] text-sm shadow-sm",
-                  message.role === "user" 
-                    ? "bg-primary text-primary-foreground rounded-tr-sm" 
-                    : "bg-muted border rounded-tl-sm prose prose-sm dark:prose-invert prose-img:rounded-xl prose-img:w-full prose-img:max-w-md prose-img:shadow-md"
+                  "fluent-msg-bubble",
+                  message.role === "user" ? "fluent-bubble-user" : "fluent-bubble-ai"
                 )}
               >
                 {message.isStreaming && !message.text ? (
-                  <div className="flex items-center gap-1.5 h-5">
-                    <span className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <div className="fluent-typing">
+                    <span className="fluent-dot" style={{ animationDelay: '0ms' }} />
+                    <span className="fluent-dot" style={{ animationDelay: '160ms' }} />
+                    <span className="fluent-dot" style={{ animationDelay: '320ms' }} />
                   </div>
                 ) : (
-                  <div className={cn("break-words", message.role === "user" ? "text-white" : "text-foreground")}>
+                  <div className="fluent-msg-text">
                     <ReactMarkdown
                       components={{
                         img: ({ node, ...props }) => {
@@ -399,76 +406,579 @@ export const ChatInterface = () => {
               </div>
 
               {message.role === "user" && (
-                <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center shrink-0 border">
-                  <User className="w-4 h-4 text-secondary-foreground" />
+                <div className="fluent-user-avatar">
+                  <User className="w-4 h-4" />
                 </div>
               )}
             </div>
           ))}
         </div>
-      </ScrollArea>
-
-      {/* Área de Input */}
-      <div className="p-4 border-t bg-card shrink-0">
-        <div className="max-w-4xl mx-auto">
-          {/* Pré-visualização do anexo */}
-          {attachedImage && (
-            <div className="mb-3 relative inline-block">
-              <img src={attachedImage.url} alt="Anexo" className="h-20 w-auto rounded-lg border shadow-sm object-cover" />
-              <button
-                onClick={() => setAttachedImage(null)}
-                className="absolute -top-2 -right-2 bg-destructive text-white p-1 rounded-full hover:bg-destructive/90 shadow-sm"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-          )}
-          <div className="flex items-end gap-2 bg-muted/30 border rounded-2xl p-2 shadow-sm focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
-            <input 
-              type="file" 
-              accept="image/*" 
-              className="hidden" 
-              ref={fileInputRef} 
-              onChange={handleFileChange} 
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="mb-[2px] shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isLoading}
-              title="Anexar imagem"
-            >
-              <Paperclip className="h-5 w-5" />
-            </Button>
-            <Textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => {
-                setInput(e.target.value);
-                autoResize();
-              }}
-              onKeyDown={handleKeyDown}
-              placeholder="Pergunte qualquer coisa ou peça uma imagem (/imagem)..."
-              className="min-h-[44px] max-h-[200px] border-0 focus-visible:ring-0 bg-transparent resize-none py-3 px-2 shadow-none"
-              rows={1}
-              disabled={isLoading}
-            />
-            <Button 
-              onClick={handleSend} 
-              disabled={(!input.trim() && !attachedImage) || isLoading}
-              size="icon"
-              className="mb-[2px] shrink-0 rounded-xl"
-            >
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-            </Button>
-          </div>
-        </div>
-        <div className="text-center mt-2">
-          <span className="text-[10px] text-muted-foreground">A IA pode cometer erros. Verifique informações importantes.</span>
-        </div>
       </div>
+
+      {/* ── Input area ── */}
+      <div className="fluent-chat-input-area">
+        {/* Attached image preview */}
+        {attachedImage && (
+          <div className="fluent-attach-preview">
+            <img src={attachedImage.url} alt="Anexo" className="fluent-attach-img" />
+            <button
+              onClick={() => setAttachedImage(null)}
+              className="fluent-attach-remove"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        )}
+        <div className="fluent-input-capsule">
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+          />
+          <button
+            type="button"
+            className="fluent-paperclip-btn"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isLoading}
+            title="Anexar imagem"
+          >
+            <Paperclip className="w-5 h-5" />
+          </button>
+          <textarea
+            ref={textareaRef}
+            value={input}
+            onChange={(e) => {
+              setInput(e.target.value);
+              autoResize();
+            }}
+            onKeyDown={handleKeyDown}
+            placeholder="Pergunte qualquer coisa ou peça um resumo do painel!"
+            className="fluent-textarea"
+            rows={1}
+            disabled={isLoading}
+          />
+          <button
+            onClick={handleSend}
+            disabled={(!input.trim() && !attachedImage) || isLoading}
+            className="fluent-send-btn"
+            title="Enviar mensagem"
+          >
+            {isLoading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Send className="w-5 h-5" />
+            )}
+          </button>
+        </div>
+        <p className="fluent-disclaimer">
+          A IA pode cometer erros. Verifique informações importantes.
+        </p>
+      </div>
+
+      {/* ── Scoped Fluent Design styles ── */}
+      <style>{`
+        /* ═══════════════════════════════════════════
+           Windows 11 Fluent Design — Chat Panel
+           ═══════════════════════════════════════════ */
+
+        .fluent-chat-root {
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+          width: 100%;
+          font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
+          background: linear-gradient(145deg, rgba(248,252,255,.88), rgba(236,245,255,.72));
+          backdrop-filter: blur(28px) saturate(145%);
+          -webkit-backdrop-filter: blur(28px) saturate(145%);
+          border: 1px solid rgba(255,255,255,.78);
+          border-radius: 26px;
+          box-shadow:
+            0 24px 70px rgba(48,83,120,.18),
+            0 6px 20px rgba(65,110,160,.10),
+            inset 0 1px 0 rgba(255,255,255,.90);
+          overflow: hidden;
+          color: #18345F;
+        }
+
+        /* ── Header ── */
+        .fluent-chat-header {
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          gap: 8px;
+          padding: 16px 20px 8px;
+          flex-shrink: 0;
+        }
+
+        .fluent-clear-btn {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 14px;
+          border: none;
+          background: transparent;
+          color: #18345F;
+          font-size: 14px;
+          font-weight: 500;
+          font-family: inherit;
+          cursor: pointer;
+          border-radius: 12px;
+          transition: all .18s ease;
+        }
+
+        .fluent-clear-btn:hover {
+          background: rgba(78,166,255,.10);
+          color: #4EA6FF;
+        }
+
+        .fluent-clear-icon {
+          width: 16px;
+          height: 16px;
+          transition: transform .3s ease;
+        }
+
+        .fluent-clear-btn:hover .fluent-clear-icon {
+          transform: rotate(-90deg);
+        }
+
+        .fluent-close-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          border: none;
+          background: transparent;
+          color: #6E7F94;
+          cursor: pointer;
+          border-radius: 10px;
+          transition: all .15s ease;
+        }
+
+        .fluent-close-btn:hover {
+          background: rgba(220,60,60,.12);
+          color: #dc3c3c;
+        }
+
+        /* ── Messages scrollable area ── */
+        .fluent-chat-messages {
+          flex: 1;
+          overflow-y: auto;
+          overflow-x: hidden;
+          padding: 8px 20px 16px;
+          scroll-behavior: smooth;
+        }
+
+        .fluent-chat-messages::-webkit-scrollbar {
+          width: 5px;
+        }
+
+        .fluent-chat-messages::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        .fluent-chat-messages::-webkit-scrollbar-thumb {
+          background: rgba(78,166,255,.18);
+          border-radius: 10px;
+        }
+
+        .fluent-chat-messages::-webkit-scrollbar-thumb:hover {
+          background: rgba(78,166,255,.35);
+        }
+
+        .fluent-messages-inner {
+          display: flex;
+          flex-direction: column;
+          gap: 18px;
+        }
+
+        /* ── Message row ── */
+        .fluent-msg-row {
+          display: flex;
+          gap: 12px;
+          align-items: flex-start;
+          animation: fluentMsgIn .32s cubic-bezier(.16,1,.3,1) both;
+        }
+
+        .fluent-msg-user {
+          justify-content: flex-end;
+        }
+
+        .fluent-msg-ai {
+          justify-content: flex-start;
+        }
+
+        @keyframes fluentMsgIn {
+          from {
+            opacity: 0;
+            transform: translateY(8px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        /* ── AI Avatar ── */
+        .fluent-ai-avatar {
+          width: 48px;
+          height: 48px;
+          min-width: 48px;
+          border-radius: 50%;
+          background: linear-gradient(145deg, rgba(200,225,255,.55), rgba(175,210,255,.40));
+          border: 1.5px solid rgba(143,204,255,.50);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow:
+            0 2px 12px rgba(78,166,255,.18),
+            inset 0 1px 0 rgba(255,255,255,.70);
+          flex-shrink: 0;
+          margin-top: 2px;
+        }
+
+        .fluent-ai-avatar-icon {
+          width: 22px;
+          height: 22px;
+          color: #4EA6FF;
+          filter: drop-shadow(0 0 4px rgba(78,166,255,.35));
+        }
+
+        /* ── User Avatar ── */
+        .fluent-user-avatar {
+          width: 34px;
+          height: 34px;
+          min-width: 34px;
+          border-radius: 50%;
+          background: linear-gradient(145deg, #4EA6FF, #3d8de0);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          color: white;
+          margin-top: 2px;
+        }
+
+        /* ── Message Bubbles ── */
+        .fluent-msg-bubble {
+          max-width: 82%;
+          word-break: break-word;
+        }
+
+        .fluent-bubble-ai {
+          padding: 16px 20px;
+          border-radius: 20px;
+          background: linear-gradient(145deg, rgba(255,255,255,.82), rgba(248,252,255,.60));
+          border: 1px solid rgba(255,255,255,.90);
+          box-shadow:
+            0 3px 16px rgba(48,83,120,.08),
+            0 1px 4px rgba(48,83,120,.06),
+            inset 0 1px 0 rgba(255,255,255,.85);
+        }
+
+        .fluent-bubble-user {
+          padding: 14px 18px;
+          border-radius: 20px;
+          background: linear-gradient(145deg, #4EA6FF, #3a95ee);
+          color: white !important;
+          box-shadow:
+            0 3px 14px rgba(78,166,255,.28),
+            inset 0 1px 0 rgba(255,255,255,.18);
+        }
+
+        .fluent-bubble-user .fluent-msg-text,
+        .fluent-bubble-user .fluent-msg-text * {
+          color: white !important;
+        }
+
+        /* ── Message Text ── */
+        .fluent-msg-text {
+          font-size: 15px;
+          line-height: 1.6;
+          color: #18345F;
+        }
+
+        .fluent-msg-text p {
+          margin: 0 0 8px;
+        }
+
+        .fluent-msg-text p:last-child {
+          margin-bottom: 0;
+        }
+
+        .fluent-msg-text strong {
+          font-weight: 600;
+        }
+
+        .fluent-msg-text code {
+          background: rgba(78,166,255,.08);
+          padding: 2px 6px;
+          border-radius: 6px;
+          font-size: 13px;
+        }
+
+        .fluent-msg-text pre {
+          background: rgba(24,52,95,.06);
+          padding: 12px;
+          border-radius: 12px;
+          overflow-x: auto;
+          margin: 8px 0;
+        }
+
+        .fluent-msg-text ul, .fluent-msg-text ol {
+          padding-left: 20px;
+          margin: 8px 0;
+        }
+
+        .fluent-msg-text li {
+          margin-bottom: 4px;
+        }
+
+        .fluent-msg-text a {
+          color: #4EA6FF;
+          text-decoration: underline;
+        }
+
+        /* ── Typing indicator ── */
+        .fluent-typing {
+          display: flex;
+          gap: 5px;
+          align-items: center;
+          height: 24px;
+          padding: 4px 0;
+        }
+
+        .fluent-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: #8FCCFF;
+          animation: fluentBounce .9s ease-in-out infinite;
+        }
+
+        @keyframes fluentBounce {
+          0%, 80%, 100% { transform: translateY(0); opacity: .4; }
+          40% { transform: translateY(-8px); opacity: 1; }
+        }
+
+        /* ── Input Area ── */
+        .fluent-chat-input-area {
+          padding: 12px 18px 14px;
+          flex-shrink: 0;
+        }
+
+        .fluent-attach-preview {
+          margin-bottom: 10px;
+          position: relative;
+          display: inline-block;
+        }
+
+        .fluent-attach-img {
+          height: 64px;
+          width: auto;
+          border-radius: 12px;
+          border: 1px solid rgba(143,204,255,.30);
+          box-shadow: 0 2px 8px rgba(48,83,120,.10);
+          object-fit: cover;
+        }
+
+        .fluent-attach-remove {
+          position: absolute;
+          top: -6px;
+          right: -6px;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: #dc3c3c;
+          color: white;
+          border: 2px solid white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: transform .15s ease;
+        }
+
+        .fluent-attach-remove:hover {
+          transform: scale(1.15);
+        }
+
+        /* ── Input Capsule ── */
+        .fluent-input-capsule {
+          display: flex;
+          align-items: flex-end;
+          gap: 8px;
+          background: linear-gradient(145deg, rgba(255,255,255,.72), rgba(248,252,255,.55));
+          border: 1px solid rgba(255,255,255,.85);
+          border-radius: 22px;
+          padding: 8px 8px 8px 4px;
+          box-shadow:
+            0 4px 20px rgba(48,83,120,.08),
+            0 1px 6px rgba(65,110,160,.06),
+            inset 0 1px 0 rgba(255,255,255,.80);
+          transition: all .2s ease;
+        }
+
+        .fluent-input-capsule:focus-within {
+          border-color: rgba(78,166,255,.45);
+          box-shadow:
+            0 4px 20px rgba(48,83,120,.08),
+            0 1px 6px rgba(65,110,160,.06),
+            inset 0 1px 0 rgba(255,255,255,.80),
+            0 0 0 3px rgba(78,166,255,.12);
+        }
+
+        /* ── Paperclip button ── */
+        .fluent-paperclip-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 40px;
+          height: 40px;
+          min-width: 40px;
+          border: none;
+          background: transparent;
+          color: #4EA6FF;
+          cursor: pointer;
+          border-radius: 14px;
+          transition: all .15s ease;
+          flex-shrink: 0;
+        }
+
+        .fluent-paperclip-btn:hover:not(:disabled) {
+          background: rgba(78,166,255,.10);
+        }
+
+        .fluent-paperclip-btn:disabled {
+          opacity: .4;
+          cursor: not-allowed;
+        }
+
+        /* ── Textarea ── */
+        .fluent-textarea {
+          flex: 1;
+          min-height: 40px;
+          max-height: 200px;
+          padding: 10px 4px;
+          border: none;
+          background: transparent;
+          color: #18345F;
+          font-family: inherit;
+          font-size: 15px;
+          line-height: 1.5;
+          resize: none;
+          outline: none;
+        }
+
+        .fluent-textarea::placeholder {
+          color: #9CADC0;
+        }
+
+        .fluent-textarea:disabled {
+          opacity: .5;
+        }
+
+        /* ── Send button ── */
+        .fluent-send-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 52px;
+          height: 52px;
+          min-width: 52px;
+          border: 1px solid rgba(143,204,255,.35);
+          border-radius: 18px;
+          background: linear-gradient(145deg, rgba(248,252,255,.85), rgba(230,244,255,.65));
+          color: #4EA6FF;
+          cursor: pointer;
+          flex-shrink: 0;
+          transition: all .18s ease;
+          box-shadow:
+            0 2px 10px rgba(78,166,255,.14),
+            inset 0 1px 0 rgba(255,255,255,.75);
+        }
+
+        .fluent-send-btn:hover:not(:disabled) {
+          background: linear-gradient(145deg, rgba(240,250,255,.95), rgba(220,240,255,.80));
+          box-shadow:
+            0 4px 18px rgba(78,166,255,.22),
+            inset 0 1px 0 rgba(255,255,255,.85);
+          transform: translateY(-1px);
+        }
+
+        .fluent-send-btn:active:not(:disabled) {
+          transform: translateY(0) scale(.97);
+        }
+
+        .fluent-send-btn:disabled {
+          opacity: .35;
+          cursor: not-allowed;
+        }
+
+        /* ── Disclaimer ── */
+        .fluent-disclaimer {
+          text-align: center;
+          margin-top: 10px;
+          font-size: 11.5px;
+          color: #6E7F94;
+          letter-spacing: .01em;
+        }
+
+        /* ── Mobile overrides ── */
+        @media (max-width: 640px) {
+          .fluent-chat-root {
+            border-radius: 22px;
+          }
+
+          .fluent-chat-header {
+            padding: 12px 14px 6px;
+          }
+
+          .fluent-chat-messages {
+            padding: 6px 14px 12px;
+          }
+
+          .fluent-ai-avatar {
+            width: 40px;
+            height: 40px;
+            min-width: 40px;
+          }
+
+          .fluent-ai-avatar-icon {
+            width: 18px;
+            height: 18px;
+          }
+
+          .fluent-msg-bubble {
+            max-width: 88%;
+          }
+
+          .fluent-bubble-ai {
+            padding: 12px 16px;
+          }
+
+          .fluent-bubble-user {
+            padding: 10px 14px;
+          }
+
+          .fluent-chat-input-area {
+            padding: 8px 12px 10px;
+          }
+
+          .fluent-input-capsule {
+            border-radius: 18px;
+          }
+
+          .fluent-send-btn {
+            width: 46px;
+            height: 46px;
+            min-width: 46px;
+            border-radius: 15px;
+          }
+        }
+      `}</style>
     </div>
   );
 };
