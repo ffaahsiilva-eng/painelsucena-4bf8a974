@@ -159,7 +159,7 @@ function MiniBars() {
   );
 }
 
-export default function Dashboard() {
+export default function Index() {
   const navigate = useNavigate();
   const todayString = getBrazilNorthTodayString();
   const [selectedDate] = useState<Date>(() => {
