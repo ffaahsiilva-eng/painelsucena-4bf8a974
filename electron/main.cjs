@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain, session, shell, desktopCapturer } = require("electron");
 const path = require("path");
 
-const APP_URL = process.env.ELECTRON_APP_URL || "https://painelsucena.lovable.app";
+const APP_URL = process.env.ELECTRON_APP_URL || "https://www.sucena.shop";
 const WINDOW_TITLE = "Painel Sucena";
 const SESSION_PARTITION = "persist:painel-sucena-desktop";
 const VERSION_CHECK_INTERVAL_MS = 2_000;
