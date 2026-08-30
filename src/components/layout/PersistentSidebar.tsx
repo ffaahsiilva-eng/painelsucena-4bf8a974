@@ -171,7 +171,7 @@ export const PersistentSidebar = ({ children }: PersistentSidebarProps) => {
   return (
     <SidebarProvider defaultOpen={isAvatarBlocked ? false : !isMobile}>
       <div
-        className={`sucena-app w-full ${hasDesktopChrome ? "sucena-app--chrome" : "sucena-app--plain"} app-shell`}
+        className={hasDesktopChrome ? "app-shell-v6" : `sucena-app w-full sucena-app--plain app-shell`}
         data-has-global-bg="true"
         data-layout={layoutMode}
       >
@@ -184,35 +184,58 @@ export const PersistentSidebar = ({ children }: PersistentSidebarProps) => {
             playsInline
             preload="metadata"
             poster="/logo-sucena-pdf.png"
-            className="sucena-bg-photo object-cover"
+            className={hasDesktopChrome ? "app-bg-v6 object-cover" : "sucena-bg-photo object-cover"}
           />
         ) : (
           <div
-            className="sucena-bg-photo"
+            className={hasDesktopChrome ? "app-bg-v6" : "sucena-bg-photo"}
             style={{ backgroundImage: `url(${localBgUrl})` }}
           />
         )}
-        <div className="sucena-bg-overlay" />
-        <div className="sucena-bg-haze" />
+        
+        {hasDesktopChrome ? (
+          <div className="app-overlay-v6" />
+        ) : (
+          <>
+            <div className="sucena-bg-overlay" />
+            <div className="sucena-bg-haze" />
+          </>
+        )}
 
         {hasDesktopChrome && (
-          <div className={justCompletedTransition ? "animate-fade-in" : ""}>
+          <div className={`app-sidebar-v6 ${justCompletedTransition ? "animate-fade-in" : ""}`}>
             <AppSidebar lockedCollapsed={!!isAvatarBlocked} />
           </div>
         )}
 
-        <div
-          className={`sucena-main ${hasDesktopChrome ? "sucena-main--chrome" : "sucena-main--plain"} ${
-            justCompletedTransition ? "animate-fade-in" : ""
-          }`}
-        >
-          {hasDesktopChrome && !isAvatarBlocked && !isMobile && <TopNavHeader />}
-          {hasDesktopChrome && !isAvatarBlocked && isMobile && <MobileTopNav />}
+        {hasDesktopChrome && !isAvatarBlocked && !isMobile && (
+          <div className="app-topbar-v6">
+             <TopNavHeader />
+          </div>
+        )}
+        
+        {hasDesktopChrome && !isAvatarBlocked && isMobile && (
+          <MobileTopNav />
+        )}
 
-          <main className={`sucena-content ${hasDesktopChrome ? "sucena-content--chrome" : "sucena-content--plain"}`}>
-            {children}
-          </main>
-        </div>
+        {hasDesktopChrome ? (
+          <>
+            <main className={`app-main-v6 ${justCompletedTransition ? "animate-fade-in" : ""}`}>
+              {children}
+            </main>
+            <div className="app-footer-v6"></div>
+          </>
+        ) : (
+          <div
+            className={`sucena-main sucena-main--plain ${
+              justCompletedTransition ? "animate-fade-in" : ""
+            }`}
+          >
+            <main className="sucena-content sucena-content--plain">
+              {children}
+            </main>
+          </div>
+        )}
 
         {useDock && !isAuthPage && <DockNavigation />}
       </div>
