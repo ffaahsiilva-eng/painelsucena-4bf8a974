@@ -1,0 +1,25 @@
+{
+  "appId": "com.sucena.painel",
+  "productName": "Painel Sucena",
+  "directories": {
+    "output": "electron-installer"
+  },
+  "win": {
+    "target": "nsis",
+    "icon": "Sucenaicon/icon.ico"
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "deleteAppDataOnUninstall": false,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "Painel Sucena"
+  },
+  "files": [
+    "dist/**/*",
+    "electron/**/*",
+    "package.json"
+  ]
+}

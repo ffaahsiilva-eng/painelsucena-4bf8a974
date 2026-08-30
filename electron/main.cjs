@@ -1,161 +1,66 @@
 const { app, BrowserWindow, ipcMain, session, shell, desktopCapturer } = require("electron");
 const path = require("path");
+const http = require("http");
+const fs = require("fs");
 
-const APP_URL = process.env.ELECTRON_APP_URL || "https://www.sucena.shop";
 const WINDOW_TITLE = "Painel Sucena";
 const SESSION_PARTITION = "persist:painel-sucena-desktop";
-const VERSION_CHECK_INTERVAL_MS = 2_000;
-const NO_CACHE_HEADERS = {
-  "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
-  Pragma: "no-cache",
-  Expires: "0",
-  "X-Desktop-App": "electron",
-};
 
 let mainWindow = null;
-let currentAssetPath = null;
-let versionMonitor = null;
-let sessionConfigured = false;
 
-app.commandLine.appendSwitch("disable-http-cache");
+function startLocalServer() {
+  return new Promise((resolve) => {
+    const distPath = path.join(__dirname, "../dist");
+    
+    const server = http.createServer((req, res) => {
+      const reqUrl = req.url.split('?')[0];
+      let filePath = path.join(distPath, reqUrl);
+      
+      if (!filePath.startsWith(distPath)) {
+        res.writeHead(403);
+        return res.end();
+      }
 
-function headersToString(headers) {
-  return Object.entries(headers)
-    .map(([key, value]) => `${key}: ${value}`)
-    .join("\n");
-}
+      fs.stat(filePath, (err, stats) => {
+        if (err || !stats.isFile()) {
+          filePath = path.join(distPath, "index.html");
+        }
+        
+        fs.readFile(filePath, (err, data) => {
+          if (err) {
+            res.writeHead(404);
+            return res.end("Not found");
+          }
+          
+          const ext = path.extname(filePath).toLowerCase();
+          const mimeTypes = {
+            '.html': 'text/html',
+            '.js': 'text/javascript',
+            '.css': 'text/css',
+            '.json': 'application/json',
+            '.png': 'image/png',
+            '.jpg': 'image/jpeg',
+            '.svg': 'image/svg+xml',
+            '.ico': 'image/x-icon',
+            '.webp': 'image/webp',
+            '.woff2': 'font/woff2'
+          };
+          
+          res.writeHead(200, { "Content-Type": mimeTypes[ext] || "application/octet-stream" });
+          res.end(data);
+        });
+      });
+    });
 
-function buildPublishedUrl(reason = "startup") {
-  const url = new URL(APP_URL);
-  url.searchParams.set("desktop-shell", "electron");
-  url.searchParams.set("desktop-reason", reason);
-  url.searchParams.set("desktop-ts", `${Date.now()}`);
-  return url.toString();
-}
-
-function extractAssetPath(html) {
-  const assetMatch = html.match(/src="(\/assets\/[^\"]+\.js)"/i);
-  return assetMatch ? assetMatch[1] : null;
-}
-
-async function fetchPublishedAssetPath() {
-  const response = await fetch(buildPublishedUrl("version-probe"), {
-    method: "GET",
-    cache: "no-store",
-    headers: NO_CACHE_HEADERS,
-    redirect: "follow",
-  });
-
-  if (!response.ok) {
-    throw new Error(`Falha ao consultar versão publicada (${response.status})`);
-  }
-
-  const html = await response.text();
-  return extractAssetPath(html);
-}
-
-async function clearDesktopCaches(targetSession) {
-  await targetSession.clearCache();
-  await targetSession.clearStorageData({
-    storages: ["serviceworkers", "cachestorage"],
-  });
-}
-
-function configureDesktopSession(targetSession) {
-  if (sessionConfigured) return;
-  sessionConfigured = true;
-
-  targetSession.webRequest.onBeforeRequest((details, callback) => {
-    const requestUrl = details.url.toLowerCase();
-    const isServiceWorkerScript =
-      requestUrl.includes("/app-runtime-sw.js") || requestUrl.endsWith("/sw.js") || requestUrl.includes("/app-sw.js");
-
-    callback({ cancel: isServiceWorkerScript });
-  });
-
-  targetSession.webRequest.onBeforeSendHeaders((details, callback) => {
-    const requestUrl = details.url.toLowerCase();
-    const isBackendApi = requestUrl.includes(".supabase.co/") || requestUrl.includes("/functions/v1/");
-
-    if (isBackendApi) {
-      callback({ requestHeaders: details.requestHeaders });
-      return;
-    }
-
-    callback({
-      requestHeaders: {
-        ...details.requestHeaders,
-        ...NO_CACHE_HEADERS,
-      },
+    server.listen(0, "127.0.0.1", () => {
+      resolve(`http://127.0.0.1:${server.address().port}`);
     });
   });
-
-  targetSession.webRequest.onHeadersReceived((details, callback) => {
-    callback({
-      responseHeaders: {
-        ...details.responseHeaders,
-        "Cache-Control": [NO_CACHE_HEADERS["Cache-Control"]],
-        Pragma: [NO_CACHE_HEADERS.Pragma],
-        Expires: [NO_CACHE_HEADERS.Expires],
-      },
-    });
-  });
-}
-
-async function loadLatestPublished(reason = "startup") {
-  if (!mainWindow || mainWindow.isDestroyed()) return;
-
-  await mainWindow.loadURL(buildPublishedUrl(reason), {
-    extraHeaders: headersToString(NO_CACHE_HEADERS),
-  });
-}
-
-async function checkForPublishedUpdate(trigger = "interval") {
-  if (!mainWindow || mainWindow.isDestroyed() || mainWindow.webContents.isLoadingMainFrame()) {
-    return;
-  }
-
-  try {
-    const nextAssetPath = await fetchPublishedAssetPath();
-
-    if (!nextAssetPath) {
-      return;
-    }
-
-    if (!currentAssetPath) {
-      currentAssetPath = nextAssetPath;
-      return;
-    }
-
-    if (nextAssetPath !== currentAssetPath) {
-      currentAssetPath = nextAssetPath;
-      await clearDesktopCaches(mainWindow.webContents.session);
-      await loadLatestPublished(`publish-detected-${trigger}`);
-    }
-  } catch (error) {
-    console.error("Erro ao verificar atualização publicada:", error);
-  }
-}
-
-function startVersionMonitor() {
-  if (versionMonitor) {
-    clearInterval(versionMonitor);
-  }
-
-  versionMonitor = setInterval(() => {
-    void checkForPublishedUpdate("interval");
-  }, VERSION_CHECK_INTERVAL_MS);
 }
 
 async function createMainWindow() {
   const desktopSession = session.fromPartition(SESSION_PARTITION);
-  configureDesktopSession(desktopSession);
-  await clearDesktopCaches(desktopSession);
-  currentAssetPath = await fetchPublishedAssetPath().catch(() => null);
 
-  // Permite que getDisplayMedia (compartilhamento de tela do Jitsi)
-  // funcione no Electron retornando automaticamente a tela inteira.
-  // Sem isso, o seletor de tela do Chromium fica preso em "carregando".
   desktopSession.setDisplayMediaRequestHandler(
     (_request, callback) => {
       desktopCapturer
@@ -165,7 +70,6 @@ async function createMainWindow() {
             callback({});
             return;
           }
-          // Seleciona a tela principal por padrão
           const screenSource = sources.find((s) => s.id.startsWith("screen:")) || sources[0];
           callback({ video: screenSource, audio: "loopback" });
         })
@@ -174,7 +78,6 @@ async function createMainWindow() {
     { useSystemPicker: true },
   );
 
-  // Concede permissões de mídia (camera/mic/display) sem prompt
   desktopSession.setPermissionRequestHandler((_webContents, permission, callback) => {
     const allowed = ["media", "display-capture", "camera", "microphone", "fullscreen"];
     callback(allowed.includes(permission));
@@ -207,20 +110,11 @@ async function createMainWindow() {
 
   mainWindow.webContents.on("before-input-event", (event, input) => {
     if (input.type !== "keyDown") return;
-
     const key = input.key.toLowerCase();
     if (key === "f5" || (input.control && key === "r")) {
       event.preventDefault();
-      void clearDesktopCaches(mainWindow.webContents.session).then(() => loadLatestPublished("manual-refresh"));
+      mainWindow.reload();
     }
-  });
-
-  mainWindow.on("focus", () => {
-    void checkForPublishedUpdate("focus");
-  });
-
-  mainWindow.on("show", () => {
-    void checkForPublishedUpdate("show");
   });
 
   mainWindow.on("closed", () => {
@@ -231,24 +125,13 @@ async function createMainWindow() {
     mainWindow.show();
   });
 
-  mainWindow.webContents.on("did-fail-load", (_event, errorCode, errorDescription, validatedURL, isMainFrame) => {
-    if (!isMainFrame) return;
-    console.error("Falha ao carregar a aplicação desktop:", { errorCode, errorDescription, validatedURL });
-    setTimeout(() => {
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        void loadLatestPublished("retry");
-      }
-    }, 1500);
-  });
-
-  await loadLatestPublished("startup");
-  startVersionMonitor();
+  const localUrl = await startLocalServer();
+  mainWindow.loadURL(localUrl);
 }
 
 ipcMain.handle("desktop:reload-latest", async () => {
   if (!mainWindow || mainWindow.isDestroyed()) return false;
-  await clearDesktopCaches(mainWindow.webContents.session);
-  await loadLatestPublished("renderer-request");
+  mainWindow.reload();
   return true;
 });
 
@@ -268,22 +151,17 @@ ipcMain.handle("desktop:list-screen-sources", async () => {
   }));
 });
 
-app.whenReady().then(async () => {
-  await createMainWindow();
+app.whenReady().then(() => {
+  createMainWindow();
 
-  app.on("activate", async () => {
+  app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      await createMainWindow();
+      createMainWindow();
     }
   });
 });
 
 app.on("window-all-closed", () => {
-  if (versionMonitor) {
-    clearInterval(versionMonitor);
-    versionMonitor = null;
-  }
-
   if (process.platform !== "darwin") {
     app.quit();
   }
