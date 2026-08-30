@@ -409,3 +409,12 @@ html[data-layout="modern"].dark .modern-text-black {
 .force-black-text * {
   color: #000000 !important;
 }
+
+/* Força o ícone de recolher/expandir sidebar e afins na cor preta no layout moderno */
+html[data-layout="modern"] button[data-sidebar="trigger"] svg,
+html[data-layout="modern"].dark button[data-sidebar="trigger"] svg,
+html[data-layout="modern"] [data-sidebar="rail"] svg,
+html[data-layout="modern"] .sucena-sidebar-collapse svg {
+  stroke: #000000 !important;
+  color: #000000 !important;
+}

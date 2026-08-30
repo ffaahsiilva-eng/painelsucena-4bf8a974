@@ -261,7 +261,7 @@ export default function SelecaoVeiculo() {
     const helperPlaceholder = getHelperPlaceholder(fixedVehicle.equipment_type);
 
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="h-[100dvh] overflow-hidden bg-background flex flex-col">
         {/* Header */}
         <header className="sticky top-0 z-10 bg-card/95  border-b shadow-sm">
           <div className="flex items-center justify-between p-3">
@@ -366,7 +366,7 @@ export default function SelecaoVeiculo() {
 
   // Default UI for drivers without fixed vehicle
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-[100dvh] overflow-hidden bg-background flex flex-col">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-card/95  border-b shadow-sm safe-area-inset-top">
         <div className="flex items-center justify-between p-3">

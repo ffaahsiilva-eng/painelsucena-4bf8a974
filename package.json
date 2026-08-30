@@ -96,6 +96,7 @@
     "zod": "3.23.8"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^8.5.0",
     "@eslint/js": "^9.32.0",
     "@napi-rs/canvas": "^0.1.100",

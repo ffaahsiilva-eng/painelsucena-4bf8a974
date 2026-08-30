@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { NewsTicker } from "@/components/footer/NewsTicker";
-import { ChevronDown, Pencil, Check, X, Save } from "lucide-react";
+import { ChevronDown, Pencil, Check, X, Save, LogOut } from "lucide-react";
 import chatIcon from "@/assets/chat-icon.png.asset.json";
 import { useIsAdmin } from "@/hooks/useUserRole";
 import { useAuth } from "@/hooks/useAuth";
@@ -60,19 +60,7 @@ export const OnlineUsersFooter = ({ onUserClick, onToggleSidebar, isSidebarOpen,
       )}
 
 
-      {/* Mobile minimize toggle */}
-      <button
-        onClick={() => setIsMinimized(!isMinimized)}
-        className={cn(
-          "md:hidden absolute left-1/2 -translate-x-1/2 z-50 flex items-center justify-center text-muted-foreground hover:text-foreground transition-all",
-          isMinimized
-            ? "bottom-2 w-11 h-11 rounded-full bg-card border border-border shadow-lg"
-            : "-top-5 w-10 h-5 rounded-t-lg bg-card border border-b-0 border-border"
-        )}
-        aria-label={isMinimized ? "Expandir barra" : "Minimizar barra"}
-      >
-        <ChevronDown className={cn("h-4 w-4 transition-transform", isMinimized && "rotate-180")} />
-      </button>
+
 
       {!isMinimized && (
         <div className="flex w-full min-w-0 items-center gap-1 md:gap-3 px-2 md:px-4 py-1 overflow-visible">
@@ -84,8 +72,21 @@ export const OnlineUsersFooter = ({ onUserClick, onToggleSidebar, isSidebarOpen,
                 </TooltipTrigger>
               </Tooltip>
             </TooltipProvider>
-
           </div>
+          
+          <div className="flex md:hidden shrink-0 items-center">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onSignOut?.();
+              }}
+              className="sucena-footer-chat relative p-1.5 rounded-full transition-all group flex items-center justify-center bg-red-500/10 hover:bg-red-500/20"
+              title="Sair"
+            >
+              <LogOut className="h-5 w-5 text-red-500" />
+            </button>
+          </div>
+
           <div className="flex-1 min-w-0 overflow-hidden flex items-center justify-end gap-4">
           </div>
           <div className="flex shrink-0 items-center gap-2">

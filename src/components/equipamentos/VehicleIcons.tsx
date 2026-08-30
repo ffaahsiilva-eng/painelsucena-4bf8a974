@@ -31,15 +31,24 @@ export const VehicleIcon: React.FC<VehicleIconProps> = ({
   const { width, height } = sizeConfig[size];
   const baseClass = `${isStopped ? 'opacity-60' : ''} ${className}`;
 
-  if (imageUrl) {
+  const [imgError, setImgError] = React.useState(false);
+
+  React.useEffect(() => {
+    setImgError(false);
+  }, [imageUrl]);
+
+  const isValidUrl = !imgError && typeof imageUrl === 'string' && (imageUrl.startsWith('http') || imageUrl.startsWith('data:'));
+
+  if (isValidUrl) {
     return (
       <img loading="lazy" decoding="async"
-        src={imageUrl}
+        src={imageUrl as string}
         alt="Equipamento"
         width={width * 3}
         height={height * 3}
         className={`${baseClass} object-contain`}
         style={{ imageRendering: 'auto', background: 'transparent' }}
+        onError={() => setImgError(true)}
       />
     );
   }

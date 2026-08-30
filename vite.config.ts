@@ -210,7 +210,7 @@ export default defineConfig(({ mode }) => ({
       },
     },
     sourcemap: false,
-    assetsInlineLimit: 4096,
+    assetsInlineLimit: 200000,
   },
 }));
 
