@@ -24,10 +24,10 @@
 
 .dgv4-heading h1 {
   margin: 0;
-  font-family: 'Cartefield', sans-serif !important;
+  font-family: 'TarmilesAction', sans-serif !important;
   font-size: clamp(44px, 3.35vw, 56px);
   line-height: 0.98;
-  font-weight: 400;
+  font-weight: normal !important;
   letter-spacing: -0.045em;
   color: #000000 !important;
 }

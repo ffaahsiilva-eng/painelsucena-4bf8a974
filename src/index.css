@@ -28,8 +28,8 @@
 }
 
 @font-face {
-  font-family: 'Weghorst';
-  src: url('/__l5e/assets-v1/3f9102d2-ee8d-45cc-af0e-fc593f30557e/TarmilesAction.otf') format('opentype');
+  font-family: 'TarmilesAction';
+  src: url('/__l5e/assets-v1/9406d1b6-e8b4-4fc3-94fe-a49554a101e2/TarmilesAction.otf') format('opentype');
   font-display: swap;
 }
 
@@ -48,11 +48,11 @@
 }
 
 .font-weghorst {
-  font-family: 'Weghorst', sans-serif;
+  font-family: 'TarmilesAction', sans-serif;
 }
 
 h1, .dashboard-title {
-  font-family: 'Cartefield', sans-serif !important;
+  font-family: 'TarmilesAction', sans-serif !important;
   font-weight: normal !important;
 }
 

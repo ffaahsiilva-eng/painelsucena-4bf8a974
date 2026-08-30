@@ -55,6 +55,7 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
   const [attachedImage, setAttachedImage] = useState<{ url: string; base64: string; mimeType: string } | null>(null);
   
   const [userId, setUserId] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
   const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null);
   const [isHistoryLoaded, setIsHistoryLoaded] = useState(false);
 
@@ -62,21 +63,29 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
   
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
-      const defaultMsg = [{ id: "1", role: "model" as const, text: "Olá! Sou a Inteligência Artificial do painel.\nComo posso ajudar você hoje?" }];
       if (data.user) {
         setUserId(data.user.id);
         
-        // Fetch user avatar
+        // Fetch user avatar and name
         const { data: profile } = await supabase
           .from("profiles")
-          .select("avatar_url")
+          .select("avatar_url, full_name")
           .eq("user_id", data.user.id)
           .maybeSingle();
+          
+        let currentUserName = null;
+        if (profile?.full_name) {
+          currentUserName = profile.full_name.split(' ')[0];
+          setUserName(currentUserName);
+        }
           
         if (profile?.avatar_url) {
           const resolved = await resolveStorageUrl(profile.avatar_url);
           setUserAvatarUrl(resolved);
         }
+
+        const defaultMsgText = currentUserName ? `Olá, ${currentUserName}! Sou a Inteligência Artificial do painel.\nComo posso ajudar você hoje?` : "Olá! Sou a Inteligência Artificial do painel.\nComo posso ajudar você hoje?";
+        const defaultMsg = [{ id: "1", role: "model" as const, text: defaultMsgText }];
 
         const saved = localStorage.getItem(`sucena_ai_history_${data.user.id}`);
         if (saved) {
@@ -89,6 +98,7 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
           setMessages(defaultMsg);
         }
       } else {
+        const defaultMsg = [{ id: "1", role: "model" as const, text: "Olá! Sou a Inteligência Artificial do painel.\nComo posso ajudar você hoje?" }];
         setMessages(defaultMsg);
       }
       setIsHistoryLoaded(true);
@@ -214,29 +224,7 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
         return;
       }
 
-      // Check cache before hitting API
-      const cacheKey = `ai_cache_${userMessageText.toLowerCase().trim()}`;
-      const cachedResponse = localStorage.getItem(cacheKey);
-      
-      if (cachedResponse) {
-        try {
-          const parsedCache = JSON.parse(cachedResponse);
-          // Expiration of 10 minutes (600,000 ms)
-          if (Date.now() - parsedCache.timestamp < 600000) {
-            setMessages((prev) => 
-              prev.map((msg) => 
-                msg.id === aiMessageId 
-                  ? { ...msg, text: parsedCache.text + "\n\n*(Resposta rápida do cache)*", isStreaming: false } 
-                  : msg
-              )
-            );
-            setIsLoading(false);
-            return;
-          }
-        } catch (e) {
-          // ignore cache errors
-        }
-      }
+
 
       // Assemble history correctly for Gemini API
       const contents: any[] = [];
@@ -258,7 +246,7 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
         role: "user",
         parts: [
           {
-            text: "Você é um assistente virtual integrado ao painel SucenaPainel. Você possui duas funções principais:\n1. Responder dúvidas e consultar informações reais do banco de dados do painel chamando a ferramenta 'query_database'.\n2. Ajudar de forma geral como uma IA avançada em qualquer outro assunto ou dúvida que o usuário tiver fora do sistema.\n\nDICA DE OURO: Para evitar bloqueios de limite de cota, NUNCA faça queries para descobrir as colunas. Use as seguintes estruturas conhecidas:\n- Tabela `equipment`: id, name, type, equipment_type, status, plate, brand, environment\n- Tabela `equipment_movements`: id, equipment_name, exit_reason, environment, created_at, created_by\n- Tabela `profiles`: id, full_name, cargo, environment\n- Tabela `rh_efetivo`: id, colaboradores (coluna JSONB contendo um array de colaboradores com nome, aso (inclui validade), funcao, etc), environment\n\nATENÇÃO MÁXIMA 1: Faça APENAS UMA chamada de função por vez. Se a consulta retornar vazia ([]), NÃO tente fazer outra busca na mesma hora, apenas responda 'Não encontrei dados'. NUNCA faça consultas em loop.\nATENÇÃO MÁXIMA 2: Você TEM PERMISSÃO TOTAL para acessar e informar qualquer dado do RH (como aniversariantes, lista de funcionários da tabela rh_efetivo, cargos, etc.). Apenas negue acesso e peça para contatar o administrador caso seja estritamente um dado financeiro ou senha.\n\nSeja amigável, criativo ao ajudar com assuntos gerais e sempre responda em pt-br."
+            text: `Você é um assistente virtual integrado ao painel SucenaPainel. Você está conversando neste momento com o usuário logado no sistema: ${userName || 'Usuário'}. Chame-o pelo nome e seja prestativo.\n\nINFORMAÇÃO TEMPORAL IMPORTANTE:\nHoje é ${new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} (Formato ISO: ${new Date().toISOString().split('T')[0]}). Sempre use esta data atual como referência absoluta para calcular "ontem", "hoje", "amanhã", "segunda-feira passada", etc.\n\nVocê possui duas funções principais:\n1. Responder dúvidas e consultar informações reais do banco de dados do painel chamando a ferramenta 'query_database'.\n2. Ajudar de forma geral como uma IA avançada em qualquer outro assunto ou dúvida que o usuário tiver fora do sistema.\n\nDICA DE OURO: Você TEM PERMISSÃO TOTAL para acessar TODAS as tabelas do sistema, como: desvios, equipment, rh_efetivo, planejamento_metas, reuniões, vistorias, dds_schedule, instacena_posts, etc. Se o usuário pedir informações sobre "desvios", você DEVE chamar a ferramenta 'query_database' na tabela "desvios". Jamais diga que não tem permissão para acessar algo do painel, apenas busque.\n\nPara evitar bloqueios de limite de cota, NUNCA faça queries para descobrir as colunas. Use as seguintes estruturas conhecidas:\n- Tabela \`desvios\`: id, description, status (ex: Aberto, Concluído, Em Andamento), priority, due_date, created_by_name, responsible_name, tags, instruction, correction, environment\n- Tabela \`equipment\`: id, name, type, equipment_type, status, plate, brand, environment\n- Tabela \`equipment_movements\`: id, equipment_name, exit_reason, environment, created_at, created_by\n- Tabela \`profiles\`: id, full_name, cargo, environment\n- Tabela \`rh_efetivo\`: id, colaboradores (coluna JSONB contendo array de funcionários com nome, aso, funcao), environment\n- Tabela \`dds_schedule\` (buscar SEMPRE usando select="*, profiles(full_name)"): id, scheduled_date, theme, external_presenter_name, presenter_user_id. ATENÇÃO: Para saber quem é o Apresentador, se \`external_presenter_name\` estiver vazio, o nome correto estará dentro do objeto \`profiles.full_name\`. Se ambos existirem, dê preferência ao \`profiles.full_name\`.\n- Tabela \`instacena_posts\` (feed de fotos, rede social interna Instacena, DDS mensal ou o que foi postado no dia): id, content, created_at, user_name, environment, image_urls\n\nATENÇÃO MÁXIMA 1: Tente fazer buscas amplas (ex: não filtre tanto no \`match\`, traga mais resultados e filtre você mesmo). Faça APENAS UMA chamada de função por vez. Se a consulta retornar vazia ([]), NÃO tente fazer outra busca na mesma hora, apenas responda 'Não encontrei dados'. NUNCA faça consultas em loop.\nATENÇÃO MÁXIMA 2: Você TEM PERMISSÃO TOTAL para acessar e informar qualquer dado do RH, Desvios ou Equipamentos. Apenas negue acesso e peça para contatar o administrador caso seja estritamente um dado financeiro ou senha de acesso.\n\nREGRAS DE FORMATAÇÃO E EXIBIÇÃO:\n1. NUNCA use tabelas em Markdown (ex: \`| Coluna |\`) nas suas respostas, pois elas quebram a interface do chat. Formate as informações em texto corrido estruturado com quebras de linha, bullet points e emojis.\n2. Se a consulta retornar APENAS um UUID de usuário sem o nome, NUNCA mostre o UUID bruto para o usuário. Faça uma nova consulta na tabela \`profiles\` para obter o nome real da pessoa, ou omita o ID, mas mostre apenas o PRIMEIRO NOME dela se encontrar. Se você já fez o join (ex: profiles(full_name)), pegue o nome de lá.\n3. Se você for enviar um link de imagem ou foto da tabela, NUNCA envie usando a sintaxe de imagem do markdown \`![foto](url)\`. Em vez disso, envie como um link de texto simples: \`[Visualizar Imagem](url)\`.\n\nCALENDÁRIO HYDRO 2026 (Use isso se perguntarem sobre feriados ou calendário):\n- Jan: 01 (Confraternização)\n- Fev: 16-17 (Carnaval), 18 (Cinzas - Compensado)\n- Abr: 03 (Paixão), 20 (Compensado), 21 (Tiradentes)\n- Mai: 01 (Trabalhador)\n- Jun: 04 (Corpus Christi), 05 (Compensado)\n- Set: 07 (Independência)\n- Out: 12 (N. Sra. Aparecida)\n- Nov: 02 (Finados), 15 (República), 20 (Consciência Negra)\n- Dez: 03 (São Francisco Xavier), 04 (Compensado), 25 (Natal)\n\nSeja amigável, criativo ao ajudar com assuntos gerais e sempre responda em pt-br.`
           }
         ]
       };
@@ -431,8 +419,8 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
         throw new Error(`Sistema indisponível no momento. (Detalhe: ${lastError?.error?.message || lastError?.message || ''})`);
       };
 
-      // Limitado a 3 loops para não estourar a cota
-      while (!isFunctionCallDone && loops < 3) {
+      // Limitado a 5 loops para não estourar a cota mas permitir queries extras
+      while (!isFunctionCallDone && loops < 5) {
         loops++;
         const data = await fetchWithFallback({
           contents,
@@ -463,14 +451,24 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
             try {
               const table = fnCall.args.table;
               const select = fnCall.args.select || '*';
-              const limit = Math.min(fnCall.args.limit || 15, 50); // limit max 50
+              const limit = Math.min(fnCall.args.limit || 30, 100); // limit max 100
               const match = fnCall.args.match || {};
               
               let query = supabase.from(table).select(select);
               
               if (match && typeof match === 'object') {
                 for (const [k, v] of Object.entries(match)) {
-                  query = query.eq(k, v);
+                  if (typeof v === 'string') {
+                    const isDate = /^\d{4}-\d{2}-\d{2}(T.*)?$/.test(v);
+                    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+                    if (isDate || isUUID || k === 'status' || k === 'environment' || k.includes('date') || k.includes('id')) {
+                      query = query.eq(k, v);
+                    } else {
+                      query = query.ilike(k, `%${v}%`);
+                    }
+                  } else {
+                    query = query.eq(k, v);
+                  }
                 }
               }
               
@@ -478,10 +476,41 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
               
               if (qError) throw qError;
               
-              let dataStr = JSON.stringify(qData);
-              if (dataStr.length > 12000) {
-                console.warn("Payload very large, truncating to 12000 chars to save tokens...");
-                dataStr = dataStr.substring(0, 12000) + '... [TRUNCATED]';
+              let cleanData = qData;
+              if (Array.isArray(qData)) {
+                cleanData = qData.map((item: any) => {
+                  const { user_avatar_url, user_avatar, ...rest } = item;
+                  
+                  // Try to resolve any photo or image field to a full public URL
+                  // The bucket is 'desvios' for the desvios table, otherwise usually 'site-assets'
+                  const bucketName = table === 'desvios' ? 'desvios' : 'site-assets';
+
+                  for (const key of Object.keys(rest)) {
+                    const val = rest[key];
+                    if (val && typeof val === 'string' && (key.includes('photo') || key.includes('image') || key.includes('url'))) {
+                      if (!val.startsWith('http')) {
+                        const { data: pubData } = supabase.storage.from(bucketName).getPublicUrl(val);
+                        if (pubData && pubData.publicUrl) {
+                          rest[key] = pubData.publicUrl;
+                        }
+                      }
+                    } else if (val && Array.isArray(val) && (key.includes('image') || key.includes('photo'))) {
+                      rest[key] = val.map((v: any) => {
+                        if (typeof v === 'string' && !v.startsWith('http')) {
+                          return supabase.storage.from(bucketName).getPublicUrl(v).data.publicUrl;
+                        }
+                        return v;
+                      });
+                    }
+                  }
+                  
+                  return rest;
+                });
+              }
+              let dataStr = JSON.stringify(cleanData);
+              if (dataStr.length > 5000) {
+                console.warn("Payload very large, truncating to 5000 chars to save tokens...");
+                dataStr = dataStr.substring(0, 5000) + '... [TRUNCATED]';
               }
               
               dbResult = { success: true, data: dataStr, count: qData?.length };
@@ -512,17 +541,11 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
         }
       }
 
-      if (!finalReply && loops >= 8) {
-        finalReply = "Desculpe, precisei analisar muitas tabelas e o limite de consultas consecutivas foi atingido.";
+      if (!finalReply) {
+        finalReply = "Desculpe, precisei de muito tempo para analisar os dados ou ocorreu uma falha de conexão com a IA. Pode tentar perguntar novamente de outra forma?";
       }
 
-      // Save to cache if it's a valid answer
-      if (finalReply && !finalReply.includes("Não encontrei dados") && !finalReply.includes("Desculpe") && !finalReply.includes("Ocorreu um erro") && !finalReply.includes("administrador")) {
-        localStorage.setItem(cacheKey, JSON.stringify({
-          text: finalReply,
-          timestamp: Date.now()
-        }));
-      }
+
 
       // Atualiza a interface com a resposta final
       setMessages((prev) => 
@@ -588,7 +611,8 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
   };
 
   const clearChat = () => {
-    setMessages([{ id: Date.now().toString(), role: "model", text: "Histórico limpo. Como posso ajudar?" }]);
+    const defaultText = userName ? `Histórico limpo. Como posso ajudar, ${userName}?` : "Histórico limpo. Como posso ajudar?";
+    setMessages([{ id: Date.now().toString(), role: "model", text: defaultText }]);
   };
 
   return (
@@ -624,8 +648,8 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
               style={{ animationDelay: `${Math.min(idx * 40, 200)}ms` }}
             >
               {message.role === "model" && (
-                <div className="fluent-ai-avatar">
-                  <Sparkles className="fluent-ai-avatar-icon text-blue-500" />
+                <div className="w-11 h-11 min-w-[44px] flex items-center justify-center flex-shrink-0 mt-1">
+                  <img src="/robot-ia.png?v=4" alt="IA" className="w-full h-full object-contain drop-shadow-sm scale-[1.15]" />
                 </div>
               )}
 

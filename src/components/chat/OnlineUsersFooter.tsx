@@ -94,9 +94,10 @@ export const OnlineUsersFooter = ({ onUserClick, onToggleSidebar, isSidebarOpen,
                 e.stopPropagation();
                 window.dispatchEvent(new Event("toggle-ia-chat"));
               }}
-              className="sucena-footer-chat relative p-1 rounded-full transition-all group"
+              className="sucena-footer-chat relative p-1 rounded-full transition-all group flex items-center gap-1.5"
               title="Assistente IA"
             >
+              <span className="text-white font-semibold text-xs whitespace-nowrap">Assistente IA</span>
               <svg viewBox="0 0 24 24" className={cn(
                 "w-6 h-6 object-contain cursor-pointer group-hover:scale-110 transition-transform"
               )}>

@@ -97,10 +97,12 @@ export const PersistentSidebar = ({ children }: PersistentSidebarProps) => {
   }, [user]);
 
   const DEFAULT_BG_URL =
-    "https://images.unsplash.com/photo-1542224566-6e85f2e6772f?auto=format&fit=crop&w=2560&q=80";
+    "https://images.unsplash.com/photo-1542224566-6e85f2e6772f?auto=format&fit=crop&w=1920&q=60";
   const cachedBgUrl = localStorage.getItem("sucena_global_bg_url");
   const globalBgUrl = settings?.global_background_url || cachedBgUrl || DEFAULT_BG_URL;
   const isVideoBg = /\.(mp4|webm|ogg|mov|m4v)(\?|$)/i.test(globalBgUrl);
+  
+  const [localBgUrl, setLocalBgUrl] = useState<string>(globalBgUrl);
 
   useEffect(() => {
     if (settings?.global_background_url) {
@@ -108,13 +110,52 @@ export const PersistentSidebar = ({ children }: PersistentSidebarProps) => {
     }
   }, [settings?.global_background_url]);
 
+  useEffect(() => {
+    let isMounted = true;
+    const fetchAndCacheBg = async () => {
+      try {
+        if (!globalBgUrl || isVideoBg) {
+          if (isMounted) setLocalBgUrl(globalBgUrl);
+          return;
+        }
+        
+        if ('caches' in window) {
+          const cache = await caches.open('sucena-bg-cache-v1');
+          const cachedResponse = await cache.match(globalBgUrl);
+          
+          if (cachedResponse) {
+            const blob = await cachedResponse.blob();
+            if (isMounted) setLocalBgUrl(URL.createObjectURL(blob));
+            return;
+          }
+
+          const response = await fetch(globalBgUrl, { mode: 'cors' });
+          if (response.ok) {
+            await cache.put(globalBgUrl, response.clone());
+            const blob = await response.blob();
+            if (isMounted) setLocalBgUrl(URL.createObjectURL(blob));
+          } else {
+            if (isMounted) setLocalBgUrl(globalBgUrl);
+          }
+        } else {
+          if (isMounted) setLocalBgUrl(globalBgUrl);
+        }
+      } catch (error) {
+        console.warn("Could not cache background image, using normal URL", error);
+        if (isMounted) setLocalBgUrl(globalBgUrl);
+      }
+    };
+    fetchAndCacheBg();
+    return () => { isMounted = false; };
+  }, [globalBgUrl, isVideoBg]);
+
   if (!layoutReady) {
     return (
       <div className="sucena-app w-full app-shell" data-has-global-bg="true" data-layout={layoutMode}>
         {isVideoBg ? (
-          <video src={globalBgUrl} autoPlay loop muted playsInline preload="metadata" className="sucena-bg-photo object-cover" />
+          <video src={localBgUrl} autoPlay loop muted playsInline preload="metadata" className="sucena-bg-photo object-cover" />
         ) : (
-          <div className="sucena-bg-photo" style={{ backgroundImage: `url(${globalBgUrl})` }} />
+          <div className="sucena-bg-photo" style={{ backgroundImage: `url(${localBgUrl})` }} />
         )}
         <div className="sucena-bg-overlay" />
         <div className="sucena-bg-haze" />
@@ -136,7 +177,7 @@ export const PersistentSidebar = ({ children }: PersistentSidebarProps) => {
       >
         {isVideoBg ? (
           <video
-            src={globalBgUrl}
+            src={localBgUrl}
             autoPlay
             loop
             muted
@@ -148,7 +189,7 @@ export const PersistentSidebar = ({ children }: PersistentSidebarProps) => {
         ) : (
           <div
             className="sucena-bg-photo"
-            style={{ backgroundImage: `url(${globalBgUrl})` }}
+            style={{ backgroundImage: `url(${localBgUrl})` }}
           />
         )}
         <div className="sucena-bg-overlay" />
