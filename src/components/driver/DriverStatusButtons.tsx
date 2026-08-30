@@ -413,9 +413,12 @@ export function DriverStatusButtons() {
         // Optimistic update
         queryClient.setQueryData(["equipment"], (old: any) => {
           if (!old) return old;
-          return old.map((eq: any) =>
+          const newData = old.map((eq: any) =>
             eq.id === selectedVehicleId ? { ...eq, stop_reason: "end_of_shift", stop_start_time: now } : eq
           );
+          const env = localStorage.getItem("selected_environment") ?? sessionStorage.getItem("selected_environment");
+          localStorage.setItem(`cached_equipment_${env || "default"}`, JSON.stringify(newData));
+          return newData;
         });
       }
 
@@ -756,9 +759,12 @@ export function DriverStatusButtons() {
         // Optimistic update
         queryClient.setQueryData(["equipment"], (old: any) => {
           if (!old) return old;
-          return old.map((eq: any) =>
+          const newData = old.map((eq: any) =>
             eq.id === selectedVehicleId ? { ...eq, stop_reason: "none", stop_start_time: null } : eq
           );
+          const env = localStorage.getItem("selected_environment") ?? sessionStorage.getItem("selected_environment");
+          localStorage.setItem(`cached_equipment_${env || "default"}`, JSON.stringify(newData));
+          return newData;
         });
       }
 
@@ -928,9 +934,12 @@ export function DriverStatusButtons() {
       // Optimistic update
       queryClient.setQueryData(["equipment"], (old: any) => {
         if (!old) return old;
-        return old.map((eq: any) =>
+        const newData = old.map((eq: any) =>
           eq.id === selectedVehicleId ? { ...eq, stop_reason: newStatus, stop_start_time: newStatus !== "none" ? now : null } : eq
         );
+        const env = localStorage.getItem("selected_environment") ?? sessionStorage.getItem("selected_environment");
+        localStorage.setItem(`cached_equipment_${env || "default"}`, JSON.stringify(newData));
+        return newData;
       });
 
       await commitDriverAction(clientActionId);
