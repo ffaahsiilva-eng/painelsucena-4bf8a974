@@ -20,8 +20,11 @@
   z-index: -30 !important;
   background-size: cover !important;
   background-position: center !important;
-  filter: brightness(1.02) contrast(.84) saturate(.64) !important;
   pointer-events: none !important;
+}
+
+[data-layout="modern"] .app-bg-v6 {
+  filter: brightness(1.02) contrast(.84) saturate(.64) !important;
 }
 
 .app-overlay-v6 {
@@ -29,6 +32,9 @@
   inset: 0 !important;
   z-index: -20 !important;
   pointer-events: none !important;
+}
+
+[data-layout="modern"] .app-overlay-v6 {
   background:
     linear-gradient(
       100deg,
@@ -89,7 +95,10 @@
   bottom: 0 !important;
   height: var(--footer-h) !important;
   z-index: 20 !important;
+  box-shadow: none !important;
+}
 
+[data-layout="modern"] .app-footer-v6 {
   background:
     linear-gradient(
       180deg,
@@ -100,7 +109,6 @@
   border-top: 1px solid rgba(255,255,255,.15) !important;
   backdrop-filter: blur(15px) saturate(108%) !important;
   -webkit-backdrop-filter: blur(15px) saturate(108%) !important;
-  box-shadow: none !important;
 }
 
 .app-footer-v6::before,
@@ -126,8 +134,7 @@
   z-index: 10 !important;
 }
 
-.dashboard-glass-v4 h1 {
-  font-family: Inter, Geist, Manrope, system-ui, sans-serif !important;
+[data-layout="modern"] .dashboard-glass-v4 h1 {
   font-size: clamp(44px,3.35vw,56px) !important;
   font-weight: 400 !important;
   letter-spacing: -.045em !important;
@@ -135,11 +142,11 @@
   color: #2c3032 !important;
 }
 
-.dashboard-glass-v4 .dgv4-grid {
+[data-layout="modern"] .dashboard-glass-v4 .dgv4-grid {
   gap: 22px !important;
 }
 
-.dashboard-glass-v4 .dgv4-card {
+[data-layout="modern"] .dashboard-glass-v4 .dgv4-card {
   background:
     linear-gradient(
       145deg,
@@ -172,31 +179,31 @@
     bottom: calc(var(--footer-h) + 4px) !important;
   }
 
-  .dashboard-glass-v4 .dgv4-heading {
+  [data-layout="modern"] .dashboard-glass-v4 .dgv4-heading {
     margin-bottom: 18px !important;
   }
 
-  .dashboard-glass-v4 .dgv4-grid {
+  [data-layout="modern"] .dashboard-glass-v4 .dgv4-grid {
     gap: 18px !important;
   }
 
-  .dashboard-glass-v4 .dgv4-weather {
+  [data-layout="modern"] .dashboard-glass-v4 .dgv4-weather {
     min-height: 255px !important;
   }
 
-  .dashboard-glass-v4 .dgv4-employees {
+  [data-layout="modern"] .dashboard-glass-v4 .dgv4-employees {
     min-height: 195px !important;
   }
 
-  .dashboard-glass-v4 .dgv4-progress {
+  [data-layout="modern"] .dashboard-glass-v4 .dgv4-progress {
     min-height: 335px !important;
   }
 
-  .dashboard-glass-v4 .dgv4-small {
+  [data-layout="modern"] .dashboard-glass-v4 .dgv4-small {
     min-height: 145px !important;
   }
 
-  .dashboard-glass-v4 .dgv4-equipment {
+  [data-layout="modern"] .dashboard-glass-v4 .dgv4-equipment {
     min-height: 485px !important;
   }
 }

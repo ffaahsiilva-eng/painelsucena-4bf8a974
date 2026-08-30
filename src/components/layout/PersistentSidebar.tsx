@@ -193,7 +193,7 @@ export const PersistentSidebar = ({ children }: PersistentSidebarProps) => {
           />
         )}
         
-        {hasDesktopChrome ? (
+        {hasDesktopChrome && layoutMode === "modern" ? (
           <div className="app-overlay-v6" />
         ) : (
           <>
