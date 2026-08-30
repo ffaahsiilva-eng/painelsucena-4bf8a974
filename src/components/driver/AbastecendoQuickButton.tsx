@@ -11,6 +11,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useAddStatusToHistory } from "@/hooks/useDailyShiftRecords";
 import { useOfflineSyncV2 } from "@/hooks/useOfflineSyncV2";
 import { confirmOnce } from "@/lib/pendingConfirm";
+import { useQueryClient } from "@tanstack/react-query";
 
 /**
  * Quick-access tile for setting status to "Abastecendo" (end_of_day),
@@ -23,6 +24,7 @@ export function AbastecendoQuickButton() {
   const updateStatus = useUpdateEquipmentStatus();
   const addStatusToHistory = useAddStatusToHistory();
   const { isOnline, addPendingAction } = useOfflineSyncV2();
+  const queryClient = useQueryClient();
 
   const selectedVehicleId =
     typeof window !== "undefined"
@@ -82,6 +84,16 @@ export function AbastecendoQuickButton() {
             functionName: "wapi-driver-status-notify",
             body: wapiBody,
           });
+          
+          queryClient.setQueryData(["equipment"], (old: any) => {
+            if (!old) return old;
+            return old.map((eq: any) =>
+              eq.id === selectedVehicleId
+                ? { ...eq, stop_reason: newStatus, stop_start_time: now }
+                : eq
+            );
+          });
+
           toast.success("Salvo offline: Abastecendo");
           setIsUpdating(false);
           return;
