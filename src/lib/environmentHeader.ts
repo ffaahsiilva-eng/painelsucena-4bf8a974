@@ -7,7 +7,7 @@
  */
 
 const STORAGE_KEY = "selected_environment";
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://fcaxyvptfwnwfctxkqre.supabase.co";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "";
 
 function readEnvironment(): string {
   try {
