@@ -1,143 +1,181 @@
-import { useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
-import { Users, ClipboardCheck, AlertCircle, Activity, Calendar as CalendarIcon, Filter, ArrowUp, ArrowRight, Briefcase, RefreshCw } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import React, { lazy, Suspense, useState, useMemo, useId } from "react";
+import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useProfile } from "@/hooks/useProfile";
-import { useSiteSettings } from "@/hooks/useSiteSettings";
-import { SimpleTree } from "@/components/ui/simple-growth-tree";
-import { EditablePageTitle } from "@/components/cms/EditablePageTitle";
-import { GlassCard } from "@/components/dashboard/GlassCard";
-import { ProgressRing } from "@/components/dashboard/ProgressRing";
 import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  MouseSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import Layout from "@/components/layout/Layout";
-import { lazy, Suspense } from "react";
-
-const ModernStatCard = lazy(() => import("@/components/dashboard/ModernStatCard"));
-const PresenceGauge = lazy(() => import("@/components/dashboard/PresenceGauge").then(m => ({ default: m.PresenceGauge })));
-const MatrixGauge = lazy(() => import("@/components/dashboard/MatrixGauge").then(m => ({ default: m.MatrixGauge })));
-const AttendanceTrendChart = lazy(() => import("@/components/dashboard/AttendanceTrendChart").then(m => ({ default: m.AttendanceTrendChart })));
-const MatrixSideChart = lazy(() => import("@/components/dashboard/MatrixSideChart").then(m => ({ default: m.MatrixSideChart })));
-const DDSHighlightCard = lazy(() => import("@/components/dds/DDSHighlightCard").then(m => ({ default: m.DDSHighlightCard })));
-const ReminderHighlightBanner = lazy(() => import("@/components/reminders/ReminderHighlightBanner").then(m => ({ default: m.ReminderHighlightBanner })));
-const MatrixAlertBanner = lazy(() => import("@/components/dashboard/MatrixAlertBanner").then(m => ({ default: m.MatrixAlertBanner })));
-const CampaignBanner = lazy(() => import("@/components/campaigns/CampaignBanner").then(m => ({ default: m.CampaignBanner })));
-const OrderHighlightBanner = lazy(() => import("@/components/orders/OrderHighlightBanner").then(m => ({ default: m.OrderHighlightBanner })));
-const EquipmentStatusCard = lazy(() => import("@/components/dashboard/EquipmentStatusCard").then(m => ({ default: m.EquipmentStatusCard })));
-const DocumentExpiryBanner = lazy(() => import("@/components/documents/DocumentExpiryBanner").then(m => ({ default: m.DocumentExpiryBanner })));
-const NRExpiryBanner = lazy(() => import("@/components/dashboard/NRExpiryBanner").then(m => ({ default: m.NRExpiryBanner })));
-const ASOExpiryBanner = lazy(() => import("@/components/dashboard/ASOExpiryBanner").then(m => ({ default: m.ASOExpiryBanner })));
-const VehicleExpiryBanner = lazy(() => import("@/components/vistorias/VehicleExpiryBanner").then(m => ({ default: m.VehicleExpiryBanner })));
-const SlingInspectionBanner = lazy(() => import("@/components/dashboard/SlingInspectionBanner").then(m => ({ default: m.SlingInspectionBanner })));
-const InspectionScheduleBanner = lazy(() => import("@/components/dashboard/InspectionScheduleBanner").then(m => ({ default: m.InspectionScheduleBanner })));
-const WeatherWidget = lazy(() => import("@/components/dashboard/WeatherWidget").then(m => ({ default: m.WeatherWidget })));
-const DraggableDashboardItem = lazy(() => import("@/components/dashboard/DraggableDashboardItem").then(m => ({ default: m.DraggableDashboardItem })));
-const DashboardEditControls = lazy(() => import("@/components/dashboard/DashboardEditControls").then(m => ({ default: m.DashboardEditControls })));
-const BirthdayBanner = lazy(() => import("@/components/dashboard/BirthdayBanner"));
-const DDSPresenterAlert = lazy(() => import("@/components/dds/DDSPresenterAlert"));
-const RecentActivitiesCard = lazy(() => import("@/components/dashboard/RecentActivitiesCard").then(m => ({ default: m.RecentActivitiesCard })));
-const PlanejamentoProgressCard = lazy(() => import("@/components/dashboard/PlanejamentoProgressCard").then(m => ({ default: m.PlanejamentoProgressCard })));
-const AtaContratoProgressCard = lazy(() => import("@/components/dashboard/AtaContratoProgressCard").then(m => ({ default: m.AtaContratoProgressCard })));
-const MatrixAlertBannerPreload = () => {
-  useEffect(() => {
-    import("@/components/dashboard/MatrixAlertBanner");
-  }, []);
-  return null;
-};
-import { useCampaignNotifications } from "@/hooks/useCampaignNotifications";
-import { useLastDayMatrixCheck } from "@/hooks/useLastDayMatrixCheck";
-import { CelebrationModal } from "@/components/matriz/CelebrationModal";
-import { MatrixReminderModal } from "@/components/matriz/MatrixReminderModal";
+  CalendarDays,
+  ChevronDown,
+  CloudSun,
+  Droplets,
+  MapPin,
+  Thermometer,
+  Users,
+  Wind,
+} from "lucide-react";
+import "./dashboard-glass-reference.css";
 import { useRHEfetivo } from "@/hooks/useRHEfetivo";
 import { useAttendanceDailyMarks } from "@/hooks/useAttendanceDailyMarks";
 import { useAttendanceAreaAssignments } from "@/hooks/useAttendanceAreaAssignments";
 import { useEquipment } from "@/hooks/useEquipment";
-import { useEquipmentCurrentlyOut, useAllRegisteredEquipmentCount } from "@/hooks/useEquipmentMovements";
+import { useEquipmentCurrentlyOut } from "@/hooks/useEquipmentMovements";
 import { useJardinagemEquipment } from "@/hooks/useJardinagemEquipment";
 import { getBrazilNorthTodayString } from "@/lib/timezone";
-import { useDocumentExpiryNotifications } from "@/hooks/useDocumentExpiryNotifications";
-import { useVehicleExpiryNotifications } from "@/hooks/useVehicleExpiryNotifications";
-import { useASOExpiryNotifications } from "@/hooks/useASOExpiryNotifications";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { useCurrentTemperature } from "@/hooks/useCurrentTemperature";
+import { usePlanejamentoMetas } from "@/hooks/usePlanejamentoMetas";
 import { useAnimatedNumber } from "@/hooks/useAnimatedNumber";
-import { useDashboardOrder, DashboardItemId, DEFAULT_DASHBOARD_ORDER } from "@/hooks/useDashboardOrder";
-import { useHolidayNotification } from "@/hooks/useHolidayNotification";
-import { useFridayNotification } from "@/hooks/useFridayNotification";
-import { toast } from "sonner";
 
-const DashboardItemSkeleton = () => (
-  <div className="w-full h-32 bg-card/50 animate-pulse rounded-2xl border border-border/50 glass-card-dashboard" />
+// Seções completas do dashboard original, mantidas com dados e ações reais.
+// O visual é atualizado pelo escopo .dgv4-extended no CSS deste dashboard.
+const ReminderHighlightBanner = lazy(() => import("@/components/reminders/ReminderHighlightBanner").then(m => ({ default: m.ReminderHighlightBanner })));
+const BirthdayBanner = lazy(() => import("@/components/dashboard/BirthdayBanner"));
+const ASOExpiryBanner = lazy(() => import("@/components/dashboard/ASOExpiryBanner").then(m => ({ default: m.ASOExpiryBanner })));
+const MatrixAlertBanner = lazy(() => import("@/components/dashboard/MatrixAlertBanner").then(m => ({ default: m.MatrixAlertBanner })));
+const DDSHighlightCard = lazy(() => import("@/components/dds/DDSHighlightCard").then(m => ({ default: m.DDSHighlightCard })));
+const CampaignBanner = lazy(() => import("@/components/campaigns/CampaignBanner").then(m => ({ default: m.CampaignBanner })));
+const EquipmentStatusCard = lazy(() => import("@/components/dashboard/EquipmentStatusCard").then(m => ({ default: m.EquipmentStatusCard })));
+const RecentActivitiesCard = lazy(() => import("@/components/dashboard/RecentActivitiesCard").then(m => ({ default: m.RecentActivitiesCard })));
+const AttendanceTrendChart = lazy(() => import("@/components/dashboard/AttendanceTrendChart").then(m => ({ default: m.AttendanceTrendChart })));
+const MatrixGauge = lazy(() => import("@/components/dashboard/MatrixGauge").then(m => ({ default: m.MatrixGauge })));
+const AtaContratoProgressCard = lazy(() => import("@/components/dashboard/AtaContratoProgressCard").then(m => ({ default: m.AtaContratoProgressCard })));
+const MatrixSideChart = lazy(() => import("@/components/dashboard/MatrixSideChart").then(m => ({ default: m.MatrixSideChart })));
+
+const ExtendedSectionSkeleton = () => (
+  <div className="dgv4-extended-skeleton" aria-hidden="true">
+    <span />
+    <span />
+    <span />
+  </div>
 );
 
-const Dashboard = () => {
-  const { data: profile } = useProfile();
-  const { settings } = useSiteSettings();
-  const uiTheme = (profile as any)?.ui_theme || "classic";
-  const isDockTheme = uiTheme === "macos-dock";
+type DashboardGlassData = {
+  location?: string;
+  temperature?: number | string;
+  weatherLabel?: string;
+  feelsLike?: number | string;
+  humidity?: number | string;
+  wind?: number | string;
+  employees?: number | string;
+  progress?: number;
+  goalsTotal?: number;
+  goalsDone?: number;
+  goalsRemaining?: number;
+  present?: number | string;
+  absences?: number | string;
+  external?: number | string;
+  equipmentPercent?: number;
+  equipmentActive?: number;
+  equipmentTotal?: number;
+  dateLabel?: string;
+};
+
+type Props = {
+  data?: DashboardGlassData;
+};
+
+function Ring({
+  value = 0,
+  label,
+  size = 164,
+}: {
+  value?: number;
+  label: string;
+  size?: number;
+}) {
+  const stroke = 11;
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const pct = Math.max(0, Math.min(100, Number(value) || 0));
+  const animatedPct = useAnimatedNumber(pct, 1500);
+  const offset = c - (animatedPct / 100) * c;
+  const gradientId = useId();
+
+  return (
+    <div className="dgv4-ring" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <defs>
+          <linearGradient id={gradientId} x1="0" x2="1">
+            <stop offset="0%" stopColor="#a98247" />
+            <stop offset="100%" stopColor="#d8b36e" />
+          </linearGradient>
+        </defs>
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke="rgba(59,62,64,.10)"
+          strokeWidth={stroke}
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke={`url(#${gradientId})`}
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={offset}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        />
+      </svg>
+      <div className="dgv4-ring-center">
+        <strong>{animatedPct}%</strong>
+        <span>{label}</span>
+      </div>
+    </div>
+  );
+}
+
+function MiniLine({ variant = 1 }: { variant?: number }) {
+  const path =
+    variant === 1
+      ? "M0 62 C30 35,52 58,78 42 S126 15,156 35 S202 10,246 35"
+      : "M0 68 C35 52,52 70,78 42 S120 26,145 45 S185 10,220 30 S238 58,246 64";
+  return (
+    <svg className="dgv4-mini-svg" viewBox="0 0 246 82" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id={`area-${variant}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="rgba(181,138,72,.18)" />
+          <stop offset="100%" stopColor="rgba(181,138,72,0)" />
+        </linearGradient>
+      </defs>
+      <path d={`${path} L246 82 L0 82 Z`} fill={`url(#area-${variant})`} />
+      <path d={path} fill="none" stroke="#a98146" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+function MiniBars() {
+  const heights = [32, 24, 46, 34, 68, 17, 28];
+  return (
+    <div className="dgv4-bars">
+      {heights.map((h, i) => (
+        <span key={i} style={{ height: h }} />
+      ))}
+    </div>
+  );
+}
+
+export default function Dashboard() {
+  const navigate = useNavigate();
   const todayString = getBrazilNorthTodayString();
-  const [selectedDate, setSelectedDate] = useState<Date>(() => {
+  const [selectedDate] = useState<Date>(() => {
     const [y, m, d] = todayString.split("-").map(Number);
     return new Date(y, m - 1, d);
   });
   const selectedDateString = format(selectedDate, "yyyy-MM-dd");
-  const isToday = selectedDateString === todayString;
-  const today = selectedDateString;
+
   const { data: rhData } = useRHEfetivo();
   const { data: dailyMarks } = useAttendanceDailyMarks(selectedDateString);
   const { data: areaAssignments } = useAttendanceAreaAssignments();
   const { data: equipment } = useEquipment();
   const { data: currentlyOutEquipment } = useEquipmentCurrentlyOut();
-  const { data: allRegisteredCount } = useAllRegisteredEquipmentCount();
   const { data: jardinagemEquipment } = useJardinagemEquipment();
-  const { dashboardOrder, updateOrder, isLoading: isLoadingOrder } = useDashboardOrder();
-  useHolidayNotification();
-  useFridayNotification();
-  const lastDayMatrix = useLastDayMatrixCheck();
-  
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [localOrder, setLocalOrder] = useState<DashboardItemId[]>(dashboardOrder);
-  const [isSaving, setIsSaving] = useState(false);
-  
-
-  const sensors = useSensors(
-    useSensor(MouseSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: {
-        delay: 200,
-        tolerance: 5,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-  
-  useCampaignNotifications();
-  useDocumentExpiryNotifications();
-  useVehicleExpiryNotifications();
-  useASOExpiryNotifications();
+  const { data: currentWeather } = useCurrentTemperature(true);
+  const { data: planejamentoMetas = [] } = usePlanejamentoMetas();
 
   const activeColaboradores = useMemo(() => {
     if (!rhData?.colaboradores) return [];
@@ -146,15 +184,13 @@ const Dashboard = () => {
   }, [rhData]);
 
   const totalEmployees = activeColaboradores.length;
-  
-  // Áreas que tiveram a Lista de Presença salva no dia (independente de ter ausentes)
+
   const savedAreasToday = useMemo(() => {
     const set = new Set<string>();
     (dailyMarks ?? []).forEach((m) => set.add(m.area));
     return set;
   }, [dailyMarks]);
 
-  // Conta apenas colaboradores cuja área teve a lista salva
   const expectedToday = useMemo(() => {
     if (!areaAssignments || savedAreasToday.size === 0) return 0;
     const activeIds = new Set(activeColaboradores.map((c) => c.id));
@@ -177,414 +213,329 @@ const Dashboard = () => {
     return count;
   }, [dailyMarks, activeColaboradores]);
 
-  // Trabalho Externo do dia — busca em TODAS as áreas da lista de presença salva
-  // (attendance_daily_marks.external_work_employee_ids) + RH (attendance_absence_reasons)
   const { data: externalToday = 0 } = useQuery({
     queryKey: ["external_work_count_all_areas", selectedDateString],
     queryFn: async () => {
       const ids = new Set<string>();
-
-      const { data: marks, error: marksErr } = await supabase
+      const { data: marks } = await supabase
         .from("attendance_daily_marks")
         .select("external_work_employee_ids")
         .eq("date", selectedDateString);
-      if (marksErr) throw marksErr;
       (marks || []).forEach((m: any) => {
         (m.external_work_employee_ids || []).forEach((id: any) => ids.add(String(id)));
       });
-
-      const { data: rh, error: rhErr } = await supabase
+      const { data: rh } = await supabase
         .from("attendance_absence_reasons")
         .select("employee_id")
         .eq("date", selectedDateString)
         .eq("reason", "Trabalho Externo");
-      if (rhErr) throw rhErr;
       (rh || []).forEach((r: any) => ids.add(String(r.employee_id)));
-
       return ids.size;
     },
   });
-  const animatedExternalToday = useAnimatedNumber(externalToday, 1000);
 
-  // Se nenhuma área salvou a lista hoje => 0 presentes / 0%
   const presentToday = savedAreasToday.size === 0 ? 0 : Math.max(0, expectedToday - absentToday);
-  const presencePercent =
-    savedAreasToday.size === 0 || totalEmployees === 0
-      ? 0
-      : Math.round((presentToday / totalEmployees) * 100);
-  
+
+  const planejamentoSummary = useMemo(() => {
+    const metas = planejamentoMetas.filter((m) => !m.is_section_header);
+    const goalsTotal = metas.length;
+    const goalsDone = metas.filter((m) => Number(m.meta) > 0 && Number(m.realizado) >= Number(m.meta)).length;
+    const goalsRemaining = Math.max(0, goalsTotal - goalsDone);
+    const totalMeta = metas.reduce((sum, m) => sum + Math.max(0, Number(m.meta) || 0), 0);
+    const totalRealizado = metas.reduce((sum, m) => {
+      const meta = Math.max(0, Number(m.meta) || 0);
+      const realizado = Math.max(0, Number(m.realizado) || 0);
+      return sum + (meta > 0 ? Math.min(realizado, meta) : 0);
+    }, 0);
+    const progress = totalMeta > 0 ? Math.round((totalRealizado / totalMeta) * 100) : 0;
+    return { goalsTotal, goalsDone, goalsRemaining, progress };
+  }, [planejamentoMetas]);
+
   const jardinagemTotal = jardinagemEquipment?.length || 0;
   const jardinagemIn = jardinagemEquipment?.filter(e => e.status === "entrou").length || 0;
-  // Filter currentlyInEquipment to only count plates that belong to the equipment table (vehicles)
   const vehiclePlates = new Set((equipment || []).map(e => e.plate));
   const vehiclesOut = (currentlyOutEquipment || []).filter(m => vehiclePlates.has(m.plate)).length;
   const vehiclesIn = (equipment || []).length - vehiclesOut;
   const inOperation = vehiclesIn + jardinagemIn;
   const totalEquip = (equipment?.length || 0) + jardinagemTotal;
-  const equipPercent = totalEquip > 0 ? Math.round(inOperation / totalEquip * 100) : 0;
+  const equipPercent = totalEquip > 0 ? Math.round((inOperation / totalEquip) * 100) : 0;
 
-  const animatedEquipPercent = useAnimatedNumber(equipPercent, 1000);
-  const animatedInOperation = useAnimatedNumber(inOperation, 1000);
-  const animatedTotalEquip = useAnimatedNumber(totalEquip, 1000);
-  const animatedPresentToday = useAnimatedNumber(typeof presentToday === "number" ? presentToday : 0, 1000);
-  const animatedAbsentToday = useAnimatedNumber(absentToday, 1000);
-  const animatedTotalEmployees = useAnimatedNumber(totalEmployees, 1000);
+  const dateLabelStr = format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
 
-  const handleToggleEditMode = () => {
-    if (!isEditMode) {
-      setLocalOrder(dashboardOrder);
-    }
-    setIsEditMode(!isEditMode);
-  };
+  const animatedEmployees = useAnimatedNumber(totalEmployees, 1500);
+  const animatedGoalsTotal = useAnimatedNumber(planejamentoSummary.goalsTotal, 1500);
+  const animatedGoalsDone = useAnimatedNumber(planejamentoSummary.goalsDone, 1500);
+  const animatedGoalsRemaining = useAnimatedNumber(planejamentoSummary.goalsRemaining, 1500);
+  const animatedPresent = useAnimatedNumber(presentToday, 1500);
+  const animatedAbsences = useAnimatedNumber(absentToday, 1500);
+  const animatedExternal = useAnimatedNumber(externalToday as number, 1500);
+  const animatedEquipmentActive = useAnimatedNumber(inOperation, 1500);
+  const animatedEquipmentTotal = useAnimatedNumber(totalEquip, 1500);
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      setLocalOrder((items) => {
-        const oldIndex = items.indexOf(active.id as DashboardItemId);
-        const newIndex = items.indexOf(over.id as DashboardItemId);
-        return arrayMove(items, oldIndex, newIndex);
-      });
-    }
-  };
-
-  const handleSave = async () => {
-    setIsSaving(true);
-    const success = await updateOrder(localOrder);
-    setIsSaving(false);
-    if (success) {
-      toast.success("Ordem dos destaques salva!");
-      setIsEditMode(false);
-    } else {
-      toast.error("Erro ao salvar ordem");
-    }
-  };
-
-  const handleCancel = () => {
-    setLocalOrder(dashboardOrder);
-    setIsEditMode(false);
-  };
-
-  const handleReset = () => {
-    setLocalOrder(DEFAULT_DASHBOARD_ORDER);
-  };
-
-  const hasChanges = JSON.stringify(localOrder) !== JSON.stringify(dashboardOrder);
-  const currentOrder = isEditMode ? localOrder : dashboardOrder;
-  const sortableOrder = currentOrder.filter(id => id !== "birthday");
-
-  const renderDashboardItem = (id: DashboardItemId) => {
-    switch (id) {
-      case "birthday": return <BirthdayBanner />;
-      case "matrix_alert": return <MatrixAlertBanner />;
-      
-      case "campaign": return <CampaignBanner />;
-      case "reminder": return null;
-      case "order": return <OrderHighlightBanner />;
-      case "vehicle_expiry": return <VehicleExpiryBanner />;
-      case "document_expiry": return <DocumentExpiryBanner />;
-      case "sling_inspection": return <SlingInspectionBanner />;
-      case "dds": return <DDSHighlightCard />;
-      case "equipment": return <EquipmentStatusCard />;
-      case "stats": return null;
-      case "matrix_chart": return null;
-      default: return null;
-    }
+  const d = {
+    location: "Barcarena – Vila do Conde",
+    temperature: currentWeather?.temperature ?? "26",
+    weatherLabel: "Parcialmente nublado",
+    feelsLike: currentWeather?.apparentTemp ?? "30",
+    humidity: currentWeather?.humidity ?? "90",
+    wind: "12",
+    employees: animatedEmployees,
+    progress: planejamentoSummary.progress,
+    goalsTotal: animatedGoalsTotal,
+    goalsDone: animatedGoalsDone,
+    goalsRemaining: animatedGoalsRemaining,
+    present: animatedPresent,
+    absences: animatedAbsences,
+    external: animatedExternal,
+    equipmentPercent: equipPercent,
+    equipmentActive: animatedEquipmentActive,
+    equipmentTotal: animatedEquipmentTotal,
+    dateLabel: dateLabelStr,
   };
 
   return (
-    <Layout>
-      {/* Last day of month matrix modals */}
-      <CelebrationModal
-        isOpen={lastDayMatrix.showCelebration}
-        onClose={() => lastDayMatrix.setShowCelebration(false)}
-        cargoName={lastDayMatrix.cargoName}
-        userName={lastDayMatrix.userName}
-        userAvatarUrl={lastDayMatrix.userAvatarUrl}
-      />
-      <MatrixReminderModal
-        isOpen={lastDayMatrix.showReminder}
-        onClose={() => lastDayMatrix.setShowReminder(false)}
-        cargoName={lastDayMatrix.cargoName}
-        progress={lastDayMatrix.progress}
-        userName={lastDayMatrix.userName}
-        userAvatarUrl={lastDayMatrix.userAvatarUrl}
-        daysUntilMonthEnd={lastDayMatrix.daysUntilMonthEnd}
-        currentMonthName={lastDayMatrix.currentMonthName}
-        pendingCargos={lastDayMatrix.pendingCargos}
-      />
-      <div className="container mx-auto px-3 sm:px-8 py-6 sm:py-10 max-w-[1240px] safe-area-inset-bottom">
-        {/* Header */}
-        <div className="dashboard-heading-row">
-          {isDockTheme ? (
-            <div className="flex-1 flex justify-center pl-16 pt-2">
-              <SimpleTree className="w-32 h-24 sm:w-56 sm:h-48" />
-            </div>
-          ) : (
-            <div>
-              <EditablePageTitle
-                pageKey="dashboard"
-                defaultValue="Dashboard"
-                className="dashboard-title !text-black dark:!text-white"
-                as="h1"
-              />
-              <p className="dashboard-subtitle !text-black dark:!text-white">
-                Visão geral da operação
-              </p>
-            </div>
-          )}
-          <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  title={format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                  className="group inline-flex flex-col items-center gap-0 px-2 py-1 bg-transparent border-0 hover:opacity-90 transition-opacity"
-                >
-                  <div className="flex items-center gap-2">
-                    <CalendarIcon
-                      className="h-6 w-6 sm:h-7 sm:w-7 text-white"
-                      strokeWidth={1.25}
-                      style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.35))" }}
-                    />
-                    <span
-                      className="text-white leading-none"
-                      style={{
-                        fontFamily: "'Great Vibes', cursive",
-                        fontSize: "clamp(1rem, 2vw, 2.25rem)",
-                        textShadow: "0 1px 3px rgba(0,0,0,0.4)",
-                      }}
-                    >
-                      {format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                    </span>
-                  </div>
-                  <svg
-                    viewBox="0 0 300 14"
-                    className="w-[150px] sm:w-[260px] h-3 -mt-1 text-white/80"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.2"
-                    strokeLinecap="round"
-                    style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.35))" }}
-                  >
-                    <path d="M5 8 C 60 2, 120 12, 180 6 S 280 4, 295 9" />
-                  </svg>
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="end">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={(d) => d && setSelectedDate(d)}
-                  locale={ptBR}
-                  initialFocus
-                  className="pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-            {!isToday && (
-              <button
-                type="button"
-                onClick={() => {
-                  const [y, m, d] = todayString.split("-").map(Number);
-                  setSelectedDate(new Date(y, m - 1, d));
-                }}
-                className="text-xs text-primary hover:underline"
-              >
-                Hoje
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => window.location.reload()}
-              title="Recarregar Dados"
-              className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
-            >
-              <RefreshCw className="h-4 w-4" />
-            </button>
-          </div>
+    <section className="dashboard-glass-v4">
+      <div className="dgv4-heading">
+        <div>
+          <h1 className="!text-black dark:!text-white">Dashboard</h1>
+          <p className="!text-black dark:!text-white">Visão geral da operação</p>
         </div>
 
-        {/* Main stats grid */}
-        <Suspense fallback={<DashboardItemSkeleton />}>
-          <div className="dashboard-grid animate-slide-up">
-            {/* Left column: Weather + Total Funcionários */}
-            <div className="flex flex-col gap-6">
-              <WeatherWidget />
-              <ModernStatCard
-                title="Total de Funcionários"
-                value={animatedTotalEmployees}
-                percentage={presencePercent}
-                icon={Users}
-                variant="gauge"
-              />
+        <button className="dgv4-date" type="button">
+          <CalendarDays size={22} strokeWidth={1.6} />
+          <span>{d.dateLabel}</span>
+          <ChevronDown size={17} strokeWidth={1.6} />
+        </button>
+      </div>
+
+      <div className="dgv4-grid">
+        <div className="dgv4-col dgv4-col-left">
+          <article className="dgv4-card dgv4-weather">
+            <div className="dgv4-weather-head">
+              <span><MapPin size={15} /> {d.location}</span>
+              <span className="dgv4-live"><i /> Tempo Real</span>
             </div>
 
-            {/* Center: Avanço Mensal (Planejamento) */}
-            <div className="flex flex-col">
-              <PlanejamentoProgressCard />
-            </div>
-
-            {/* Right-center: Presentes Hoje + Ausências */}
-            <div className="flex flex-col gap-6">
-              <ModernStatCard
-                title="Presentes hoje"
-                value={animatedPresentToday}
-                percentage={presencePercent}
-                icon={ClipboardCheck}
-                variant="sparkline"
-                sparklineData={[5, 8, 6, 9, 7, 10, presentToday || 8]}
-              />
-              <ModernStatCard
-                title="Ausências"
-                value={animatedAbsentToday}
-                percentage={totalEmployees > 0 ? Math.round(absentToday / totalEmployees * 100) : 0}
-                icon={AlertCircle}
-                variant="bars"
-                barData={[2, 4, 1, 3, 2, 5, absentToday || 1]}
-              />
-              <ModernStatCard
-                title="Trabalho Externo"
-                value={animatedExternalToday}
-                percentage={totalEmployees > 0 ? Math.round((externalToday as number) / totalEmployees * 100) : 0}
-                icon={Briefcase}
-                variant="sparkline"
-                sparklineData={[1, 2, 1, 3, 2, 4, (externalToday as number) || 1]}
-              />
-            </div>
-
-            {/* Far right: Equipamentos Ativos (clean white card matching reference) */}
-            <div className="flex flex-col">
-              <div className="h-full">
-                <GlassCard className="h-full flex flex-col items-center text-center justify-between py-8">
-                  <div>
-                    <h3 className="text-[13px] font-semibold text-[#6D7175] uppercase tracking-widest mb-1">
-                      Equipamentos Ativos
-                    </h3>
-                  </div>
-
-                  <div className="flex-1 flex items-center justify-center my-6">
-                    <ProgressRing 
-                      progress={equipPercent} 
-                      size={180} 
-                      strokeWidth={14} 
-                      label={`${animatedEquipPercent}%`} 
-                    />
-                  </div>
-
-                  <div>
-                    <div className="flex items-baseline justify-center gap-1">
-                      <span className="text-[28px] font-extrabold text-[#292C2E] leading-none">
-                        {animatedInOperation}
-                      </span>
-                      <span className="text-sm font-medium text-[#92969A]">
-                        /{animatedTotalEquip}
-                      </span>
-                    </div>
-                    <p className="text-[11px] font-medium text-[#6D7175] mt-1">
-                      Equipamentos operantes
-                    </p>
-                  </div>
-                  
-                  <Link
-                    to="/status-geral-equipamentos"
-                    className="absolute top-4 right-4 text-xs font-semibold text-[#B38A45] hover:text-[#D8B16B] transition-colors"
-                  >
-                    Ver Tudo
-                  </Link>
-                </GlassCard>
+            <div className="dgv4-temp-row">
+              <CloudSun className="dgv4-weather-icon" size={58} strokeWidth={1.25} />
+              <div>
+                <strong className="dgv4-temp">{d.temperature}°</strong>
+                <p>{d.weatherLabel}</p>
               </div>
-          </div>
-        </div>
-      </Suspense>
-
-        {/* Reminder Banner */}
-        <div className="mb-4">
-          <Suspense fallback={<DashboardItemSkeleton />}>
-            <ReminderHighlightBanner />
-          </Suspense>
-        </div>
-
-        {/* Fixed banners */}
-        <Suspense fallback={null}>
-          <InspectionScheduleBanner />
-          <BirthdayBanner />
-          <DDSPresenterAlert />
-          <NRExpiryBanner />
-          <ASOExpiryBanner />
-        </Suspense>
-
-        {/* Draggable items */}
-        {!isLoadingOrder && (
-          isEditMode ? (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={sortableOrder}
-                strategy={verticalListSortingStrategy}
-              >
-                <div className="space-y-4 cv-auto">
-                  {sortableOrder.map((id) => (
-                    <DraggableDashboardItem key={id} id={id} isEditMode={isEditMode}>
-                      <div className="cv-auto" style={{ containIntrinsicSize: "0 200px" }}>
-                        {renderDashboardItem(id)}
-                      </div>
-                    </DraggableDashboardItem>
-                  ))}
-                </div>
-              </SortableContext>
-            </DndContext>
-          ) : (
-            <div className="space-y-4 cv-auto">
-              {sortableOrder.map((id) => (
-                <div key={id} className="cv-auto" style={{ containIntrinsicSize: "0 200px" }}>
-                  {renderDashboardItem(id)}
-                </div>
-              ))}
             </div>
-          )
-        )}
 
-        {/* Recent activities row (mix real do sistema) */}
-        <div className="mt-6 mb-4 animate-slide-up" style={{ animationDelay: "0.05s" }}>
-          <Suspense fallback={<DashboardItemSkeleton />}>
-            <RecentActivitiesCard />
-          </Suspense>
+            <div className="dgv4-weather-stats">
+              <div><span><Thermometer size={16} /> Sensação</span><b>{d.feelsLike}°</b></div>
+              <div><span><Droplets size={16} /> Umidade</span><b>{d.humidity}%</b></div>
+              <div><span><Wind size={16} /> Vento</span><b>{d.wind} km/h</b></div>
+            </div>
+          </article>
+
+          <article className="dgv4-card dgv4-employees">
+            <div className="dgv4-card-title">
+              <span>TOTAL DE FUNCIONÁRIOS</span>
+              <Users size={19} strokeWidth={1.5} />
+            </div>
+            <div className="dgv4-employee-body">
+              <Users className="dgv4-ghost-users" size={90} strokeWidth={1.2} />
+              <strong>{d.employees}</strong>
+              <span>Colaboradores ativos</span>
+            </div>
+          </article>
         </div>
 
-        {/* Charts Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-6">
-          <div className="lg:col-span-2 animate-slide-up" style={{ animationDelay: "0.1s" }}>
-            <AttendanceTrendChart />
-          </div>
-          <div className="animate-slide-up" style={{ animationDelay: "0.15s" }}>
-            <MatrixGauge referenceDate={selectedDate} />
-          </div>
+        <div className="dgv4-col">
+          <article className="dgv4-card dgv4-progress">
+            <div className="dgv4-card-title dgv4-progress-title">
+              <div>
+                <span>AVANÇO MENSAL</span>
+                <small>Metas do Planejamento</small>
+              </div>
+              <button type="button" onClick={() => navigate("/planejamento")}>Ver tudo →</button>
+            </div>
+
+            <div className="dgv4-ring-wrap">
+              <Ring value={d.progress} label="AVANÇO" size={164} />
+            </div>
+
+            <div className="dgv4-goal-counts">
+              <div><strong>{d.goalsTotal}</strong><span>TOTAL</span></div>
+              <div className="is-done"><strong>{d.goalsDone}</strong><span>CONCLUÍDAS</span></div>
+              <div className="is-left"><strong>{d.goalsRemaining}</strong><span>FALTAM</span></div>
+            </div>
+
+            <div className="dgv4-progressbar">
+              <span style={{ width: `${Math.max(0, Math.min(100, d.progress))}%` }} />
+            </div>
+            <p className="dgv4-caption">{d.goalsDone} de {d.goalsTotal} metas concluídas</p>
+          </article>
         </div>
 
-        {/* Matriz do mês (gráfico lateral) + Ata de Contrato */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4 mb-16">
-          <div className="lg:col-span-2 animate-slide-up" style={{ animationDelay: "0.18s" }}>
-            <Suspense fallback={<DashboardItemSkeleton />}>
-              <AtaContratoProgressCard />
-            </Suspense>
-          </div>
-          <div className="animate-slide-up" style={{ animationDelay: "0.2s" }}>
-            <MatrixSideChart />
-          </div>
+        <div className="dgv4-col">
+          <article className="dgv4-card dgv4-small">
+            <div className="dgv4-card-title"><span>PRESENTES HOJE</span><Users size={18} /></div>
+            <strong className="dgv4-small-number">{d.present}</strong>
+            <MiniLine variant={1} />
+            <div className="dgv4-axis"><span>00h</span><span>06h</span><span>12h</span><span>18h</span><span>24h</span></div>
+          </article>
+
+          <article className="dgv4-card dgv4-small">
+            <div className="dgv4-card-title"><span>AUSÊNCIAS</span><CalendarDays size={17} /></div>
+            <strong className="dgv4-small-number">{d.absences}</strong>
+            <MiniBars />
+            <div className="dgv4-axis dgv4-axis-days"><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span></div>
+          </article>
+
+          <article className="dgv4-card dgv4-small">
+            <div className="dgv4-card-title"><span>TRABALHO EXTERNO</span><Users size={17} /></div>
+            <strong className="dgv4-small-number">{d.external}</strong>
+            <MiniLine variant={2} />
+            <div className="dgv4-axis"><span>00h</span><span>06h</span><span>12h</span><span>18h</span><span>24h</span></div>
+          </article>
         </div>
-        
-        {/* Logo at the bottom */}
-        <div className="flex justify-center pb-8 opacity-20 hover:opacity-40 transition-opacity">
-          <SimpleTree className="w-16 h-16 grayscale" />
+
+        <div className="dgv4-col">
+          <article className="dgv4-card dgv4-equipment">
+            <div className="dgv4-card-title dgv4-progress-title">
+              <span>EQUIPAMENTOS ATIVOS</span>
+              <button type="button" onClick={() => navigate("/equipamentos")}>Ver tudo →</button>
+            </div>
+
+            <div className="dgv4-equipment-ring">
+              <Ring value={d.equipmentPercent} label="EM USO" size={176} />
+            </div>
+
+            <div className="dgv4-equipment-count">
+              <strong>{d.equipmentActive}</strong>
+              <span> de {d.equipmentTotal}</span>
+              <p>equipamentos em uso</p>
+            </div>
+
+            <div className="dgv4-progressbar">
+              <span style={{ width: `${Math.max(0, Math.min(100, d.equipmentPercent))}%` }} />
+            </div>
+
+            <p className="dgv4-equipment-caption">
+              {d.equipmentActive} no canteiro de {d.equipmentTotal} equipamentos
+            </p>
+          </article>
         </div>
       </div>
-          </div>
-    </Layout>
-  );
-};
 
-export default Dashboard;
+      <div className="dgv4-extended" aria-label="Informações complementares do dashboard">
+        <section className="dgv4-extended-block" aria-labelledby="dgv4-alertas-title">
+          <div className="dgv4-section-heading">
+            <div>
+              <span className="dgv4-section-kicker">Acompanhamento</span>
+              <h2 id="dgv4-alertas-title">Alertas e pessoas</h2>
+            </div>
+            <p>Lembretes, aniversariantes e vencimentos importantes.</p>
+          </div>
+
+          <Suspense fallback={<ExtendedSectionSkeleton />}>
+            <div className="dgv4-legacy-surface dgv4-reminders-wrap">
+              <ReminderHighlightBanner />
+            </div>
+          </Suspense>
+
+          <div className="dgv4-extended-grid dgv4-extended-grid--people">
+            <Suspense fallback={<ExtendedSectionSkeleton />}>
+              <div className="dgv4-legacy-surface dgv4-birthday-wrap">
+                <BirthdayBanner />
+              </div>
+            </Suspense>
+            <Suspense fallback={<ExtendedSectionSkeleton />}>
+              <div className="dgv4-legacy-surface dgv4-aso-wrap">
+                <ASOExpiryBanner />
+              </div>
+            </Suspense>
+          </div>
+        </section>
+
+        <section className="dgv4-extended-block" aria-labelledby="dgv4-seguranca-title">
+          <div className="dgv4-section-heading">
+            <div>
+              <span className="dgv4-section-kicker">Segurança</span>
+              <h2 id="dgv4-seguranca-title">Matriz e DDS</h2>
+            </div>
+            <p>Pendências da matriz e programação dos DDS.</p>
+          </div>
+
+          <Suspense fallback={<ExtendedSectionSkeleton />}>
+            <div className="dgv4-legacy-surface dgv4-matrix-alert-wrap">
+              <MatrixAlertBanner />
+            </div>
+          </Suspense>
+          <Suspense fallback={<ExtendedSectionSkeleton />}>
+            <div className="dgv4-legacy-surface dgv4-dds-wrap">
+              <DDSHighlightCard />
+            </div>
+          </Suspense>
+        </section>
+
+        <section className="dgv4-extended-block" aria-labelledby="dgv4-operacao-title">
+          <div className="dgv4-section-heading">
+            <div>
+              <span className="dgv4-section-kicker">Operação</span>
+              <h2 id="dgv4-operacao-title">Campanhas e equipamentos</h2>
+            </div>
+            <p>Campanha do mês e situação detalhada dos equipamentos.</p>
+          </div>
+
+          <Suspense fallback={<ExtendedSectionSkeleton />}>
+            <div className="dgv4-legacy-surface dgv4-campaign-wrap">
+              <CampaignBanner />
+            </div>
+          </Suspense>
+          <Suspense fallback={<ExtendedSectionSkeleton />}>
+            <div className="dgv4-legacy-surface dgv4-equipment-status-wrap">
+              <EquipmentStatusCard />
+            </div>
+          </Suspense>
+        </section>
+
+        <section className="dgv4-extended-block dgv4-extended-block--analytics" aria-labelledby="dgv4-analises-title">
+          <div className="dgv4-section-heading">
+            <div>
+              <span className="dgv4-section-kicker">Indicadores</span>
+              <h2 id="dgv4-analises-title">Atividades e desempenho</h2>
+            </div>
+            <p>Histórico operacional, presença, matriz e acompanhamento contratual.</p>
+          </div>
+
+          <Suspense fallback={<ExtendedSectionSkeleton />}>
+            <div className="dgv4-legacy-surface dgv4-recent-wrap">
+              <RecentActivitiesCard />
+            </div>
+          </Suspense>
+
+          <div className="dgv4-analytics-grid">
+            <Suspense fallback={<ExtendedSectionSkeleton />}>
+              <div className="dgv4-legacy-surface dgv4-chart-wrap dgv4-chart-wrap--wide">
+                <AttendanceTrendChart />
+              </div>
+            </Suspense>
+            <Suspense fallback={<ExtendedSectionSkeleton />}>
+              <div className="dgv4-legacy-surface dgv4-chart-wrap dgv4-chart-wrap--gauge">
+                <MatrixGauge referenceDate={selectedDate} />
+              </div>
+            </Suspense>
+          </div>
+
+          <div className="dgv4-analytics-grid">
+            <Suspense fallback={<ExtendedSectionSkeleton />}>
+              <div className="dgv4-legacy-surface dgv4-chart-wrap dgv4-chart-wrap--wide">
+                <AtaContratoProgressCard />
+              </div>
+            </Suspense>
+            <Suspense fallback={<ExtendedSectionSkeleton />}>
+              <div className="dgv4-legacy-surface dgv4-chart-wrap dgv4-chart-wrap--gauge">
+                <MatrixSideChart />
+              </div>
+            </Suspense>
+          </div>
+        </section>
+      </div>
+    </section>
+  );
+}

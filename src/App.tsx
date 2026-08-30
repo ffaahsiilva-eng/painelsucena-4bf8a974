@@ -31,7 +31,7 @@ import loadingLogo from "@/assets/logo-principal.png";
 const FloatingChatWidget = lazy(() => import("@/components/ia/FloatingChatWidget").then(m => ({ default: m.FloatingChatWidget })));
 
 // Lazy-load ALL pages — only the current route's code is downloaded
-const Index = lazy(() => import("./pages/Index"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Auth = lazy(() => import("./pages/Auth"));
 const SelecaoAmbiente = lazy(() => import("./pages/SelecaoAmbiente"));
 const RH = lazy(() => import("./pages/RH"));
@@ -200,7 +200,7 @@ const App = () => (
                     <Routes>
                       <Route path="/auth" element={<Auth />} />
                       <Route path="/selecao-ambiente" element={<ProtectedRoute><SelecaoAmbiente /></ProtectedRoute>} />
-                      <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+                      <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                       <Route path="/rh" element={<ProtectedRoute><RH /></ProtectedRoute>} />
                       <Route path="/presenca" element={<ProtectedRoute><Presenca /></ProtectedRoute>} />
                       <Route path="/relatorio-presenca" element={<ProtectedRoute><RelatorioPresenca /></ProtectedRoute>} />
