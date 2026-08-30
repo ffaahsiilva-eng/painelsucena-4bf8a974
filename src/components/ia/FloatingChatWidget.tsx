@@ -43,13 +43,15 @@ export function FloatingChatWidget() {
         .fluent-chat-panel {
           position: fixed;
           z-index: 9999;
-          bottom: 24px;
-          right: 24px;
-          width: min(420px, calc(100vw - 32px));
-          height: min(540px, calc(100vh - 80px));
-          border-radius: 26px;
-          overflow: hidden;
-          animation: fluentSlideIn .28s cubic-bezier(.16,1,.3,1) both;
+          bottom: 20px;
+          right: 20px;
+          width: 540px;
+          max-width: calc(100vw - 40px);
+          height: 85vh;
+          max-height: 850px;
+          border-radius: 30px;
+          overflow: visible;
+          animation: fluentSlideIn .28s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
 
         @media (max-width: 640px) {
@@ -57,9 +59,10 @@ export function FloatingChatWidget() {
             bottom: 8px;
             right: 8px;
             width: calc(100vw - 16px);
-            height: calc(100dvh - 72px);
-            max-height: calc(100dvh - 16px);
-            border-radius: 22px;
+            max-width: none;
+            height: calc(100dvh - 16px);
+            max-height: none;
+            border-radius: 24px;
           }
         }
 

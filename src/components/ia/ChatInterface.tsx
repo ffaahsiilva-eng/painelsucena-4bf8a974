@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Sparkles, Send, User, Loader2, RefreshCw, Paperclip, X, Download } from "lucide-react";
+import { Sparkles, Send, UserRound, Loader2, RefreshCw, Paperclip, X, Download, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
+import { resolveStorageUrl } from "@/lib/storage";
 
 type Message = {
   id: string;
@@ -54,15 +55,29 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
   const [attachedImage, setAttachedImage] = useState<{ url: string; base64: string; mimeType: string } | null>(null);
   
   const [userId, setUserId] = useState<string | null>(null);
+  const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null);
   const [isHistoryLoaded, setIsHistoryLoaded] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(async ({ data }) => {
       const defaultMsg = [{ id: "1", role: "model" as const, text: "Olá! Sou a Inteligência Artificial do painel.\nComo posso ajudar você hoje?" }];
       if (data.user) {
         setUserId(data.user.id);
+        
+        // Fetch user avatar
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("avatar_url")
+          .eq("user_id", data.user.id)
+          .maybeSingle();
+          
+        if (profile?.avatar_url) {
+          const resolved = await resolveStorageUrl(profile.avatar_url);
+          setUserAvatarUrl(resolved);
+        }
+
         const saved = localStorage.getItem(`sucena_ai_history_${data.user.id}`);
         if (saved) {
           try {
@@ -132,13 +147,66 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
       const isImageCommand = userMessageText.toLowerCase().trim().startsWith("/imagem ");
       if (isImageCommand) {
         const imagePrompt = userMessageText.substring(8).trim();
-        const safePrompt = encodeURIComponent(imagePrompt + " masterpiece, high resolution");
-        const fallbackUrl = `https://image.pollinations.ai/prompt/${safePrompt}?nologo=true&model=flux&seed=${Math.floor(Math.random()*10000)}`;
+        let englishPrompt = imagePrompt;
         
+        try {
+          const transPayload = {
+            contents: [{ role: "user", parts: [{ text: `Translate the following image generation prompt to English. Make it highly descriptive and optimize it for an AI image generator. DO NOT include any conversational text, just the final English prompt:\n\n${imagePrompt}` }] }]
+          };
+          for (const model of ["gemini-1.5-flash-latest", "gemini-1.5-pro-latest", "gemini-flash-latest"]) {
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+            const res = await fetch(endpoint, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(transPayload),
+            });
+            if (res.ok) {
+              const tData = await res.json();
+              if (tData.candidates?.[0]?.content?.parts?.[0]?.text) {
+                englishPrompt = tData.candidates[0].content.parts[0].text.trim();
+                break;
+              }
+            }
+          }
+        } catch (e) {
+          console.error("Erro ao traduzir prompt de imagem", e);
+        }
+
+        let imageUrl = "";
+        const openaiKey = import.meta.env.VITE_OPENAI_API_KEY;
+
+        if (openaiKey) {
+          try {
+            const res = await fetch("https://api.openai.com/v1/images/generations", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${openaiKey}`
+              },
+              body: JSON.stringify({
+                model: "dall-e-3",
+                prompt: englishPrompt,
+                n: 1,
+                size: "1024x1024"
+              })
+            });
+            if (res.ok) {
+              const data = await res.json();
+              imageUrl = data.data[0].url;
+            }
+          } catch (e) {
+            console.error("Erro no DALL-E da OpenAI:", e);
+          }
+        }
+
+        if (!imageUrl) {
+          const safePrompt = encodeURIComponent(englishPrompt + ", masterpiece, high resolution, best quality");
+          imageUrl = `https://image.pollinations.ai/prompt/${safePrompt}?nologo=true&model=flux&seed=${Math.floor(Math.random()*10000)}`;
+        }
         setMessages((prev) => 
           prev.map((msg) => 
             msg.id === aiMessageId 
-              ? { ...msg, text: `Aqui está a imagem que você pediu:\n\n![Imagem gerada](${fallbackUrl})`, isStreaming: false } 
+              ? { ...msg, text: `Aqui está a imagem que você pediu:\n\n![Imagem gerada](${imageUrl})`, isStreaming: false } 
               : msg
           )
         );
@@ -190,7 +258,7 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
         role: "user",
         parts: [
           {
-            text: "Você é um assistente virtual integrado ao painel SucenaPainel. Você possui duas funções principais:\n1. Responder dúvidas e consultar informações reais do banco de dados do painel chamando a ferramenta 'query_database'.\n2. Ajudar de forma geral como uma IA avançada em qualquer outro assunto ou dúvida que o usuário tiver fora do sistema.\n\nDICA DE OURO: Para evitar bloqueios de limite de cota, NUNCA faça queries para descobrir as colunas. Use as seguintes estruturas conhecidas:\n- Tabela `equipment`: id, name, type, equipment_type, status, plate, brand, environment\n- Tabela `equipment_movements`: id, equipment_name, exit_reason, environment, created_at, created_by\n- Tabela `profiles`: id, full_name, cargo, environment\n- Tabela `rh_efetivo`: id, colaboradores (coluna JSONB contendo um array de colaboradores com nome, aso (inclui validade), funcao, etc), environment\n\nATENÇÃO MÁXIMA 1: Faça APENAS UMA chamada de função por vez. Se a consulta retornar vazia ([]), NÃO tente fazer outra busca na mesma hora, apenas responda 'Não encontrei dados'. NUNCA faça consultas em loop.\nATENÇÃO MÁXIMA 2: Sempre que houver alguma pergunta sobre informações internas sensíveis, dados financeiros, ou qualquer assunto exclusivo apenas para administradores, NÃO responda diretamente. Diga apenas para o usuário entrar em contato com o administrador do sistema.\n\nSeja amigável, criativo ao ajudar com assuntos gerais e sempre responda em pt-br."
+            text: "Você é um assistente virtual integrado ao painel SucenaPainel. Você possui duas funções principais:\n1. Responder dúvidas e consultar informações reais do banco de dados do painel chamando a ferramenta 'query_database'.\n2. Ajudar de forma geral como uma IA avançada em qualquer outro assunto ou dúvida que o usuário tiver fora do sistema.\n\nDICA DE OURO: Para evitar bloqueios de limite de cota, NUNCA faça queries para descobrir as colunas. Use as seguintes estruturas conhecidas:\n- Tabela `equipment`: id, name, type, equipment_type, status, plate, brand, environment\n- Tabela `equipment_movements`: id, equipment_name, exit_reason, environment, created_at, created_by\n- Tabela `profiles`: id, full_name, cargo, environment\n- Tabela `rh_efetivo`: id, colaboradores (coluna JSONB contendo um array de colaboradores com nome, aso (inclui validade), funcao, etc), environment\n\nATENÇÃO MÁXIMA 1: Faça APENAS UMA chamada de função por vez. Se a consulta retornar vazia ([]), NÃO tente fazer outra busca na mesma hora, apenas responda 'Não encontrei dados'. NUNCA faça consultas em loop.\nATENÇÃO MÁXIMA 2: Você TEM PERMISSÃO TOTAL para acessar e informar qualquer dado do RH (como aniversariantes, lista de funcionários da tabela rh_efetivo, cargos, etc.). Apenas negue acesso e peça para contatar o administrador caso seja estritamente um dado financeiro ou senha.\n\nSeja amigável, criativo ao ajudar com assuntos gerais e sempre responda em pt-br."
           }
         ]
       };
@@ -199,50 +267,180 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
       let finalReply = "";
       let loops = 0;
       
-      const modelsToTry = ["gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-2.5-flash", "gemini-flash-latest", "gemini-pro-latest"];
+      const modelsToTry = ["gemini-1.5-flash-latest", "gemini-1.5-pro-latest", "openai/gpt-oss-120b", "openai/gpt-oss-20b"];
 
       const fetchWithFallback = async (payload: any) => {
         let lastError = null;
         for (const model of modelsToTry) {
-          const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
-          const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-          });
-          
-          if (response.ok) {
-            return response;
+          try {
+            if (!model.startsWith("gemini")) {
+              let apiKey = "";
+              let endpoint = "";
+              
+              if (model.startsWith("gpt-4")) {
+                apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+                endpoint = "https://api.openai.com/v1/chat/completions";
+              } else {
+                apiKey = import.meta.env.VITE_GROQ_API_KEY;
+                endpoint = "https://api.groq.com/openai/v1/chat/completions";
+              }
+
+              if (!apiKey) {
+                console.warn(`API key not found, skipping ${model}`);
+                continue;
+              }
+
+              // Translate Gemini payload to OpenAI (Groq) format
+              const messages = [];
+              if (payload.systemInstruction?.parts?.[0]?.text) {
+                messages.push({ role: "system", content: payload.systemInstruction.parts[0].text });
+              }
+
+              for (const item of payload.contents) {
+                const role = item.role === "model" ? "assistant" : "user";
+                let text = "";
+                let tool_calls = undefined;
+                
+                // If it's a tool response from user
+                if (item.role === "user" && item.parts[0]?.functionResponse) {
+                  messages.push({
+                    role: "tool",
+                    tool_call_id: "call_default", // Dummy ID since Gemini doesn't track them
+                    name: item.parts[0].functionResponse.name,
+                    content: JSON.stringify(item.parts[0].functionResponse.response)
+                  });
+                  continue;
+                }
+
+                // If it's a tool call from model
+                if (item.role === "model" && item.parts[0]?.functionCall) {
+                  messages.push({
+                    role: "assistant",
+                    content: null,
+                    tool_calls: [{
+                      id: "call_default",
+                      type: "function",
+                      function: {
+                        name: item.parts[0].functionCall.name,
+                        arguments: JSON.stringify(item.parts[0].functionCall.args)
+                      }
+                    }]
+                  });
+                  continue;
+                }
+
+                for (const part of item.parts) {
+                  if (part.text) text += part.text;
+                }
+                if (text) messages.push({ role, content: text });
+              }
+
+              let paramsStr = JSON.stringify(payload.tools[0].functionDeclarations[0].parameters);
+              paramsStr = paramsStr.replace(/"type":\s*"OBJECT"/g, '"type":"object"');
+              paramsStr = paramsStr.replace(/"type":\s*"STRING"/g, '"type":"string"');
+              paramsStr = paramsStr.replace(/"type":\s*"INTEGER"/g, '"type":"integer"');
+              paramsStr = paramsStr.replace(/"type":\s*"NUMBER"/g, '"type":"number"');
+              paramsStr = paramsStr.replace(/"type":\s*"BOOLEAN"/g, '"type":"boolean"');
+              paramsStr = paramsStr.replace(/"type":\s*"ARRAY"/g, '"type":"array"');
+
+              const groqPayload = {
+                model: model,
+                messages: messages,
+                temperature: payload.generationConfig?.temperature || 0.2,
+                max_tokens: payload.generationConfig?.maxOutputTokens || 2048,
+                tools: [{
+                  type: "function",
+                  function: {
+                    name: "query_database",
+                    description: "Consulta o banco de dados do Supabase. Use esta ferramenta APENAS quando precisar de informações exatas e em tempo real sobre o painel.",
+                    parameters: JSON.parse(paramsStr)
+                  }
+                }],
+                tool_choice: "auto"
+              };
+
+              const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify(groqPayload),
+              });
+
+              if (response.ok) {
+                const groqData = await response.json();
+                const choice = groqData.choices?.[0]?.message;
+                
+                // Translate back to Gemini format
+                const parts = [];
+                if (choice?.tool_calls && choice.tool_calls.length > 0) {
+                  const fnCall = choice.tool_calls[0].function;
+                  parts.push({
+                    functionCall: {
+                      name: fnCall.name,
+                      args: JSON.parse(fnCall.arguments || "{}")
+                    }
+                  });
+                } else if (choice?.content) {
+                  parts.push({ text: choice.content });
+                }
+
+                return {
+                  candidates: [{
+                    content: { parts }
+                  }]
+                };
+              } else {
+                const err = await response.json().catch(() => ({}));
+                if (response.status === 429 || response.status === 503) {
+                  lastError = err;
+                  await new Promise(r => setTimeout(r, 1000));
+                  continue;
+                }
+                throw new Error(err.error?.message || "Groq Error");
+              }
+            } else {
+              // GEMINI LOGIC
+              const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+              const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+              });
+              
+              if (response.ok) {
+                return await response.json();
+              }
+              
+              if (response.status === 503 || response.status === 429 || response.status === 404 || response.status === 400) {
+                console.warn(`Modelo ${model} retornou ${response.status}. Tentando fallback...`);
+                lastError = await response.json().catch(() => ({}));
+                await new Promise(r => setTimeout(r, 1000));
+                continue;
+              }
+              
+              const errorData = await response.json().catch(() => ({}));
+              throw new Error(`Erro na API do Gemini (${model}): ${errorData.error?.message || response.statusText}`);
+            }
+          } catch (loopErr: any) {
+            console.error("Error in fallback loop for", model, loopErr);
+            lastError = loopErr;
           }
-          
-          // Fallback on rate limits, unavailability, OR not found (wrong model name)
-          if (response.status === 503 || response.status === 429 || response.status === 404 || response.status === 400) {
-            console.warn(`Modelo ${model} retornou ${response.status}. Tentando fallback...`);
-            lastError = await response.json().catch(() => ({}));
-            // Espera 1 segundo antes de tentar o próximo para não dar rate limit em todos de uma vez
-            await new Promise(r => setTimeout(r, 1000));
-            continue;
-          }
-          
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(`Erro na API do Gemini (${model}): ${errorData.error?.message || response.statusText}`);
         }
-        throw new Error(`Sistema indisponível no momento. (Detalhe: ${lastError?.error?.message || ''})`);
+        throw new Error(`Sistema indisponível no momento. (Detalhe: ${lastError?.error?.message || lastError?.message || ''})`);
       };
 
-      // Limitado a 3 loops para não estourar a cota gratuita do Gemini (15 req/min)
+      // Limitado a 3 loops para não estourar a cota
       while (!isFunctionCallDone && loops < 3) {
         loops++;
-        const response = await fetchWithFallback({
+        const data = await fetchWithFallback({
           contents,
           generationConfig: { temperature: 0.2, maxOutputTokens: 2048 },
           systemInstruction,
           tools: [toolDeclaration]
         });
 
-        // Erros HTTP e parse do response (o fallback cuida dos blocos de retry)
-
-        const data = await response.json();
         const firstCandidate = data.candidates?.[0];
         const modelParts = firstCandidate?.content?.parts || [];
 
@@ -279,7 +477,14 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
               const { data: qData, error: qError } = await query.limit(limit).order('id', { ascending: false });
               
               if (qError) throw qError;
-              dbResult = { success: true, data: qData, count: qData?.length };
+              
+              let dataStr = JSON.stringify(qData);
+              if (dataStr.length > 12000) {
+                console.warn("Payload very large, truncating to 12000 chars to save tokens...");
+                dataStr = dataStr.substring(0, 12000) + '... [TRUNCATED]';
+              }
+              
+              dbResult = { success: true, data: dataStr, count: qData?.length };
             } catch (err: any) {
               console.error("Erro na busca do banco:", err);
               dbResult = { success: false, error: err.message };
@@ -312,7 +517,7 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
       }
 
       // Save to cache if it's a valid answer
-      if (finalReply && !finalReply.includes("Não encontrei dados") && !finalReply.includes("Desculpe") && !finalReply.includes("Ocorreu um erro")) {
+      if (finalReply && !finalReply.includes("Não encontrei dados") && !finalReply.includes("Desculpe") && !finalReply.includes("Ocorreu um erro") && !finalReply.includes("administrador")) {
         localStorage.setItem(cacheKey, JSON.stringify({
           text: finalReply,
           timestamp: Date.now()
@@ -401,6 +606,11 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
         )}
       </div>
 
+      {/* ── Logo IA Sucena ── */}
+      <div className="fluent-chat-logo-area">
+        <img src="/logo-ia-sucena.png" alt="IA Sucena" className="fluent-logo-image" />
+      </div>
+
       {/* ── Messages area ── */}
       <div className="fluent-chat-messages" ref={scrollRef}>
         <div className="fluent-messages-inner">
@@ -415,7 +625,7 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
             >
               {message.role === "model" && (
                 <div className="fluent-ai-avatar">
-                  <Sparkles className="fluent-ai-avatar-icon" />
+                  <Sparkles className="fluent-ai-avatar-icon text-blue-500" />
                 </div>
               )}
 
@@ -463,13 +673,28 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
                     >
                       {message.text}
                     </ReactMarkdown>
+                    {(() => {
+                      const ts = parseInt(message.id);
+                      if (!isNaN(ts) && ts > 1600000000000) {
+                        return (
+                          <div className="text-[10px] opacity-40 text-right mt-1.5 w-full leading-none">
+                            {new Date(ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
                 )}
               </div>
 
               {message.role === "user" && (
-                <div className="fluent-user-avatar">
-                  <User className="w-4 h-4" />
+                <div className="fluent-user-avatar overflow-hidden">
+                  {userAvatarUrl ? (
+                    <img src={userAvatarUrl} alt="Você" className="w-full h-full object-cover" />
+                  ) : (
+                    <UserRound className="w-5 h-5 text-white" />
+                  )}
                 </div>
               )}
             </div>
@@ -506,7 +731,7 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
             disabled={isLoading}
             title="Anexar imagem"
           >
-            <Paperclip className="w-5 h-5" />
+            <Paperclip className="w-5 h-5 text-blue-500" />
           </button>
           <textarea
             ref={textareaRef}
@@ -516,7 +741,7 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
               autoResize();
             }}
             onKeyDown={handleKeyDown}
-            placeholder="Pergunte qualquer coisa ou peça um resumo do painel!"
+            placeholder="Pergunte algo à IA Sucena..."
             className="fluent-textarea"
             rows={1}
             disabled={isLoading}
@@ -542,7 +767,7 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
       {/* ── Scoped Fluent Design styles ── */}
       <style>{`
         /* ═══════════════════════════════════════════
-           Windows 11 Fluent Design — Chat Panel
+           Windows 11 Fluent Design — Chat Panel IA Sucena
            ═══════════════════════════════════════════ */
 
         .fluent-chat-root {
@@ -550,18 +775,29 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
           flex-direction: column;
           height: 100%;
           width: 100%;
-          font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
-          background: linear-gradient(145deg, rgba(248,252,255,.88), rgba(236,245,255,.72));
-          backdrop-filter: blur(28px) saturate(145%);
-          -webkit-backdrop-filter: blur(28px) saturate(145%);
-          border: 1px solid rgba(255,255,255,.78);
-          border-radius: 26px;
+          font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+          background: rgba(246, 250, 255, 0.88);
+          backdrop-filter: blur(20px) saturate(140%);
+          -webkit-backdrop-filter: blur(20px) saturate(140%);
+          border: 1px solid rgba(255, 255, 255, 0.75);
+          border-radius: 30px;
           box-shadow:
-            0 24px 70px rgba(48,83,120,.18),
-            0 6px 20px rgba(65,110,160,.10),
-            inset 0 1px 0 rgba(255,255,255,.90);
+            0 20px 60px rgba(20,55,100,0.18),
+            0 4px 15px rgba(50,130,255,0.08);
           overflow: hidden;
-          color: #18345F;
+          color: #17345F;
+          animation: fluentOpen .3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes fluentOpen {
+          from {
+            opacity: 0;
+            transform: translateY(12px) scale(0.97);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
         }
 
         /* ── Header ── */
@@ -569,30 +805,32 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
           display: flex;
           align-items: center;
           justify-content: flex-end;
-          gap: 8px;
-          padding: 16px 20px 8px;
+          gap: 12px;
+          height: 50px;
+          padding: 0 20px;
           flex-shrink: 0;
+          border-bottom: 1px solid rgba(255,255,255,0.8);
         }
 
         .fluent-clear-btn {
           display: flex;
           align-items: center;
           gap: 6px;
-          padding: 6px 14px;
+          padding: 8px 16px;
           border: none;
           background: transparent;
-          color: #18345F;
+          color: #17345F;
           font-size: 14px;
           font-weight: 500;
           font-family: inherit;
           cursor: pointer;
           border-radius: 12px;
-          transition: all .18s ease;
+          transition: all .2s ease;
         }
 
         .fluent-clear-btn:hover {
-          background: rgba(78,166,255,.10);
-          color: #4EA6FF;
+          background: rgba(49, 135, 245, 0.08);
+          color: #3187F5;
         }
 
         .fluent-clear-icon {
@@ -609,19 +847,35 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 32px;
-          height: 32px;
+          width: 36px;
+          height: 36px;
           border: none;
-          background: transparent;
-          color: #6E7F94;
+          background: #ef4444; /* Solid vibrant red */
+          color: #ffffff; /* White text for contrast */
           cursor: pointer;
-          border-radius: 10px;
-          transition: all .15s ease;
+          border-radius: 12px;
+          transition: all .2s ease;
         }
 
         .fluent-close-btn:hover {
-          background: rgba(220,60,60,.12);
-          color: #dc3c3c;
+          background: #dc2626; /* Darker solid red on hover */
+          color: #ffffff;
+        }
+
+        /* ── Logo IA Sucena ── */
+        .fluent-chat-logo-area {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 12px 0 16px 0;
+          flex-shrink: 0;
+        }
+
+        .fluent-logo-image {
+          height: 48px;
+          width: auto;
+          object-fit: contain;
+          filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.08));
         }
 
         /* ── Messages scrollable area ── */
@@ -629,39 +883,39 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
           flex: 1;
           overflow-y: auto;
           overflow-x: hidden;
-          padding: 8px 20px 16px;
+          padding: 8px 24px 24px;
           scroll-behavior: smooth;
         }
 
         .fluent-chat-messages::-webkit-scrollbar {
-          width: 5px;
+          width: 6px;
         }
-
+        
         .fluent-chat-messages::-webkit-scrollbar-track {
           background: transparent;
         }
-
+        
         .fluent-chat-messages::-webkit-scrollbar-thumb {
-          background: rgba(78,166,255,.18);
+          background: rgba(116, 136, 164, 0.25);
           border-radius: 10px;
         }
 
         .fluent-chat-messages::-webkit-scrollbar-thumb:hover {
-          background: rgba(78,166,255,.35);
+          background: rgba(116, 136, 164, 0.45);
         }
 
         .fluent-messages-inner {
           display: flex;
           flex-direction: column;
-          gap: 18px;
+          gap: 24px;
         }
 
         /* ── Message row ── */
         .fluent-msg-row {
           display: flex;
-          gap: 12px;
-          align-items: flex-start;
-          animation: fluentMsgIn .32s cubic-bezier(.16,1,.3,1) both;
+          gap: 16px;
+          align-items: flex-end;
+          animation: fluentMsgFadeSlide .3s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
 
         .fluent-msg-user {
@@ -670,12 +924,13 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
 
         .fluent-msg-ai {
           justify-content: flex-start;
+          align-items: flex-start;
         }
 
-        @keyframes fluentMsgIn {
+        @keyframes fluentMsgFadeSlide {
           from {
             opacity: 0;
-            transform: translateY(8px);
+            transform: translateY(5px);
           }
           to {
             opacity: 1;
@@ -685,69 +940,61 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
 
         /* ── AI Avatar ── */
         .fluent-ai-avatar {
-          width: 48px;
-          height: 48px;
-          min-width: 48px;
+          width: 44px;
+          height: 44px;
+          min-width: 44px;
           border-radius: 50%;
-          background: linear-gradient(145deg, rgba(200,225,255,.55), rgba(175,210,255,.40));
-          border: 1.5px solid rgba(143,204,255,.50);
+          background: #ffffff;
+          border: 1px solid rgba(77, 168, 255, 0.3);
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow:
-            0 2px 12px rgba(78,166,255,.18),
-            inset 0 1px 0 rgba(255,255,255,.70);
+          box-shadow: 0 4px 15px rgba(49, 135, 245, 0.1);
           flex-shrink: 0;
-          margin-top: 2px;
+          margin-top: 4px;
         }
 
         .fluent-ai-avatar-icon {
-          width: 22px;
-          height: 22px;
-          color: #4EA6FF;
-          filter: drop-shadow(0 0 4px rgba(78,166,255,.35));
+          width: 20px;
+          height: 20px;
+          color: #3187F5;
         }
 
         /* ── User Avatar ── */
         .fluent-user-avatar {
-          width: 34px;
-          height: 34px;
-          min-width: 34px;
+          width: 44px;
+          height: 44px;
+          min-width: 44px;
           border-radius: 50%;
-          background: linear-gradient(145deg, #4EA6FF, #3d8de0);
+          background: #3187F5;
           display: flex;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
           color: white;
-          margin-top: 2px;
+          box-shadow: 0 4px 12px rgba(49, 135, 245, 0.2);
         }
 
         /* ── Message Bubbles ── */
         .fluent-msg-bubble {
-          max-width: 82%;
+          max-width: 78%;
           word-break: break-word;
         }
 
         .fluent-bubble-ai {
-          padding: 16px 20px;
-          border-radius: 20px;
-          background: linear-gradient(145deg, rgba(255,255,255,.82), rgba(248,252,255,.60));
-          border: 1px solid rgba(255,255,255,.90);
-          box-shadow:
-            0 3px 16px rgba(48,83,120,.08),
-            0 1px 4px rgba(48,83,120,.06),
-            inset 0 1px 0 rgba(255,255,255,.85);
+          padding: 6px 12px;
+          border-radius: 12px;
+          background: linear-gradient(135deg, rgba(255,255,255,0.96), rgba(242,247,253,0.96));
+          border: 1px solid rgba(255,255,255,0.9);
+          box-shadow: 0 4px 10px rgba(35,65,100,0.05);
         }
 
         .fluent-bubble-user {
-          padding: 14px 18px;
-          border-radius: 20px;
-          background: linear-gradient(145deg, #4EA6FF, #3a95ee);
+          padding: 6px 12px;
+          border-radius: 12px;
+          background: linear-gradient(135deg, #4DA8FF 0%, #3187F5 100%);
           color: white !important;
-          box-shadow:
-            0 3px 14px rgba(78,166,255,.28),
-            inset 0 1px 0 rgba(255,255,255,.18);
+          box-shadow: 0 4px 10px rgba(45,135,245,0.12);
         }
 
         .fluent-bubble-user .fluent-msg-text,
@@ -757,13 +1004,13 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
 
         /* ── Message Text ── */
         .fluent-msg-text {
-          font-size: 15px;
-          line-height: 1.6;
-          color: #18345F;
+          font-size: 14px;
+          line-height: 1.4;
+          color: #17345F;
         }
 
         .fluent-msg-text p {
-          margin: 0 0 8px;
+          margin: 0 0 4px;
         }
 
         .fluent-msg-text p:last-child {
@@ -771,87 +1018,88 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
         }
 
         .fluent-msg-text strong {
-          font-weight: 600;
+          font-weight: 700;
         }
 
         .fluent-msg-text code {
           background: rgba(78,166,255,.08);
           padding: 2px 6px;
           border-radius: 6px;
-          font-size: 13px;
+          font-size: 14px;
         }
 
         .fluent-msg-text pre {
-          background: rgba(24,52,95,.06);
-          padding: 12px;
-          border-radius: 12px;
+          background: rgba(23,52,95,.04);
+          padding: 14px;
+          border-radius: 14px;
           overflow-x: auto;
-          margin: 8px 0;
+          margin: 12px 0;
+          font-size: 14px;
         }
 
         .fluent-msg-text ul, .fluent-msg-text ol {
           padding-left: 20px;
-          margin: 8px 0;
+          margin: 10px 0;
         }
 
         .fluent-msg-text li {
-          margin-bottom: 4px;
+          margin-bottom: 6px;
         }
 
         .fluent-msg-text a {
-          color: #4EA6FF;
+          color: #4DA8FF;
           text-decoration: underline;
         }
 
         /* ── Typing indicator ── */
         .fluent-typing {
           display: flex;
-          gap: 5px;
+          gap: 6px;
           align-items: center;
           height: 24px;
           padding: 4px 0;
         }
 
         .fluent-dot {
-          width: 7px;
-          height: 7px;
+          width: 8px;
+          height: 8px;
           border-radius: 50%;
-          background: #8FCCFF;
-          animation: fluentBounce .9s ease-in-out infinite;
+          background: #3187F5;
+          animation: fluentBounce 1s ease-in-out infinite;
         }
 
         @keyframes fluentBounce {
           0%, 80%, 100% { transform: translateY(0); opacity: .4; }
-          40% { transform: translateY(-8px); opacity: 1; }
+          40% { transform: translateY(-6px); opacity: 1; }
         }
 
         /* ── Input Area ── */
         .fluent-chat-input-area {
-          padding: 12px 18px 14px;
+          padding: 16px 24px 20px;
           flex-shrink: 0;
         }
 
         .fluent-attach-preview {
-          margin-bottom: 10px;
+          margin-bottom: 12px;
           position: relative;
           display: inline-block;
         }
 
         .fluent-attach-img {
-          height: 64px;
+          height: 70px;
           width: auto;
-          border-radius: 12px;
+          border-radius: 14px;
           border: 1px solid rgba(143,204,255,.30);
-          box-shadow: 0 2px 8px rgba(48,83,120,.10);
+          box-shadow: 0 4px 12px rgba(48,83,120,.12);
           object-fit: cover;
         }
 
         .fluent-attach-remove {
           position: absolute;
-          top: -6px;
-          right: -6px;
-          width: 20px;
-          height: 20px;
+          top: -8px;
+          right: -8px;
+          width: 24px;
+          height: 24px;
           border-radius: 50%;
           background: #dc3c3c;
           color: white;
@@ -864,32 +1112,20 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
         }
 
         .fluent-attach-remove:hover {
-          transform: scale(1.15);
+          transform: scale(1.1);
         }
 
         /* ── Input Capsule ── */
         .fluent-input-capsule {
           display: flex;
           align-items: flex-end;
-          gap: 8px;
-          background: linear-gradient(145deg, rgba(255,255,255,.72), rgba(248,252,255,.55));
-          border: 1px solid rgba(255,255,255,.85);
-          border-radius: 22px;
-          padding: 8px 8px 8px 4px;
-          box-shadow:
-            0 4px 20px rgba(48,83,120,.08),
-            0 1px 6px rgba(65,110,160,.06),
-            inset 0 1px 0 rgba(255,255,255,.80);
+          gap: 12px;
+          background: rgba(255,255,255,0.78);
+          border: 1px solid rgba(255,255,255,0.9);
+          border-radius: 28px;
+          padding: 8px 10px 8px 8px;
+          box-shadow: 0 10px 30px rgba(30,80,130,0.10);
           transition: all .2s ease;
-        }
-
-        .fluent-input-capsule:focus-within {
-          border-color: rgba(78,166,255,.45);
-          box-shadow:
-            0 4px 20px rgba(48,83,120,.08),
-            0 1px 6px rgba(65,110,160,.06),
-            inset 0 1px 0 rgba(255,255,255,.80),
-            0 0 0 3px rgba(78,166,255,.12);
         }
 
         /* ── Paperclip button ── */
@@ -897,49 +1133,59 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 40px;
-          height: 40px;
-          min-width: 40px;
+          width: 48px;
+          height: 48px;
+          min-width: 48px;
           border: none;
-          background: transparent;
-          color: #1e6fd9;
+          background: #EAF4FF;
+          color: #3187F5;
           cursor: pointer;
-          border-radius: 14px;
-          transition: all .15s ease;
+          border-radius: 22px;
+          transition: all .2s ease;
           flex-shrink: 0;
         }
 
         .fluent-paperclip-btn:hover:not(:disabled) {
-          background: rgba(30,111,217,.12);
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(49, 135, 245, 0.15);
         }
 
         .fluent-paperclip-btn:disabled {
-          opacity: .4;
+          opacity: .5;
           cursor: not-allowed;
         }
 
         /* ── Textarea ── */
         .fluent-textarea {
           flex: 1;
-          min-height: 40px;
-          max-height: 200px;
-          padding: 10px 4px;
-          border: none;
-          background: transparent;
-          color: #18345F;
+          min-height: 48px;
+          max-height: 180px;
+          padding: 12px 16px;
+          border: 1px solid rgba(210,225,245,0.7);
+          border-radius: 18px;
+          background: rgba(255,255,255,0.65);
+          color: #17345F;
           font-family: inherit;
-          font-size: 15px;
+          font-size: 16px;
           line-height: 1.5;
           resize: none;
           outline: none;
+          transition: all .2s ease;
+          margin-bottom: 2px;
+        }
+
+        .fluent-textarea:focus {
+          border-color: rgba(60,140,255,0.55);
+          box-shadow: 0 0 0 4px rgba(59,130,246,0.08);
+          background: #ffffff;
         }
 
         .fluent-textarea::placeholder {
-          color: #9CADC0;
+          color: #7488A4;
         }
 
         .fluent-textarea:disabled {
-          opacity: .5;
+          opacity: .6;
         }
 
         /* ── Send button ── */
@@ -947,65 +1193,70 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 52px;
-          height: 52px;
-          min-width: 52px;
-          border: 1px solid rgba(78,166,255,.45);
+          width: 54px;
+          height: 54px;
+          min-width: 54px;
+          border: none;
           border-radius: 18px;
-          background: linear-gradient(145deg, #4EA6FF, #3a95ee);
+          background: linear-gradient(135deg, #47A5FF, #2684F5);
           color: white;
           cursor: pointer;
           flex-shrink: 0;
-          transition: all .18s ease;
-          box-shadow:
-            0 3px 14px rgba(78,166,255,.28),
-            inset 0 1px 0 rgba(255,255,255,.18);
+          transition: all .2s ease;
+          box-shadow: 0 4px 15px rgba(38, 132, 245, 0.3);
         }
 
         .fluent-send-btn:hover:not(:disabled) {
-          background: linear-gradient(145deg, #5eb0ff, #439df5);
-          box-shadow:
-            0 4px 18px rgba(78,166,255,.35),
-            inset 0 1px 0 rgba(255,255,255,.25);
-          transform: translateY(-1px);
+          transform: translateY(-1px) scale(1.02);
+          box-shadow: 0 6px 18px rgba(38, 132, 245, 0.4);
         }
 
         .fluent-send-btn:active:not(:disabled) {
-          transform: translateY(0) scale(.97);
+          transform: translateY(0) scale(.98);
         }
 
         .fluent-send-btn:disabled {
-          opacity: .35;
+          opacity: .5;
           cursor: not-allowed;
+          box-shadow: none;
         }
 
         /* ── Disclaimer ── */
         .fluent-disclaimer {
           text-align: center;
-          margin-top: 10px;
-          font-size: 11.5px;
-          color: #6E7F94;
+          margin-top: 14px;
+          font-size: 12px;
+          color: #7488A4;
           letter-spacing: .01em;
         }
 
         /* ── Mobile overrides ── */
         @media (max-width: 640px) {
           .fluent-chat-root {
-            border-radius: 22px;
+            border-radius: 24px;
           }
 
           .fluent-chat-header {
-            padding: 12px 14px 6px;
+            padding: 0 16px;
+            height: 48px;
+          }
+
+          .fluent-chat-logo-area {
+            margin: 8px 0 12px 0;
+          }
+          
+          .fluent-logo-image {
+            height: 40px;
           }
 
           .fluent-chat-messages {
-            padding: 6px 14px 12px;
+            padding: 8px 16px 16px;
           }
 
           .fluent-ai-avatar {
-            width: 40px;
-            height: 40px;
-            min-width: 40px;
+            width: 38px;
+            height: 38px;
+            min-width: 38px;
           }
 
           .fluent-ai-avatar-icon {
@@ -1013,31 +1264,46 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
             height: 18px;
           }
 
+          .fluent-user-avatar {
+            width: 38px;
+            height: 38px;
+            min-width: 38px;
+          }
+
           .fluent-msg-bubble {
-            max-width: 88%;
+            max-width: 85%;
           }
 
-          .fluent-bubble-ai {
-            padding: 12px 16px;
-          }
-
-          .fluent-bubble-user {
-            padding: 10px 14px;
+          .fluent-bubble-ai, .fluent-bubble-user {
+            padding: 6px 10px;
           }
 
           .fluent-chat-input-area {
-            padding: 8px 12px 10px;
+            padding: 12px 16px 16px;
           }
 
           .fluent-input-capsule {
+            gap: 8px;
+            padding: 6px 8px 6px 6px;
+          }
+
+          .fluent-paperclip-btn {
+            width: 44px;
+            height: 44px;
+            min-width: 44px;
             border-radius: 18px;
           }
 
+          .fluent-textarea {
+            font-size: 15px;
+            padding: 10px 14px;
+          }
+
           .fluent-send-btn {
-            width: 46px;
-            height: 46px;
-            min-width: 46px;
-            border-radius: 15px;
+            width: 48px;
+            height: 48px;
+            min-width: 48px;
+            border-radius: 16px;
           }
         }
       `}</style>
