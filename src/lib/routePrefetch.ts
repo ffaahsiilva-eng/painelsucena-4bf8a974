@@ -5,7 +5,7 @@
  */
 
 const essentialLoaders: Array<() => Promise<unknown>> = [
-  () => import("@/pages/Index"),
+  () => import("@/pages/Dashboard"),
   () => import("@/pages/Lembretes"),
   () => import("@/pages/InstaCena"),
   () => import("@/pages/Equipamentos"),
