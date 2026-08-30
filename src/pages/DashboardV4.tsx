@@ -25,7 +25,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useCurrentTemperature } from "@/hooks/useCurrentTemperature";
 import { usePlanejamentoMetas } from "@/hooks/usePlanejamentoMetas";
 import { useAnimatedNumber } from "@/hooks/useAnimatedNumber";
-import { AutoInsertPipas } from "@/components/equipamentos/AutoInsertPipas";
 
 // Seções completas do dashboard original, mantidas com dados e ações reais.
 // O visual é atualizado pelo escopo .dgv4-extended no CSS deste dashboard.
@@ -296,7 +295,6 @@ export default function DashboardV4() {
 
   return (
     <section className="dashboard-glass-v4">
-      <AutoInsertPipas />
       <div className="dgv4-heading">
         <div>
           <h1 className="!text-black dark:!text-white">Dashboard</h1>
