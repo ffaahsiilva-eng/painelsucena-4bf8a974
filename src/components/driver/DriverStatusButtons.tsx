@@ -1133,8 +1133,12 @@ export function DriverStatusButtons() {
               const isDisabledByMaintenance =
                 isInMaintenance && !isServices;
               const isDisabledByNoShift = !shiftStarted;
+              const isBlocked = isDisabledByMaintenance || isDisabledByNoShift;
               const isCurrentStatus = !isServices && currentStatus === button.action;
-                                key={button.id}
+
+              return (
+                <Button
+                  key={button.id}
                   variant="outline"
                   className={`relative h-auto min-h-[60px] py-3 flex flex-col items-center gap-1.5 touch-manipulation transition-transform active:scale-95 overflow-hidden ${
                     isCurrentStatus ? "ring-2 ring-primary ring-offset-2 bg-primary/5 border-primary/20" : ""
