@@ -1032,7 +1032,11 @@ export function DriverStatusButtons() {
           <div className="flex items-center justify-between gap-2">
             <CardTitle className="text-base font-semibold">Controle de Turno</CardTitle>
             {showStatusBadge && (
-              <Badge className={`${statusInfo.color} text-white text-xs px-2.5 py-0.5`}>
+              <Badge className={`${statusInfo.color} text-white text-xs px-2.5 py-0.5 flex items-center gap-1.5 shadow-sm`}>
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                </span>
                 {statusInfo.label}
               </Badge>
             )}
@@ -1130,14 +1134,10 @@ export function DriverStatusButtons() {
                 isInMaintenance && !isServices;
               const isDisabledByNoShift = !shiftStarted;
               const isCurrentStatus = !isServices && currentStatus === button.action;
-              const isBlocked = isDisabledByMaintenance || isDisabledByNoShift;
-
-              return (
-                <Button
-                  key={button.id}
+                                key={button.id}
                   variant="outline"
-                  className={`h-auto min-h-[60px] py-3 flex flex-col items-center gap-1.5 touch-manipulation transition-transform active:scale-95 ${
-                    isCurrentStatus ? "ring-2 ring-primary ring-offset-2" : ""
+                  className={`relative h-auto min-h-[60px] py-3 flex flex-col items-center gap-1.5 touch-manipulation transition-transform active:scale-95 overflow-hidden ${
+                    isCurrentStatus ? "ring-2 ring-primary ring-offset-2 bg-primary/5 border-primary/20" : ""
                   } ${button.color}`}
                   onClick={() => {
                     if (!canIdentifyLoggedDriver) {
@@ -1165,10 +1165,16 @@ export function DriverStatusButtons() {
                       },
                     );
                   }}
-
-
                   disabled={isUpdating || isProfileLoading || !canIdentifyLoggedDriver || (isCurrentStatus && !isBlocked)}
                 >
+                  {isCurrentStatus && (
+                    <div className="absolute top-2 right-2">
+                      <span className="relative flex h-2.5 w-2.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span>
+                      </span>
+                    </div>
+                  )}
                   {isUpdating && !isServices ? (
                     <Loader2 className="h-6 w-6 animate-spin" />
                   ) : (
