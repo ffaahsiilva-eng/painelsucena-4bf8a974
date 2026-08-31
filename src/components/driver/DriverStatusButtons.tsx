@@ -824,6 +824,7 @@ export function DriverStatusButtons() {
 
       // Notifica o grupo sobre o INÍCIO de TURNO (sem definir status Operando).
       // O status só vai para "Operando" quando o motorista clicar em "Operar".
+      // Limpa qualquer status anterior — fica em branco até motorista clicar em "Operar"
       try {
         const wapiBody = {
           equipmentId: selectedVehicleId,
@@ -838,6 +839,8 @@ export function DriverStatusButtons() {
         };
         if (isOnline) {
           await supabase.functions.invoke("wapi-driver-status-notify", { body: wapiBody });
+          // Dispara o envio imediato da fila para que a mensagem chegue na mesma hora
+          supabase.functions.invoke("wapi-queue-worker", { method: "POST" }).catch(() => {});
         } else {
           await addPendingAction("wapi_invoke", { functionName: "wapi-driver-status-notify", body: wapiBody });
         }
@@ -1091,9 +1094,14 @@ export function DriverStatusButtons() {
         timestamp: new Date().toISOString(),
       };
       if (isOnline) {
-        supabase.functions.invoke("wapi-driver-status-notify", { body: wapiBody }).catch((err) => {
-          console.warn("Failed to notify wapi-driver-status-notify", err);
-        });
+        supabase.functions.invoke("wapi-driver-status-notify", { body: wapiBody })
+          .then(() => {
+            // Dispara o envio imediato da fila para que a mensagem chegue na mesma hora
+            supabase.functions.invoke("wapi-queue-worker", { method: "POST" }).catch(() => {});
+          })
+          .catch((err) => {
+            console.warn("Failed to notify wapi-driver-status-notify", err);
+          });
       } else {
         addPendingAction("wapi_invoke", { functionName: "wapi-driver-status-notify", body: wapiBody }).catch(e => console.warn(e));
       }
