@@ -553,7 +553,7 @@ export function DriverStatusButtons() {
         equipmentId: selectedVehicleId,
         equipmentName: selectedVehicle.name,
         plate: selectedVehicle.plate,
-        newStatus: "🏁 Fim de Turno",
+        newStatus: "end_of_shift",
         previousStatus: currentStatus,
         driverName: currentDriverName || null,
         helperName: currentHelperName || null,
@@ -582,44 +582,6 @@ export function DriverStatusButtons() {
         }
       } catch (err) {
         console.warn("wapi-driver-status-notify error", err);
-      }
-
-      // Segunda chamada à Edge Function especificamente para o PNG.
-      // Usa newStatus "end_of_shift" que na versão deployada pula o texto
-      // (isEndOfShift=true → text skipped) mas insere a imagem com pngKind
-      // "daily-shift-png-end". Isso contorna o RLS que bloqueia inserts diretos
-      // por motoristas não-admin.
-      if (parteDiariaUrl && isOnline) {
-        try {
-          const pngBody = {
-            equipmentId: selectedVehicleId,
-            equipmentName: selectedVehicle.name,
-            plate: selectedVehicle.plate,
-            newStatus: "end_of_shift",
-            driverName: currentDriverName || null,
-            helperName: currentHelperName || null,
-            shiftRecordId: savedShiftRecordId || null,
-            imageUrl: parteDiariaUrl,
-            imageCaption: `📄 *PARTE DIÁRIA*\n${selectedVehicle.name} — ${selectedVehicle.plate}\nMotorista: ${currentDriverName || "—"}`,
-            timestamp: now,
-          };
-          const notifyUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wapi-driver-status-notify`;
-          const pngResp = await fetch(notifyUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-            },
-            body: JSON.stringify(pngBody),
-          });
-          if (!pngResp.ok) {
-            console.warn("[driver] PNG edge-function call returned", pngResp.status);
-          } else {
-            console.log("[driver] PNG da Parte Diária enfileirado via edge function");
-          }
-        } catch (pngErr) {
-          console.warn("[driver] Erro ao enviar PNG via edge function:", pngErr);
-        }
       }
 
       // Fim de Turno does NOT register as equipment exit (saída)
