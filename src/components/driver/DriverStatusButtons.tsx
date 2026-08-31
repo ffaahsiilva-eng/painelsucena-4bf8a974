@@ -263,6 +263,10 @@ export function DriverStatusButtons() {
     storedDriverName?.trim() ||
     selectedVehicle?.driver?.trim() ||
     "Motorista";
+  const storedHelperName = selectedVehicleId
+    ? localStorage.getItem(`selected_helper_name_${selectedVehicleId}`)
+    : null;
+  const currentHelperName = selectedVehicle?.helper || storedHelperName || "";
   const canIdentifyLoggedDriver = Boolean(loggedDriverName);
 
   useEffect(() => {
@@ -549,10 +553,10 @@ export function DriverStatusButtons() {
         equipmentId: selectedVehicleId,
         equipmentName: selectedVehicle.name,
         plate: selectedVehicle.plate,
-        newStatus: "end_of_shift",
+        newStatus: "🏁 Fim de Turno",
         previousStatus: currentStatus,
         driverName: currentDriverName || null,
-        helperName: selectedVehicle.helper || null,
+        helperName: currentHelperName || null,
         extraInfo: `*Combustível final:* ${getFuelLevelLabel(endShiftFuelLevel)}${endShiftHorimeter ? `\n*Horímetro:* ${endShiftHorimeter}` : ""}${endShiftKm ? `\n*KM:* ${endShiftKm}` : ""}`,
         shiftRecordId: savedShiftRecordId || null,
         imageUrl: parteDiariaUrl,
@@ -565,7 +569,10 @@ export function DriverStatusButtons() {
           const notifyUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wapi-driver-status-notify`;
           const resp = await fetch(notifyUrl, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+            },
             keepalive: true,
             body: JSON.stringify(wapiBody),
           });
@@ -719,7 +726,7 @@ export function DriverStatusButtons() {
             equipment_name: selectedVehicle.name,
             plate: selectedVehicle.plate,
             driver_name: currentDriverName || "Motorista",
-            helper_name: selectedVehicle.helper || undefined,
+            helper_name: currentHelperName || undefined,
             initial_horimeter: parseFloat(startShiftHorimeter),
             initial_km: parseFloat(startShiftKm),
             initial_fuel_level: fuelLevel,
@@ -762,10 +769,10 @@ export function DriverStatusButtons() {
           equipmentId: selectedVehicleId,
           equipmentName: selectedVehicle.name,
           plate: selectedVehicle.plate,
-          newStatus: "waiting",
+          newStatus: "shift_start",
           previousStatus: null,
           driverName: currentDriverName || null,
-          helperName: selectedVehicle.helper || null,
+          helperName: currentHelperName || null,
           extraInfo: `*Combustível:* ${getFuelLevelLabel(fuelLevel)}\n*Horímetro:* ${startShiftHorimeter}\n*KM:* ${startShiftKm}`,
           timestamp: new Date().toISOString(),
         };
@@ -881,7 +888,7 @@ export function DriverStatusButtons() {
     setShowStartShiftDialog(true);
   };
 
-  const handleStatusChange = async (newStatus: DriverStopReason) => {
+  const handleStatusChange = async (newStatus: DriverStopReason, customExtraInfo?: string) => {
     if (!selectedVehicleId || !selectedVehicle) {
       toast.error("Nenhum veículo selecionado");
       return;
@@ -899,7 +906,7 @@ export function DriverStatusButtons() {
         toast.error("Você precisa iniciar o turno antes de registrar Fim de Turno");
         return;
       }
-      setEndShiftFuelLevel("half"); // Reset to default
+      setEndShiftFuelLevel(fuelLevel); // Default to current fuel level
       setEndShiftHorimeter(initialHorimeter || ""); // Pre-fill with initial value
       setEndShiftKm(initialKm || ""); // Pre-fill with initial value
       setEndShiftError(null);
@@ -1019,7 +1026,8 @@ export function DriverStatusButtons() {
         newStatus,
         previousStatus: currentStatus,
         driverName: currentDriverName || null,
-        helperName: selectedVehicle.helper || null,
+        helperName: currentHelperName || null,
+        extraInfo: customExtraInfo || undefined,
         timestamp: new Date().toISOString(),
       };
       if (isOnline) {
@@ -1117,7 +1125,7 @@ export function DriverStatusButtons() {
       newStatus: "servico",
       previousStatus: selectedVehicle.stop_reason || "none",
       driverName: currentDriverName || null,
-      helperName: selectedVehicle.helper || null,
+      helperName: currentHelperName || null,
       extraInfo: `*Serviço:* ${serviceLabel}`,
       timestamp: now,
     };

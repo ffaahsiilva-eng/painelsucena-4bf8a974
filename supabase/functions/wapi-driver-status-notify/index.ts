@@ -162,13 +162,7 @@ Deno.serve(async (req) => {
       newLabel = "💧 Abastecendo Água";
     }
 
-    // Fim de Turno já tem o texto oficial enviado pelo trigger da Parte Diária.
-    // Aqui mantemos apenas o envio opcional do PNG, evitando o texto genérico duplicado.
-    if (isEndOfShift && !imageUrl) {
-      return new Response(JSON.stringify({ success: true, skipped: true, reason: "end-of-shift-text-disabled" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+
 
     // Se fornecido um timestamp original pelo frontend (ex: ação offline), usa ele. Senão, usa agora.
     const now = timestamp ? new Date(timestamp) : new Date();
@@ -207,7 +201,7 @@ Deno.serve(async (req) => {
     // Dedup robusto: se já existe QUALQUER mensagem com o mesmo status
     // (newLabel) para este equipamento nos últimos 10 minutos, ignora.
     let recentOutbox = null;
-    if (equipmentId && !isEndOfShift) {
+    if (equipmentId) {
       const { data: sameStatusRecent } = await admin
         .from("wapi_outbox")
         .select("id, status, message")
@@ -241,7 +235,7 @@ Deno.serve(async (req) => {
       ) || null;
     }
 
-    if (!isEndOfShift && recentOutbox?.id) {
+    if (recentOutbox?.id) {
       const { error: updateError } = await admin
         .from("wapi_outbox")
         .update({
@@ -257,7 +251,7 @@ Deno.serve(async (req) => {
           status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-    } else if (!isEndOfShift) {
+    } else {
       const { error } = await admin.from("wapi_outbox").insert({
         kind: "text",
         target_type: "group",

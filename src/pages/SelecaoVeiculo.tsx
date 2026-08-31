@@ -225,6 +225,7 @@ export default function SelecaoVeiculo() {
       localStorage.setItem("selectedVehicleId", vehicleId);
       localStorage.setItem("selectedDriverName", profile.full_name.trim());
       localStorage.setItem(`selected_driver_name_${vehicleId}`, profile.full_name.trim());
+      localStorage.setItem(`selected_helper_name_${vehicleId}`, helperName.trim());
       if (user?.id) {
         localStorage.setItem("selectedVehicleUserId", user.id);
         localStorage.setItem(`selected_vehicle_user_${vehicleId}`, user.id);
