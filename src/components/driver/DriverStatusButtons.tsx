@@ -1098,6 +1098,18 @@ export function DriverStatusButtons() {
     setSubmittingServiceId("custom");
     const now = new Date().toISOString();
     const serviceLabel = customServiceText.trim();
+    
+    // Optimistic update
+    queryClient.setQueryData(["equipment"], (old: any) => {
+      if (!old) return old;
+      const newData = old.map((eq: any) =>
+        eq.id === selectedVehicleId ? { ...eq, stop_reason: "servico", stop_start_time: now } : eq
+      );
+      const env = localStorage.getItem("selected_environment") ?? sessionStorage.getItem("selected_environment");
+      localStorage.setItem(`cached_equipment_${env || "default"}`, JSON.stringify(newData));
+      return newData;
+    });
+
     const wapiBody = {
       equipmentId: selectedVehicleId,
       equipmentName: selectedVehicle.name,
@@ -1670,6 +1682,18 @@ export function DriverStatusButtons() {
                     }
                     setSubmittingServiceId(s.id);
                     const now = new Date().toISOString();
+                    
+                    // Optimistic update
+                    queryClient.setQueryData(["equipment"], (old: any) => {
+                      if (!old) return old;
+                      const newData = old.map((eq: any) =>
+                        eq.id === selectedVehicleId ? { ...eq, stop_reason: "servico", stop_start_time: now } : eq
+                      );
+                      const env = localStorage.getItem("selected_environment") ?? sessionStorage.getItem("selected_environment");
+                      localStorage.setItem(`cached_equipment_${env || "default"}`, JSON.stringify(newData));
+                      return newData;
+                    });
+
                     const wapiBody = {
                       equipmentId: selectedVehicleId,
                       equipmentName: selectedVehicle.name,
