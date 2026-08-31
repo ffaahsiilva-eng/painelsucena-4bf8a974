@@ -219,9 +219,11 @@ Deno.serve(async (req) => {
         .limit(5);
 
       const dup = (sameStatusRecent || []).find((r) =>
-        typeof r.message === "string" && r.message.includes(newLabel)
-        && (!waterPoint || r.message.includes(String(waterPoint).trim()))
-        && (resolvedDriverName === "—" || r.message.includes(resolvedDriverName))
+        typeof r.message === "string" && 
+        r.message.includes(newLabel) &&
+        (!waterPoint || r.message.includes(String(waterPoint).trim())) &&
+        (resolvedDriverName === "—" || r.message.includes(resolvedDriverName)) &&
+        (!extraInfo || r.message.includes(String(extraInfo).trim()))
       );
       if (dup) {
         return new Response(JSON.stringify({ success: true, skipped: true, reason: "duplicate-status" }), {
