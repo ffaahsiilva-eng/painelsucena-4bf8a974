@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { generateAndUploadParteDiariaPng } from "@/lib/parteDiariaShare";
+import { generateParteDiariaBase64 } from "@/lib/parteDiariaShare";
 
 /**
  * Mantém a consistência do envio da Parte Diária (PNG) no grupo do WhatsApp.
@@ -80,8 +80,8 @@ export function useShiftPngBackfill(enabled: boolean = true) {
             const driver = (shift.driver_name || "").trim();
             if (!driver || driver === "—") continue;
 
-            const url = await generateAndUploadParteDiariaPng(eq as any);
-            if (!url) continue;
+            const b64 = await generateParteDiariaBase64(eq as any);
+            if (!b64) continue;
 
             const fuelLabel: Record<string, string> = {
               empty: "Vazio",
@@ -100,18 +100,26 @@ export function useShiftPngBackfill(enabled: boolean = true) {
               .filter(Boolean)
               .join("\n");
 
-            await supabase.functions.invoke("wapi-driver-status-notify", {
-              body: {
-                equipmentId: shift.equipment_id,
-                equipmentName: shift.equipment_name,
-                plate: shift.plate,
-                newStatus: "end_of_shift",
-                driverName: shift.driver_name || null,
-                extraInfo: extra || undefined,
-                shiftRecordId: shift.id,
-                imageUrl: url,
-                imageCaption: `📄 *PARTE DIÁRIA*\n${shift.equipment_name} — ${shift.plate}\nMotorista: ${shift.driver_name || "—"}`,
+            const wapiBody = {
+              equipmentId: shift.equipment_id,
+              equipmentName: shift.equipment_name || "",
+              plate: shift.plate || "",
+              newStatus: "end_of_shift",
+              driverName: driver,
+              extraInfo: extra,
+              shiftRecordId: shift.id,
+              imageBase64: b64,
+              imageCaption: `📄 *PARTE DIÁRIA (Atrasada)*\n${shift.equipment_name} — ${shift.plate}\nMotorista: ${driver}`,
+              timestamp: new Date().toISOString(),
+            };
+
+            await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wapi-driver-status-notify`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
               },
+              body: JSON.stringify(wapiBody),
             });
           } catch (err) {
             console.warn("[useShiftPngBackfill] falha em shift", shift.id, err);

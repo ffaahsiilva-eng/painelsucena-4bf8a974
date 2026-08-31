@@ -18,7 +18,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Save, Send, Search, Users, Bell, Play, FileImage, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { generateAndUploadParteDiariaPng } from "@/lib/parteDiariaShare";
+import { generateParteDiariaBase64 } from "@/lib/parteDiariaShare";
 import { format } from "date-fns";
 
 const formatBR = (digits: string): string => {
@@ -856,8 +856,8 @@ const AdminWhatsApp = () => {
       if (eqErr || !eq) throw eqErr || new Error("Equipamento não encontrado");
 
       toast.info("Gerando Parte Diária em PNG...");
-      const imageUrl = await generateAndUploadParteDiariaPng(eq as any);
-      if (!imageUrl) throw new Error("Falha ao gerar/enviar a imagem ao storage");
+      const imageBase64 = await generateParteDiariaBase64(eq as any);
+      if (!imageBase64) throw new Error("Falha ao gerar/enviar a imagem ao storage");
 
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wapi-driver-status-notify`;
       const resp = await fetch(url, {
@@ -870,7 +870,7 @@ const AdminWhatsApp = () => {
           newStatus: "end_of_shift",
           driverName: rec.driver_name,
           shiftRecordId: rec.id,
-          imageUrl,
+          imageBase64,
           imageCaption: `📄 Parte Diária — ${rec.equipment_name} (${rec.plate})\n👤 Motorista: ${rec.driver_name || "—"}`,
           extraInfo: "♻️ Reenvio manual da Parte Diária pelo painel admin.",
         }),

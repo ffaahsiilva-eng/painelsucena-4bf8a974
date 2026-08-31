@@ -52,7 +52,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useOfflineSyncV2 } from "@/hooks/useOfflineSyncV2";
 import { useCreateShiftRecord, useUpdateShiftRecord, useAddStatusToHistory, useShiftRecordByEquipment } from "@/hooks/useDailyShiftRecords";
 import { useCreateEquipmentMovement } from "@/hooks/useEquipmentMovements";
-import { generateAndUploadParteDiariaPng } from "@/lib/parteDiariaShare";
+import { generateParteDiariaBase64 } from "@/lib/parteDiariaShare";
 import { confirmOnce } from "@/lib/pendingConfirm";
 import { logDriverError } from "@/lib/driverErrorLog";
 import {
@@ -608,19 +608,19 @@ export function DriverStatusButtons() {
     setIsSendingParteDiaria(true);
     try {
       toast.info("Gerando Parte Diária...");
-      let parteDiariaUrl: string | null = null;
+      let parteDiariaBase64: string | null = null;
       let lastErr: any = null;
       for (let attempt = 1; attempt <= 3; attempt++) {
         try {
-          parteDiariaUrl = await generateAndUploadParteDiariaPng(savedShiftMeta.vehicle);
-          if (parteDiariaUrl) break;
+          parteDiariaBase64 = await generateParteDiariaBase64(savedShiftMeta.vehicle);
+          if (parteDiariaBase64) break;
         } catch (e: any) {
           lastErr = e;
           await new Promise((r) => setTimeout(r, 700));
         }
       }
 
-      if (!parteDiariaUrl) {
+      if (!parteDiariaBase64) {
         toast.error(`Falha ao gerar o PNG: ${lastErr?.message || "erro desconhecido"}`, { duration: 8000 });
         return;
       }
@@ -635,7 +635,7 @@ export function DriverStatusButtons() {
         helperName: savedShiftMeta.helperName || null,
         extraInfo: `*Combustível final:* ${getFuelLevelLabel(savedShiftMeta.fuelLevel)}${savedShiftMeta.horimeter ? `\n*Horímetro:* ${savedShiftMeta.horimeter}` : ""}${savedShiftMeta.km ? `\n*KM:* ${savedShiftMeta.km}` : ""}`,
         shiftRecordId: savedShiftMeta.shiftRecordId || null,
-        imageUrl: parteDiariaUrl,
+        imageBase64: parteDiariaBase64,
         imageCaption: `📄 *PARTE DIÁRIA*\n${savedShiftMeta.vehicle?.name} — ${savedShiftMeta.vehicle?.plate}\nMotorista: ${savedShiftMeta.driverName || "—"}`,
         timestamp: new Date().toISOString(),
       };

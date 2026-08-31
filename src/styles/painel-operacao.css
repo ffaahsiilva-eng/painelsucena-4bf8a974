@@ -1,0 +1,365 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.driver-panel-v6 {
+  --bg: #050607;
+  --panel: #0b0d0f;
+  --panel2: #111417;
+  --red: #f1262d;
+  --red2: #b90f16;
+  --white: #f5f5f5;
+  --muted: #999da2;
+  --line: #363a3e;
+  --radius: 24px;
+  --shadow: 0 18px 40px rgba(0,0,0,.55), 0 0 30px rgba(241,38,45,.05);
+
+  background: radial-gradient(circle at 50% 0, #17191b 0, #060708 27%, #000 72%);
+  color: var(--white);
+  min-height: 100dvh;
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+}
+
+.driver-panel-v6 * {
+  box-sizing: border-box;
+}
+
+.driver-panel-v6 .po-app {
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  background: linear-gradient(180deg, rgba(12,14,15,.97), rgba(0,0,0,.99) 19%);
+  box-shadow: 0 0 50px rgba(0,0,0,.85);
+  display: flex;
+  flex-direction: column;
+}
+
+.driver-panel-v6 .po-header {
+  height: 86px;
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  padding: 0 18px;
+  border-bottom: 1px solid rgba(241,38,45,.45);
+  background: linear-gradient(180deg, #15181a, #0b0d0e);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.driver-panel-v6 .po-icon-btn {
+  width: 42px;
+  height: 42px;
+  border: 0;
+  background: transparent;
+  padding: 8px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.driver-panel-v6 .po-icon-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.driver-panel-v6 .po-brand {
+  display: flex;
+  justify-content: center;
+}
+
+.driver-panel-v6 .po-brand img {
+  width: 235px;
+  max-width: 100%;
+  height: 60px;
+  object-fit: contain;
+}
+
+.driver-panel-v6 .po-main {
+  padding: 16px 18px 28px;
+  flex: 1;
+}
+
+.driver-panel-v6 .po-fuel-card {
+  border: 1px solid #3c4044;
+  border-radius: 26px;
+  background: linear-gradient(180deg, #0d0f11, #080a0b);
+  box-shadow: var(--shadow);
+  padding: 16px 15px 15px;
+  margin-bottom: 16px;
+}
+
+.driver-panel-v6 .po-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  font-weight: 750;
+  font-size: 13px;
+}
+
+.driver-panel-v6 .po-section-title img {
+  width: 23px;
+  height: 23px;
+}
+
+.driver-panel-v6 .po-gauge {
+  display: block;
+  width: 100%;
+  margin: 7px auto -2px;
+}
+
+.driver-panel-v6 .po-fuel-controls {
+  display: grid;
+  grid-template-columns: 46px 1fr 46px;
+  gap: 16px;
+  align-items: center;
+  margin-top: -12px;
+  padding: 0 78px;
+}
+
+.driver-panel-v6 .po-small-round {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  border: 1px solid #23272a;
+  background: linear-gradient(180deg, #191c1f, #0f1113);
+  color: var(--red);
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.driver-panel-v6 .po-value-pill {
+  height: 46px;
+  border-radius: 25px;
+  border: 1px solid #3a3e41;
+  background: linear-gradient(180deg, #1d2023, #101214);
+  display: grid;
+  place-items: center;
+  font-size: 23px;
+  font-weight: 800;
+}
+
+.driver-panel-v6 .po-start-btn {
+  height: 72px;
+  border-radius: 26px;
+  border: 1px solid #ff3036;
+  background: linear-gradient(180deg, #ed1f27, #b60f15);
+  color: #fff;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  box-shadow: 0 7px 24px rgba(241,38,45,.23), inset 0 1px 0 rgba(255,255,255,.15);
+  cursor: pointer;
+}
+
+.driver-panel-v6 .po-start-btn.active {
+  border-color: #55db46;
+  background: linear-gradient(180deg, #3dbd32, #248f1c);
+  box-shadow: 0 7px 24px rgba(85,219,70,.23), inset 0 1px 0 rgba(255,255,255,.15);
+}
+
+.driver-panel-v6 .po-start-btn span.po-play {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(92,0,4,.36);
+  border: 1px solid rgba(255,255,255,.12);
+}
+
+.driver-panel-v6 .po-start-btn.active span.po-play {
+  background: rgba(14,64,6,.36);
+}
+
+.driver-panel-v6 .po-start-btn img {
+  width: 24px;
+  height: 24px;
+}
+
+.driver-panel-v6 .po-status-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.driver-panel-v6 .po-status {
+  height: 88px;
+  border: 1px solid #3b3f43;
+  background: linear-gradient(180deg, #15181b, #0c0e10);
+  border-radius: 22px;
+  display: grid;
+  grid-template-columns: 56px 1fr 26px;
+  align-items: center;
+  padding: 11px 12px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  text-align: left;
+}
+
+.driver-panel-v6 .po-status.active {
+  border-color: rgba(241,38,45,.6);
+  background: linear-gradient(180deg, #1a1515, #0f0a0a);
+}
+
+.driver-panel-v6 .po-status .po-bubble {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle, #1d2023 10%, #111315 65%);
+  box-shadow: 0 0 15px rgba(241,38,45,.16), inset 0 0 0 1px rgba(241,38,45,.26);
+}
+
+.driver-panel-v6 .po-status.active .po-bubble {
+  box-shadow: 0 0 20px rgba(241,38,45,.5), inset 0 0 0 1px rgba(241,38,45,.6);
+}
+
+.driver-panel-v6 .po-status .po-bubble img {
+  width: 30px;
+  height: 30px;
+}
+
+.driver-panel-v6 .po-status .po-chev {
+  width: 22px;
+  opacity: .9;
+}
+
+.driver-panel-v6 .po-status strong {
+  font-size: 13px;
+  display: block;
+  letter-spacing: .6px;
+  color: var(--white);
+}
+
+.driver-panel-v6 .po-status small {
+  font-size: 10px;
+  color: var(--muted);
+  display: block;
+  margin-top: 3px;
+}
+
+.driver-panel-v6 .po-end-btn {
+  margin-top: 9px;
+  height: 64px;
+  width: 100%;
+  border-radius: 20px;
+  border: 1px solid rgba(241,38,45,.7);
+  background: linear-gradient(180deg, #141719, #0b0d0f);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.driver-panel-v6 .po-end-btn img {
+  width: 27px;
+}
+
+.driver-panel-v6 .po-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 13px;
+}
+
+.driver-panel-v6 .po-tile {
+  aspect-ratio: 1 / 1.05;
+  border-radius: 20px;
+  border: 1px solid #34383c;
+  background: linear-gradient(180deg, #171a1d, #0d0f11);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  text-decoration: none;
+  color: var(--white);
+}
+
+.driver-panel-v6 .po-tile:after {
+  content: "";
+  position: absolute;
+  bottom: 10px;
+  width: 24px;
+  height: 2px;
+  border-radius: 5px;
+  background: var(--red);
+}
+
+.driver-panel-v6 .po-tile img {
+  width: 38px;
+  height: 38px;
+}
+
+.driver-panel-v6 .po-tile span {
+  text-align: center;
+  font-weight: 800;
+  font-size: 12px;
+  line-height: 1.15;
+  letter-spacing: .6px;
+  padding: 0 6px;
+}
+
+.driver-panel-v6 .po-tile:hover, .driver-panel-v6 .po-status:hover {
+  transform: translateY(-1px);
+  border-color: #5b5f62;
+}
+
+.driver-panel-v6 .po-tile, .driver-panel-v6 .po-status, .driver-panel-v6 .po-start-btn, .driver-panel-v6 .po-end-btn, .driver-panel-v6 .po-small-round {
+  transition: .16s ease;
+}
+
+.driver-panel-v6 .po-tile:active, .driver-panel-v6 .po-status:active, .driver-panel-v6 .po-start-btn:active, .driver-panel-v6 .po-end-btn:active, .driver-panel-v6 .po-small-round:active {
+  transform: scale(.98);
+}
+
+@media(max-width:380px) {
+  .driver-panel-v6 .po-main {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .driver-panel-v6 .po-fuel-controls {
+    padding: 0 48px;
+  }
+  .driver-panel-v6 .po-status {
+    grid-template-columns: 48px 1fr 20px;
+  }
+  .driver-panel-v6 .po-status .po-bubble {
+    width: 46px;
+    height: 46px;
+  }
+  .driver-panel-v6 .po-status strong {
+    font-size: 11px;
+  }
+  .driver-panel-v6 .po-status small {
+    font-size: 9px;
+  }
+  .driver-panel-v6 .po-tile span {
+    font-size: 10px;
+  }
+}

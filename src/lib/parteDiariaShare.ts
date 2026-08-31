@@ -568,35 +568,26 @@ export async function renderParteDiariaHtmlToPngBlob(htmlContent: string): Promi
 
 
 /**
- * Builds today's Parte Diária PNG for an equipment, uploads to storage,
- * and returns the public URL.
+ * Builds today's Parte Diária PNG for an equipment and returns it as a Base64 string.
+ * Bypasses frontend RLS issues by allowing the Edge Function to handle the actual upload.
  */
-export async function generateAndUploadParteDiariaPng(
+export async function generateParteDiariaBase64(
   equipment: Equipment
-): Promise<string | null> {
+): Promise<string> {
   const html = await buildParteDiariaHtmlForEquipment(equipment);
   const blob = await renderParteDiariaHtmlToPngBlob(html);
-  const today = toParaDateString();
-  const safeName = (equipment.name || "equip").replace(/[^a-zA-Z0-9-_]/g, "_");
-  const path = `parte-diaria/${today}/${safeName}-${equipment.id}-${Date.now()}.png`;
-
-  let lastError: any = null;
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    const { error } = await supabase.storage
-      .from("site-assets")
-      .upload(path, await compressImage(blob), { contentType: "image/png", upsert: true });
-    if (!error) {
-      const { data } = supabase.storage.from("site-assets").getPublicUrl(path);
-      return data?.publicUrl ?? null;
-    }
-    lastError = error;
-    console.warn(`[parteDiariaShare] upload attempt ${attempt} failed`, error);
-    await new Promise((r) => setTimeout(r, 800 * attempt));
-  }
-  throw new Error(
-    `Falha ao enviar PNG ao storage após 3 tentativas: ${lastError?.message || lastError}`
-  );
+  const compressed = await compressImage(blob);
+  
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      resolve(reader.result as string);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(compressed);
+  });
 }
+
 
 function isCanvasMostlyBlank(canvas: HTMLCanvasElement): boolean {
   const ctx = canvas.getContext("2d", { willReadFrequently: true });

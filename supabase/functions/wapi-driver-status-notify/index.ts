@@ -55,6 +55,7 @@ Deno.serve(async (req) => {
       extraInfo,
       shiftRecordId,
       imageUrl,
+      imageBase64,
       imageCaption,
       timestamp,
       helperName,
@@ -198,8 +199,44 @@ Deno.serve(async (req) => {
     }
     message += `━━━━━━━━━━━━━━━━━━━━`;
 
+    let finalImageUrl = imageUrl;
+    
+    // Processamento do Base64 vindo do frontend bypassando RLS
+    if (imageBase64 && typeof imageBase64 === "string" && isEndOfShift) {
+      try {
+        const base64Content = imageBase64.replace(/^data:image\/\w+;base64,/, "");
+        const binaryString = atob(base64Content);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        
+        const todayDir = new Date().toISOString().slice(0, 10);
+        const randStr = Math.random().toString(36).substring(7);
+        const fileName = `parte-diaria/${todayDir}/pd-${shiftRecordId || randStr}-${Date.now()}.png`;
+
+        const { data: buckets } = await admin.storage.listBuckets();
+        if (!buckets?.some(b => b.name === "site-assets")) {
+          await admin.storage.createBucket("site-assets", { public: true });
+        }
+
+        const { error: upErr } = await admin.storage
+          .from("site-assets")
+          .upload(fileName, bytes.buffer, { contentType: "image/png", upsert: true });
+
+        if (!upErr) {
+          const { data } = admin.storage.from("site-assets").getPublicUrl(fileName);
+          finalImageUrl = data?.publicUrl || null;
+        } else {
+          console.error("wapi-driver-status-notify: Erro ao fazer upload do base64", upErr);
+        }
+      } catch (err) {
+        console.error("wapi-driver-status-notify: Erro no processamento do base64", err);
+      }
+    }
+
     // LÓGICA DA PARTE DIÁRIA (PNG) - Executada ANTES do early-return de dedup do status de texto
-    if (imageUrl && typeof imageUrl === "string" && isEndOfShift) {
+    if (finalImageUrl && typeof finalImageUrl === "string" && isEndOfShift) {
       const pngKind = "daily-shift-png-end";
 
       if (shiftRecordId) {
@@ -231,7 +268,7 @@ Deno.serve(async (req) => {
                 .from("wapi_outbox")
                 .update({
                   kind: "image",
-                  image_url: imageUrl,
+                  image_url: finalImageUrl,
                   caption: dbMsg.message,
                   message: null,
                   external_kind: pngKind, // Atualiza para o kind de imagem
@@ -243,7 +280,7 @@ Deno.serve(async (req) => {
                 kind: "image",
                 target_type: "group",
                 phone: targetGroupId,
-                image_url: imageUrl,
+                image_url: finalImageUrl,
                 caption: dbMsg.message,
                 origin: "driver-status",
                 external_kind: pngKind,
@@ -256,7 +293,7 @@ Deno.serve(async (req) => {
                 kind: "image",
                 target_type: "group",
                 phone: targetGroupId,
-                image_url: imageUrl,
+                image_url: finalImageUrl,
                 caption: imageCaption || `📄 Parte Diária — ${eqName}`,
                 origin: "driver-status",
                 external_kind: pngKind,
