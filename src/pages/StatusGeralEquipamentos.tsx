@@ -1,4 +1,4 @@
-import { Truck, CheckCircle2, AlertCircle, Info, FileDown, ArrowLeft, Loader2 } from "lucide-react";
+import { Truck, CheckCircle2, AlertCircle, Info, FileDown, ArrowLeft, Loader2, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -53,15 +53,40 @@ const StatusGeralEquipamentos = () => {
       const isActuallyOut = mov && 
                    !["fim_turno", "operando", "aguardando_frente_servico"].includes(mov.exit_reason || "");
       
+      let badgeLabel = "ATIVO";
+      let badgeColor = "bg-green-500 hover:bg-green-600 text-white";
+
+      if (isActuallyOut) {
+        badgeLabel = "FORA";
+        badgeColor = "bg-orange-500 hover:bg-orange-600 text-white";
+      } else if (!eq.driver) {
+        badgeLabel = "LIVRE";
+        badgeColor = "bg-slate-500 hover:bg-slate-600 text-white";
+      } else {
+        switch(eq.stop_reason) {
+          case "trabalhando": badgeLabel = "TRABALHANDO"; badgeColor = "bg-green-500 hover:bg-green-600 text-white"; break;
+          case "almoco": badgeLabel = "ALMOÇO"; badgeColor = "bg-blue-500 hover:bg-blue-600 text-white"; break;
+          case "parado_chuva": badgeLabel = "CHUVA"; badgeColor = "bg-sky-500 hover:bg-sky-600 text-white"; break;
+          case "aguardando_frente": badgeLabel = "AGUARD. FRENTE"; badgeColor = "bg-amber-500 hover:bg-amber-600 text-white"; break;
+          case "abastecimento": badgeLabel = "ABASTECENDO"; badgeColor = "bg-indigo-500 hover:bg-indigo-600 text-white"; break;
+          case "manutencao_oficina": badgeLabel = "OFICINA"; badgeColor = "bg-red-500 hover:bg-red-600 text-white"; break;
+          default: badgeLabel = "ATIVO"; badgeColor = "bg-green-500 hover:bg-green-600 text-white"; break;
+        }
+      }
+
       return {
         id: eq.id,
         name: eq.name,
         type: eq.equipment_type,
-        status: isActuallyOut ? "Fora" : "Ativo",
-        reason: isActuallyOut ? mov.reason : "No Canteiro",
+        status: isActuallyOut ? "Fora" : "Ativo", // Keeping for counts
+        badgeLabel,
+        badgeColor,
+        reason: isActuallyOut ? mov.reason : (eq.driver ? "No Canteiro (Em Uso)" : "No Canteiro (Livre)"),
         category: "Frota Pesada",
         plate: eq.plate,
         image_url: (eq as any).image_url ?? null,
+        latitude: eq.latitude,
+        longitude: eq.longitude,
       };
     }),
     ...jardinagemEquipment.map((eq) => ({
@@ -69,9 +94,13 @@ const StatusGeralEquipamentos = () => {
       name: eq.name,
       type: "jardinagem",
       status: eq.status === "entrou" ? "Ativo" : "Fora",
+      badgeLabel: eq.status === "entrou" ? "ATIVO" : "FORA",
+      badgeColor: eq.status === "entrou" ? "bg-green-500 hover:bg-green-600 text-white" : "bg-orange-500 hover:bg-orange-600 text-white",
       reason: eq.status === "entrou" ? "No Canteiro" : "Trabalho Externo / Saída",
       category: "Jardinagem",
-      plate: "-"
+      plate: "-",
+      latitude: undefined,
+      longitude: undefined,
     }))
   ];
 
@@ -96,7 +125,7 @@ const StatusGeralEquipamentos = () => {
           <td style="padding: 10px; border: 1px solid #e5e7eb; font-size: 10px; text-align: center;">${eq.category}</td>
           <td style="padding: 10px; border: 1px solid #e5e7eb; text-align: center;">
             <span style="padding: 2px 8px; border-radius: 9999px; font-size: 9px; font-weight: bold; background: ${eq.status === 'Ativo' ? '#d1fae5' : '#ffedd5'}; color: ${eq.status === 'Ativo' ? '#065f46' : '#9a3412'};">
-              ${eq.status === 'Ativo' ? 'ATIVO' : 'FORA'}
+              ${eq.badgeLabel}
             </span>
           </td>
           <td style="padding: 10px; border: 1px solid #e5e7eb; font-size: 10px; color: #4b5563; font-style: italic;">${eq.reason}</td>
@@ -274,15 +303,31 @@ const StatusGeralEquipamentos = () => {
                         </TableCell>
                         <TableCell className="py-5 text-center">
                           <Badge
-                            className={eq.status === "Ativo" 
-                              ? "bg-green-500 hover:bg-green-600 text-white border-none shadow-sm px-4 py-1 font-bold" 
-                              : "bg-orange-500 hover:bg-orange-600 text-white border-none shadow-sm px-4 py-1 font-bold"}
+                            className={`${eq.badgeColor} border-none shadow-sm px-4 py-1 font-bold`}
                           >
-                            {eq.status === "Ativo" ? "ATIVO" : "FORA"}
+                            {eq.badgeLabel}
                           </Badge>
                         </TableCell>
                         <TableCell className="py-5 text-sm font-medium text-muted-foreground italic">
-                          {eq.reason}
+                          <div className="flex flex-col gap-1.5">
+                            <span>{eq.reason}</span>
+                            {eq.latitude && eq.longitude ? (
+                              <a 
+                                href={`https://www.google.com/maps?q=${eq.latitude},${eq.longitude}`} 
+                                target="_blank" 
+                                rel="noreferrer"
+                                className="flex items-center gap-1.5 w-fit text-xs text-primary hover:text-primary/80 hover:underline not-italic font-bold bg-primary/5 px-2 py-1 rounded-md transition-colors"
+                              >
+                                <MapPin className="w-3.5 h-3.5 text-primary" />
+                                Ver localização exata
+                              </a>
+                            ) : eq.category === "Frota Pesada" ? (
+                              <div className="flex items-center gap-1.5 w-fit text-xs text-muted-foreground/60 not-italic bg-muted/20 px-2 py-1 rounded-md">
+                                <MapPin className="w-3.5 h-3.5" />
+                                Localização indisponível
+                              </div>
+                            ) : null}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}

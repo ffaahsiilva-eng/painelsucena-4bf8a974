@@ -28,6 +28,9 @@ export interface Equipment {
   stop_reason: StopReason;
   stop_start_time: string | null;
   image_url?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  location_updated_at?: string | null;
   mobilization_status: MobilizationStatus;
   created_at: string;
   updated_at: string;
@@ -80,7 +83,7 @@ export function useEquipment(options: { includeDesmobilized?: boolean } = {}) {
       try {
         let query = supabase
           .from("equipment")
-          .select("id, name, plate, driver, helper, equipment_type, stop_reason, stop_start_time, mobilization_status, image_url, environment")
+          .select("id, name, plate, driver, helper, equipment_type, stop_reason, stop_start_time, mobilization_status, image_url, environment, latitude, longitude, location_updated_at")
           .order("created_at", { ascending: true });
         if (env) query = query.eq("environment", env);
         
