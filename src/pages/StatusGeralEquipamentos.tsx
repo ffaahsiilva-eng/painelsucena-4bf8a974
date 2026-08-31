@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useEquipment } from "@/hooks/useEquipment";
+import { useEquipment, useAllActiveEquipmentStops } from "@/hooks/useEquipment";
 import { useJardinagemEquipment } from "@/hooks/useJardinagemEquipment";
 import { useEquipmentCurrentlyOut } from "@/hooks/useEquipmentMovements";
 import { VehicleIcon } from "@/components/equipamentos/VehicleIcons";
@@ -25,8 +25,9 @@ const StatusGeralEquipamentos = () => {
   const { data: equipment = [], isLoading: loadingEq } = useEquipment();
   const { data: jardinagemEquipment = [], isLoading: loadingJardinagem } = useJardinagemEquipment();
   const { data: equipmentOut = [], isLoading: loadingOut } = useEquipmentCurrentlyOut();
+  const { data: activeStops = [], isLoading: loadingStops } = useAllActiveEquipmentStops();
 
-  const isLoading = loadingEq || loadingJardinagem || loadingOut;
+  const isLoading = loadingEq || loadingJardinagem || loadingOut || loadingStops;
 
   // Map to store movement reason for regular equipment
   const movementReasonMap: Record<string, { reason: string; obs: string | null; exit_reason: string | null }> = {};
@@ -69,6 +70,7 @@ const StatusGeralEquipamentos = () => {
           case "rain": badgeLabel = "CHUVA"; badgeColor = "bg-sky-500 hover:bg-sky-600 text-white"; break;
           case "waiting": badgeLabel = "AGUARD. FRENTE"; badgeColor = "bg-amber-500 hover:bg-amber-600 text-white"; break;
           case "end_of_day": badgeLabel = "ABASTECENDO"; badgeColor = "bg-indigo-500 hover:bg-indigo-600 text-white"; break;
+          case "servico": badgeLabel = "SERVIÇO"; badgeColor = "bg-emerald-600 hover:bg-emerald-700 text-white"; break;
           case "maintenance": 
           case "manutencao_fora":
           case "manutencao_externa":
@@ -79,6 +81,13 @@ const StatusGeralEquipamentos = () => {
         }
       }
 
+      const activeStop = activeStops.find((s) => s.equipment_id === eq.id);
+      let eqReason = isActuallyOut ? mov.reason : (eq.driver ? "No Canteiro (Em Uso)" : "No Canteiro (Livre)");
+      
+      if (!isActuallyOut && eq.stop_reason === "servico" && activeStop?.defect_description) {
+        eqReason = activeStop.defect_description.replace(/^Serviço:\s*/i, "");
+      }
+
       return {
         id: eq.id,
         name: eq.name,
@@ -86,7 +95,7 @@ const StatusGeralEquipamentos = () => {
         status: isActuallyOut ? "Fora" : "Ativo", // Keeping for counts
         badgeLabel,
         badgeColor,
-        reason: isActuallyOut ? mov.reason : (eq.driver ? "No Canteiro (Em Uso)" : "No Canteiro (Livre)"),
+        reason: eqReason,
         category: "Frota Pesada",
         plate: eq.plate,
         image_url: (eq as any).image_url ?? null,

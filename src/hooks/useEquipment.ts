@@ -346,3 +346,20 @@ export function useEquipmentStopHistory(equipmentId?: string) {
     enabled: !!equipmentId || equipmentId === undefined,
   });
 }
+
+export function useAllActiveEquipmentStops() {
+  const { environment: env } = useEnvironment();
+  const queryClient = useQueryClient();
+  return useQuery({
+    queryKey: ["equipment_stop_history", "active", env],
+    queryFn: async () => {
+      let query = supabase
+        .from("equipment_stop_history")
+        .select("equipment_id, defect_description")
+        .is("ended_at", null);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data as { equipment_id: string; defect_description: string | null }[];
+    }
+  });
+}
