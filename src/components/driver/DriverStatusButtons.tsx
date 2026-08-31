@@ -147,7 +147,6 @@ export function DriverStatusButtons() {
   const [servicesOpen, setServicesOpen] = useState(false);
   const [submittingServiceId, setSubmittingServiceId] = useState<string | null>(null);
   const [fuelLevel, setFuelLevel] = useState<FuelLevel>("half");
-  const [isFuelLocked, setIsFuelLocked] = useState(false);
   const [showEndShiftDialog, setShowEndShiftDialog] = useState(false);
   const [showStartShiftDialog, setShowStartShiftDialog] = useState(false);
   const [endShiftFuelLevel, setEndShiftFuelLevel] = useState<FuelLevel>("half");
@@ -222,9 +221,7 @@ export function DriverStatusButtons() {
           
         if (data && data.final_fuel_level) {
           setFuelLevel(data.final_fuel_level as FuelLevel);
-          setIsFuelLocked(true);
         } else {
-          setIsFuelLocked(false);
           setFuelLevel("half");
         }
       } catch (err) {
@@ -1130,7 +1127,7 @@ export function DriverStatusButtons() {
             <FuelLevelGauge
               selectedLevel={fuelLevel}
               onLevelChange={setFuelLevel}
-              disabled={isUpdating || isProfileLoading || !canIdentifyLoggedDriver || isFuelLocked}
+              disabled={isUpdating || isProfileLoading || !canIdentifyLoggedDriver}
             />
           </div>
 
