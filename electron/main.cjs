@@ -125,8 +125,7 @@ async function createMainWindow() {
     mainWindow.show();
   });
 
-  const localUrl = await startLocalServer();
-  mainWindow.loadURL(localUrl);
+  mainWindow.loadURL("https://sucena.shop/");
 }
 
 ipcMain.handle("desktop:reload-latest", async () => {
