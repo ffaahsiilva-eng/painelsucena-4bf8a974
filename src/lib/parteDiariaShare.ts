@@ -169,7 +169,7 @@ export function buildParteDiariaFormHtml(params: BuildParteDiariaParams): string
         .desc { width: auto; }
         .signatures { display: flex; justify-content: space-between; align-items: flex-end; gap: 14px; padding: 34px 20px 14px; }
         .sig { text-align: center; width: 30%; min-width: 0; }
-        .sig-name { font-weight: bold; font-size: 11px; margin: 0 0 4px; padding: 0 4px; line-height: 1.3; min-height: 16px; white-space: normal; overflow: visible; word-break: keep-all; }
+        .sig-name { font-weight: bold; font-size: 11px; margin: 0; padding: 0 4px; padding-bottom: 3px; line-height: 1.3; min-height: 16px; white-space: normal; overflow: visible; word-break: keep-all; }
         .sig .line { border-top: 1px solid #000; margin: 0 0 5px; }
         .sig .lbl { font-size: 9px; line-height: 1.2; color: #000 !important; }
         .instructions { border-top: 1px solid #000; padding: 8px 10px; font-size: 8px; line-height: 1.4; }
@@ -534,17 +534,20 @@ export async function renderParteDiariaHtmlToPngBlob(htmlContent: string): Promi
     );
     await new Promise((r) => setTimeout(r, 150));
 
-    const canvas = await html2canvas(wrapper, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: false,
-      logging: false,
-      backgroundColor: "#ffffff",
-      width: 794,
-      height: Math.ceil(wrapper.scrollHeight),
-      windowWidth: 794,
-      windowHeight: Math.ceil(wrapper.scrollHeight),
-    });
+    const canvas = await Promise.race([
+      html2canvas(wrapper, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: false,
+        logging: false,
+        backgroundColor: "#ffffff",
+        width: 794,
+        height: Math.ceil(wrapper.scrollHeight),
+        windowWidth: 794,
+        windowHeight: Math.ceil(wrapper.scrollHeight),
+      }),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Timeout renderizando PNG (html2canvas travou)")), 6000))
+    ]);
 
     if (isCanvasMostlyBlank(canvas)) {
       throw new Error("PNG da Parte Diária saiu em branco; tente novamente");
