@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { toast } from "sonner";
+import { GlassCard } from "./GlassCard";
 
 interface WeatherData {
   temperature: number;
@@ -154,22 +155,58 @@ export function WeatherWidget() {
     (code >= 80 && code <= 82) ||
     code >= 95;
   const isSunny = code === 0 || code === 1 || code === 2;
+  const isNight = weather ? !weather.isDay : false;
+  const description = WMO_DESCRIPTIONS[code] || "—";
 
-  // 7 fotos de construção (uma por dia da semana: dom, seg, ter, qua, qui, sex, sab)
-  const constructionImages = [
-    "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=1200&q=80", // ponte/estrutura
-    "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=1200&q=80", // canteiro de obras
-    "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=1200&q=80", // ponte ao entardecer
-    "https://images.unsplash.com/photo-1519452575417-564c1401ecc0?auto=format&fit=crop&w=1200&q=80", // guindaste
-    "https://images.unsplash.com/photo-1590725140246-20acdee442be?auto=format&fit=crop&w=1200&q=80", // engenheiro/obra
-    "https://images.unsplash.com/photo-1517089596392-fb9a9033e05b?auto=format&fit=crop&w=1200&q=80", // estrutura metálica
-    "https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=1200&q=80", // operário com capacete
-  ];
-  const todayImage = constructionImages[new Date().getDay()];
+  const pickFirst = (...lists: Array<string[] | null | undefined>) => {
+    for (const list of lists) {
+      if (Array.isArray(list) && list.length > 0 && list[0]) return list[0];
+    }
+    return null;
+  };
 
-import { GlassCard } from "./GlassCard";
+  const mediaUrl = isNight
+    ? pickFirst(
+        isRainy ? settings?.weather_night_rainy_media_urls : null,
+        settings?.weather_night_hot_media_urls,
+        settings?.weather_night_cold_media_urls,
+      )
+    : pickFirst(
+        isRainy ? settings?.weather_day_rainy_media_urls : null,
+        isSunny ? settings?.weather_day_sunny_media_urls : null,
+        settings?.weather_day_cold_media_urls,
+      ) ||
+      (isRainy
+        ? settings?.weather_rainy_media_url
+        : isSunny
+          ? settings?.weather_sunny_media_url
+          : settings?.weather_cold_media_url) ||
+      null;
 
-// ... existing code ...
+  const isVideoMedia = Boolean(mediaUrl && /\.(mp4|webm|mov)(\?|$)/i.test(mediaUrl));
+
+  if (loading && !weather) {
+    return <Skeleton className="h-full min-h-[240px] w-full rounded-2xl" />;
+  }
+
+  if (!weather) {
+    return (
+      <div className="h-full">
+        <GlassCard className="flex flex-col items-center justify-center h-full min-h-[240px] p-6 gap-3 text-[#292C2E]">
+          <AlertCircle className="h-6 w-6 text-amber-500" />
+          <p className="text-sm text-center">{error || "Clima indisponível"}</p>
+          <Button size="sm" variant="outline" onClick={() => fetchWeather(coordsRef.current)}>
+            <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Tentar novamente
+          </Button>
+          {needsPermission && (
+            <Button size="sm" variant="ghost" onClick={() => requestGeolocation(false)}>
+              <LocateFixed className="h-3.5 w-3.5 mr-1.5" /> Usar minha localização
+            </Button>
+          )}
+        </GlassCard>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full">
