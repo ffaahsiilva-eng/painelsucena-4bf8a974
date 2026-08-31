@@ -146,36 +146,24 @@ export function AbastecendoQuickButton() {
   };
 
   return (
-    <button
-      type="button"
+    <div
       onClick={handleClick}
-      disabled={isUpdating || isCurrent}
-      className={`relative bg-red-600 hover:bg-red-700 active:bg-red-800 transition-all duration-150 border-none shadow-md touch-manipulation rounded-xl w-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary overflow-hidden ${
-        isUpdating || isCurrent
-          ? "opacity-90 ring-2 ring-red-400 ring-offset-2 cursor-not-allowed"
-          : "cursor-pointer hover:scale-[1.02] active:scale-[0.97]"
-      }`}
+      className={`po-menu-item ${isUpdating || isCurrent ? "opacity-75 cursor-not-allowed" : ""}`}
+      style={{ 
+        background: isCurrent 
+          ? "linear-gradient(145deg, #10b981, #059669)" 
+          : "linear-gradient(145deg, #ef4444, #b91c1c)",
+        outline: isCurrent ? "2px solid #10b981" : "none"
+      }}
     >
-      {isCurrent && (
-        <div className="absolute top-2 right-2">
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
-          </span>
-        </div>
-      )}
-      <div className="p-4 flex flex-col items-center justify-center text-center min-h-[90px] sm:min-h-[110px] pointer-events-none">
-        <div className="text-white mb-2 pointer-events-none">
-          {isUpdating ? (
-            <Loader2 className="w-8 h-8 animate-spin" />
-          ) : (
-            <Fuel className="w-8 h-8" />
-          )}
-        </div>
-        <h3 className="font-bold text-white text-xs uppercase tracking-wide pointer-events-none">
-          {isCurrent ? "Abastecendo (Ativo)" : "Abastecendo"}
-        </h3>
+      <div className="mb-1 text-white">
+        {isUpdating ? (
+          <Loader2 className="w-8 h-8 animate-spin" />
+        ) : (
+          <Fuel className="w-8 h-8" />
+        )}
       </div>
-    </button>
+      <span>{isCurrent ? "ABASTECENDO (ATIVO)" : "ABASTECENDO"}</span>
+    </div>
   );
 }

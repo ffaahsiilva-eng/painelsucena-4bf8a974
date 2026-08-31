@@ -64,12 +64,17 @@ const StatusGeralEquipamentos = () => {
         badgeColor = "bg-slate-500 hover:bg-slate-600 text-white";
       } else {
         switch(eq.stop_reason) {
-          case "trabalhando": badgeLabel = "TRABALHANDO"; badgeColor = "bg-green-500 hover:bg-green-600 text-white"; break;
+          case "none": badgeLabel = "OPERANDO"; badgeColor = "bg-green-500 hover:bg-green-600 text-white"; break;
           case "almoco": badgeLabel = "ALMOÇO"; badgeColor = "bg-blue-500 hover:bg-blue-600 text-white"; break;
-          case "parado_chuva": badgeLabel = "CHUVA"; badgeColor = "bg-sky-500 hover:bg-sky-600 text-white"; break;
-          case "aguardando_frente": badgeLabel = "AGUARD. FRENTE"; badgeColor = "bg-amber-500 hover:bg-amber-600 text-white"; break;
-          case "abastecimento": badgeLabel = "ABASTECENDO"; badgeColor = "bg-indigo-500 hover:bg-indigo-600 text-white"; break;
-          case "manutencao_oficina": badgeLabel = "OFICINA"; badgeColor = "bg-red-500 hover:bg-red-600 text-white"; break;
+          case "rain": badgeLabel = "CHUVA"; badgeColor = "bg-sky-500 hover:bg-sky-600 text-white"; break;
+          case "waiting": badgeLabel = "AGUARD. FRENTE"; badgeColor = "bg-amber-500 hover:bg-amber-600 text-white"; break;
+          case "end_of_day": badgeLabel = "ABASTECENDO"; badgeColor = "bg-indigo-500 hover:bg-indigo-600 text-white"; break;
+          case "maintenance": 
+          case "manutencao_fora":
+          case "manutencao_externa":
+          case "oficina_externa":
+            badgeLabel = "MANUTENÇÃO"; badgeColor = "bg-red-500 hover:bg-red-600 text-white"; break;
+          case "end_of_shift": badgeLabel = "FIM DE TURNO"; badgeColor = "bg-gray-500 hover:bg-gray-600 text-white"; break;
           default: badgeLabel = "ATIVO"; badgeColor = "bg-green-500 hover:bg-green-600 text-white"; break;
         }
       }

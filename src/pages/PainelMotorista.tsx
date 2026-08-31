@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import "@/styles/painel-operacao.css";
 import { 
   FileText, 
   Truck, 
@@ -60,18 +61,7 @@ interface QuickAccessItem {
 const PainelMotorista = () => {
   const { setTheme, theme } = useTheme();
   
-  // Force light theme on this page
-  useEffect(() => {
-    const previousTheme = theme;
-    setTheme("light");
-    
-    return () => {
-      // Restore previous theme when leaving the page
-      if (previousTheme) {
-        setTheme(previousTheme);
-      }
-    };
-  }, []);
+  // Removed light theme constraint for new dark industrial UI
 
   // Note: when equipment exit is pending we no longer force redirect to entry page.
   // The driver can keep managing the shift (Início de Turno, Operar, Abastecendo,
@@ -253,22 +243,12 @@ const PainelMotorista = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-muted/30">
-      {/* Offline Banner */}
-      <OfflineBanner isOnline={isOnline} pendingCount={pendingCount} />
-      
-      {/* Compact Header for Mobile */}
-      <header className="sticky top-0 z-10 bg-card/95  border-b shadow-sm safe-area-inset-top shrink-0">
-        <div className="flex items-center justify-between px-3 py-2.5">
-          {/* Logo */}
-          <img loading="lazy" decoding="async" 
-            src="/logo-sucena-pdf.png" 
-            alt="Sucena" 
-            className="h-6 w-auto"
-          />
-          
-          {/* User Info - Center */}
-          <div className="flex items-center gap-2 flex-1 justify-center min-w-0 px-1">
+    <div className="driver-panel-v6">
+      <div className="po-app">
+      {/* Header */}
+      <header className="po-header">
+        <div className="po-profile-group">
+          <div className="po-avatar-container">
             <NeonAvatar
               src={profile?.avatar_url}
               name={profile?.full_name || "Motorista"}
@@ -277,16 +257,15 @@ const PainelMotorista = () => {
               frameAnimation={profile?.frame_animation}
               size="sm"
             />
-            <div className="min-w-0">
-              <p className="text-xs font-semibold text-foreground leading-tight truncate max-w-[140px] sm:max-w-[180px]">
-                {profile?.full_name?.split(' ')[0] || "Motorista"}
-              </p>
-              <p className="text-[10px] text-muted-foreground leading-tight truncate">
-                {formatCargoLabel(profile?.cargo)}
-              </p>
-            </div>
           </div>
-          
+          <div className="po-driver-info">
+            <h2 id="driverName">{profile?.full_name?.split(' ')[0] || "Motorista"}</h2>
+            <span className="po-truck-badge" id="vehiclePlate">
+              {selectedVehicle?.plate || "Sem veículo"}
+            </span>
+          </div>
+        </div>
+        <div className="po-header-actions">
           {/* Sync Indicator */}
           <SyncIndicatorV2
             isOnline={isOnline}
@@ -297,11 +276,8 @@ const PainelMotorista = () => {
             isInitialized={isInitialized}
             onSync={triggerSync}
           />
-          
-          {/* Reload Button - clears all caches and reloads */}
-          <Button
-            variant="ghost"
-            size="icon"
+          <button 
+            className="po-icon-btn" 
             onClick={async () => {
               const ok = window.confirm(
                 "Recarregar e atualizar o aplicativo?\n\nIsso vai limpar o cache, dados locais e baixar a versão mais recente. Você precisará entrar novamente.",
@@ -310,68 +286,36 @@ const PainelMotorista = () => {
               toast.info("Atualizando o aplicativo…");
               await nukeAndReload();
             }}
-            className="h-10 w-10 text-primary hover:text-primary hover:bg-primary/10 rounded-full shrink-0 touch-manipulation ml-1"
-            title="Recarregar e atualizar"
           >
-            <RefreshCw className="w-4 h-4" />
-          </Button>
-
-          {/* Logout Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleLogout}
-            className="h-10 w-10 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full shrink-0 touch-manipulation ml-1"
-            title="Sair"
-          >
-            <LogOut className="w-4 h-4" />
-          </Button>
+            <RefreshCw className="w-5 h-5" />
+          </button>
+          <button className="po-icon-btn po-danger" onClick={handleLogout}>
+            <LogOut className="w-5 h-5 text-red-500" />
+          </button>
         </div>
       </header>
 
-      {/* Content - Scrollable container */}
-      <main className="flex-1">
-        <div className="p-4 max-w-lg mx-auto space-y-4 pb-safe-area safe-area-inset-bottom">
-        {/* Welcome Card */}
-        <Card className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground border-none shadow-lg">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-white/20 rounded-full">
-                <User className="w-6 h-6" />
-              </div>
-              <div className="min-w-0">
-                <h2 className="text-base font-semibold truncate">
-                  Olá, {profile?.full_name?.split(' ')[0] || "Motorista"}!
-                </h2>
-                <p className="text-xs opacity-90">
-                  Acesse as funções do seu dia a dia
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
+      {/* Main Content Area */}
+      <main className="po-main pb-safe-area safe-area-inset-bottom">
+        
         {/* Helper Name Display */}
         {selectedVehicle?.helper && selectedVehicle.helper.trim() !== "" && (
-          <div className="flex items-center gap-2 px-3 py-2 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-            <UserCheck className="w-4 h-4 text-blue-600 shrink-0" />
-            <p className="text-sm font-medium text-foreground">
-              Seu Ajudante é <span className="font-bold text-blue-600">{selectedVehicle.helper}</span>
+          <div className="flex items-center gap-2 px-3 py-2 bg-blue-900/40 border border-blue-500/30 rounded-xl mb-4">
+            <UserCheck className="w-5 h-5 text-blue-400 shrink-0" />
+            <p className="text-sm font-medium text-white">
+              Ajudante: <span className="font-bold text-blue-400">{selectedVehicle.helper}</span>
             </p>
           </div>
         )}
 
-        {/* Change equipment without ending the shift - only available before starting shift */}
+        {/* Change equipment without ending the shift */}
         {!shiftStarted && (
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button
-              variant="outline"
-              className="w-full h-10 text-sm border-amber-400 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Trocar Equipamento
-            </Button>
+            <button className="w-full h-12 mb-4 rounded-xl text-sm font-bold border-2 border-amber-500/50 text-amber-500 flex items-center justify-center gap-2 hover:bg-amber-500/10 transition-colors">
+              <RefreshCw className="w-4 h-4" />
+              TROCAR EQUIPAMENTO
+            </button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -408,27 +352,20 @@ const PainelMotorista = () => {
         </AlertDialog>
         )}
 
-
         {/* Driver Status Buttons - Controle de Turno */}
         <DriverStatusButtons />
 
-        {/* Quick Access Grid - 2 columns, touch-friendly with larger targets */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 sm:gap-3">
+        {/* Menu Grid */}
+        <section className="po-menu-grid">
           {quickAccessItems
             .filter((item) => !(item.hideForMunk && isMunk))
             .filter((item) => !(item.hideWhenExitPending && exitPending))
             .map((item) => {
               const blocked = item.requiresShift && !shiftStarted;
               return (
-                <button
+                <div
                   key={item.title}
-                  type="button"
-                  disabled={blocked}
-                  className={`${item.color} transition-all duration-150 border-none shadow-md touch-manipulation rounded-xl w-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${
-                    blocked
-                      ? "opacity-50 cursor-not-allowed"
-                      : "cursor-pointer hover:scale-[1.02] active:scale-[0.97]"
-                  }`}
+                  className={`po-menu-item ${blocked ? "opacity-40 grayscale" : ""}`}
                   onClick={() => {
                     if (blocked) {
                       toast.error("Inicie o turno antes de acessar essa função");
@@ -446,17 +383,12 @@ const PainelMotorista = () => {
                       },
                     );
                   }}
-
                 >
-                  <div className="p-4 flex flex-col items-center justify-center text-center min-h-[90px] sm:min-h-[110px] pointer-events-none">
-                    <div className={`${item.iconColor} mb-2 pointer-events-none`}>
-                      {item.icon}
-                    </div>
-                    <h3 className={`font-bold ${item.iconColor} text-xs uppercase tracking-wide pointer-events-none`}>
-                      {item.title}
-                    </h3>
+                  <div className={`mb-1 ${item.iconColor || "text-white"}`}>
+                    {item.icon}
                   </div>
-                </button>
+                  <span>{item.title}</span>
+                </div>
               );
             })}
 
@@ -466,29 +398,23 @@ const PainelMotorista = () => {
             equipmentName={selectedVehicle?.name}
             plate={selectedVehicle?.plate}
             trigger={
-              <button
-                type="button"
-                className="bg-orange-500 hover:bg-orange-600 active:bg-orange-700 transition-all duration-150 border-none shadow-md touch-manipulation rounded-xl w-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary cursor-pointer hover:scale-[1.02] active:scale-[0.97]"
-              >
-                <div className="p-4 flex flex-col items-center justify-center text-center min-h-[90px] sm:min-h-[110px] pointer-events-none">
-                  <div className="text-white mb-2 pointer-events-none">
-                    <ClipboardCheck className="w-8 h-8" />
-                  </div>
-                  <h3 className="font-bold text-white text-xs uppercase tracking-wide pointer-events-none">
-                    Check List
-                  </h3>
+              <div className="po-menu-item" style={{ background: "linear-gradient(145deg, #f97316, #c2410c)" }}>
+                <div className="mb-1 text-white">
+                  <ClipboardCheck className="w-8 h-8" />
                 </div>
-              </button>
+                <span>CHECK LIST</span>
+              </div>
             }
           />
 
           {/* Abastecendo - status quick action */}
-          <AbastecendoQuickButton />
+          <div className="po-menu-item-wrapper">
+             <AbastecendoQuickButton />
+          </div>
+        </section>
 
-
-        </div>
-        </div>
       </main>
+    </div>
     </div>
   );
 };
