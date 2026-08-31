@@ -1036,210 +1036,210 @@ export function DriverStatusButtons() {
 
   return (
     <>
-      <div className="flex flex-col gap-0 w-full">
-        {/* Offline Banner */}
-        {!isOnline && (
-          <div className="bg-orange-900/40 border border-orange-500/50 rounded-xl p-3 mb-3 flex items-center gap-3">
-            <WifiOff className="h-5 w-5 text-orange-500" />
-            <p className="text-xs text-orange-200">Modo offline - alterações serão sincronizadas quando conectar</p>
-          </div>
-        )}
-
-        {/* Maintenance Mode Alert */}
-        {isInMaintenance && (
-          <div className="bg-red-900/40 border border-red-500/50 rounded-xl p-3 mb-3 flex items-center gap-3">
-            <AlertCircle className="h-5 w-5 text-red-500" />
-            <p className="text-xs text-red-200">Equipamento em manutenção - apenas "Operar" disponível para retomar</p>
-          </div>
-        )}
-
-        {/* Info Header (Elapsed time, active service, etc) */}
-        {shiftStarted && currentStatus !== "end_of_shift" && (
-          <div className="flex items-center gap-3 mb-3 px-2">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-black/40 rounded-lg border border-white/10">
-              <Timer className="h-4 w-4 text-red-500" />
-              <span className="text-sm font-mono font-bold text-white">
-                {formatElapsedTime(elapsedSeconds)}
-              </span>
-            </div>
-            {currentStatus === ("servico" as any) && activeServiceDescription && (
-              <div
-                className="flex items-center gap-2 px-3 py-1.5 bg-green-900/30 rounded-lg border border-green-500/50 text-green-400 animate-pulse truncate max-w-[200px]"
-                title="Atividade enviada ao grupo do WhatsApp"
-              >
-                <Wrench className="h-4 w-4 shrink-0" />
-                <span className="text-xs font-bold truncate">
-                  {String(activeServiceDescription).replace(/^Serviço:\s*/i, "")}
+      <Card className="shadow-md">
+        <CardHeader className="pb-3 px-4 pt-4">
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="text-base font-semibold">Controle de Turno</CardTitle>
+            {showStatusBadge && (
+              <Badge className={`${statusInfo.color} text-white text-xs px-2.5 py-0.5 flex items-center gap-1.5 shadow-sm`}>
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
                 </span>
-              </div>
+                {statusInfo.label}
+              </Badge>
             )}
           </div>
-        )}
-
-        {/* Fuel Card */}
-        <section className="po-fuel-card">
-          <div className="po-section-title">
-            <img src="/assets/icons/svg/fuel.svg" alt="fuel" />
-            <span>Nível de combustível</span>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+            <span className="font-medium truncate">{selectedVehicle.name}</span>
+            <span>•</span>
+            <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">{selectedVehicle.plate}</span>
           </div>
-          <img className="po-gauge" src="/assets/icons/svg/fuel_gauge.svg" alt="gauge" />
-          <div className="po-fuel-controls">
-            <button 
-              className="po-small-round" 
-              onClick={() => {
-                const vals = ['E', '1/4', '1/2', '3/4', 'F'];
-                const idx = vals.indexOf(fuelLevel);
-                if (idx > 0) setFuelLevel(vals[idx - 1] as FuelLevel);
-              }}
-              disabled={isUpdating}
-            >
-              ‹
-            </button>
-            <div className="po-value-pill">{fuelLevel}</div>
-            <button 
-              className="po-small-round"
-              onClick={() => {
-                const vals = ['E', '1/4', '1/2', '3/4', 'F'];
-                const idx = vals.indexOf(fuelLevel);
-                if (idx < vals.length - 1) setFuelLevel(vals[idx + 1] as FuelLevel);
-              }}
-              disabled={isUpdating}
-            >
-              ›
-            </button>
-          </div>
-        </section>
-
-        {/* Start Shift Button */}
-        {!shiftStarted && (
-          <button 
-            className="po-start-btn"
-            onClick={openStartShiftDialog}
-            disabled={isUpdating}
-          >
-            <span className="po-play">
-              {isUpdating ? (
-                <Loader2 className="h-6 w-6 animate-spin text-white" />
-              ) : (
-                <img src="/assets/icons/svg/play.svg" alt="play" />
-              )}
-            </span>
-            INICIAR TURNO
-          </button>
-        )}
-
-        {/* Status Grid */}
-        <section className="po-status-grid">
-          {statusButtons.map((button) => {
-            const isServices = button.action === ("services" as any);
-            const isDisabledByMaintenance = isInMaintenance && !isServices;
-            const isDisabledByNoShift = !shiftStarted;
-            const isBlocked = isDisabledByMaintenance || isDisabledByNoShift;
-            const isCurrentStatus = !isServices && currentStatus === button.action;
-
-            let iconSrc = "";
-            let title = button.label.toUpperCase();
-            let subtitle = "";
-            if (button.action === ("services" as any)) {
-              iconSrc = "/assets/icons/svg/wrench.svg";
-              subtitle = "Manutenção e apoio";
-            } else if (button.action === "waiting") {
-              iconSrc = "/assets/icons/svg/clock.svg";
-              subtitle = "Em espera";
-            } else if (button.action === "rain") {
-              iconSrc = "/assets/icons/svg/rain.svg";
-              subtitle = "Condições climáticas";
-            } else if (button.action === ("almoco" as any)) {
-              iconSrc = "/assets/icons/svg/utensils.svg";
-              subtitle = "Intervalo";
-            } else {
-              // fallback for other dynamic status
-              iconSrc = "/assets/icons/svg/clock.svg"; 
-              subtitle = "Outro status";
-            }
-
-            return (
-              <div 
-                key={button.id}
-                className={`po-status ${isCurrentStatus ? "active" : ""} ${(isBlocked && !isCurrentStatus) ? "opacity-50 grayscale" : ""}`}
-                onClick={() => {
-                  if (!canIdentifyLoggedDriver) {
-                    toast.error("Aguarde carregar o motorista logado");
-                    return;
-                  }
-                  if (isDisabledByNoShift) {
-                    toast.error("Inicie o turno para usar este botão");
-                    return;
-                  }
-                  if (isDisabledByMaintenance && !isServices) {
-                    toast.error("Equipamento em manutenção. Apenas Serviços disponível.");
-                    return;
-                  }
-                  if (isServices) {
-                    setServicesOpen(true);
-                    return;
-                  }
-                  if (isCurrentStatus) return; // Prevent clicking already active status
-                  void confirmOnce(
-                    `status:${selectedVehicleId ?? "x"}:${button.action}`,
-                    `Tem certeza que deseja selecionar "${button.label}"?`,
-                    async () => {
-                      await handleStatusChange(button.action);
-                    },
-                  );
-                }}
-              >
-                <span className="po-bubble">
-                  {isUpdating && !isServices && submittingServiceId === button.id ? (
-                    <Loader2 className="h-5 w-5 animate-spin text-white" />
-                  ) : (
-                    <img src={iconSrc} alt={title} />
-                  )}
-                </span>
-                <div>
-                  <strong>{title}</strong>
-                  <small>{subtitle}</small>
-                </div>
-                <img className="po-chev" src="/assets/icons/svg/chevron.svg" alt=">" />
-              </div>
-            );
-          })}
-        </section>
-
-        {/* End Shift Button */}
-        <button 
-          className={`po-end-btn ${currentStatus === "end_of_shift" ? "opacity-50 cursor-not-allowed border-red-500" : ""}`}
-          disabled={isUpdating || isProfileLoading || !canIdentifyLoggedDriver || currentStatus === "end_of_shift"}
-          onClick={() => {
-            if (!canIdentifyLoggedDriver) {
-              toast.error("Aguarde carregar o motorista logado");
-              return;
-            }
-            if (!shiftStarted) {
-              toast.error("Inicie o turno para usar este botão");
-              return;
-            }
-            if (isInMaintenance) {
-              toast.error("Equipamento em manutenção. Apenas Serviços disponível.");
-              return;
-            }
-            void confirmOnce(
-              `status:${selectedVehicleId ?? "x"}:end_of_shift`,
-              'Tem certeza que deseja selecionar "Fim de Turno"?',
-              async () => {
-                await handleStatusChange("end_of_shift" as StopReason);
-              },
-            );
-          }}
-        >
-          {isUpdating ? (
-            <Loader2 className="h-6 w-6 animate-spin text-white" />
-          ) : (
-            <img src="/assets/icons/svg/power.svg" alt="power" />
+          {shiftStarted && activeStop && (
+            <p className="text-xs text-muted-foreground mt-1.5">
+              Desde: {format(new Date(activeStop.started_at), "HH:mm", { locale: ptBR })}
+            </p>
           )}
-          FIM DE TURNO
-        </button>
-      </div>
+          {/* Activity Timer */}
+          {shiftStarted && currentStatus !== "end_of_shift" && (
+            <div className="flex flex-col gap-1.5 mt-2">
+              <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-muted/50 rounded-md w-fit">
+                <Timer className="h-3.5 w-3.5 text-primary" />
+                <span className="text-xs font-mono font-semibold text-foreground">
+                  {formatElapsedTime(elapsedSeconds)}
+                </span>
+                <span className="text-[10px] text-muted-foreground">na atividade</span>
+              </div>
+              {currentStatus === ("servico" as any) && activeServiceDescription && (
+                <div
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md w-fit border border-green-400 bg-green-500/15 text-green-400 animate-pulse"
+                  style={{ boxShadow: "0 0 12px rgba(34,197,94,0.65)" }}
+                  title="Atividade enviada ao grupo do WhatsApp"
+                >
+                  <Wrench className="h-3.5 w-3.5" />
+                  <span className="text-xs font-semibold">
+                    {String(activeServiceDescription).replace(/^Serviço:\s*/i, "")}
+                  </span>
+                  <span className="text-[10px] opacity-80">• enviado ao WhatsApp</span>
+                </div>
+              )}
+            </div>
+          )}
+        </CardHeader>
+        <CardContent className="space-y-4 px-4 pb-4">
+          {/* Offline Banner */}
+          {!isOnline && (
+            <Alert className="bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800 py-2">
+              <WifiOff className="h-4 w-4 text-orange-500" />
+              <AlertDescription className="text-xs text-orange-700 dark:text-orange-300 ml-2">
+                Modo offline - alterações serão sincronizadas quando conectar
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Fuel Level Gauge */}
+          <div className="flex flex-col items-center gap-3 py-2">
+            <FuelLevelGauge
+              selectedLevel={fuelLevel}
+              onLevelChange={setFuelLevel}
+              disabled={isUpdating || isProfileLoading || !canIdentifyLoggedDriver}
+            />
+          </div>
+
+          {/* Maintenance Mode Alert */}
+          {isInMaintenance && (
+            <Alert className="bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800 py-2">
+              <AlertCircle className="h-4 w-4 text-red-500" />
+              <AlertDescription className="text-xs text-red-700 dark:text-red-300 ml-2">
+                Equipamento em manutenção - apenas "Operar" disponível para retomar
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Start Shift Button - only when shift not started */}
+          {!shiftStarted && (
+            <Button
+              variant="outline"
+              className="w-full h-auto min-h-[60px] py-3 flex items-center justify-center gap-2 touch-manipulation transition-transform active:scale-95 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white border-emerald-600"
+              onClick={openStartShiftDialog}
+              disabled={isUpdating}
+            >
+              {isUpdating ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Play className="h-5 w-5" />
+              )}
+              <span className="text-sm font-semibold">Iniciar Turno</span>
+            </Button>
+          )}
+
+          {/* Status Control Buttons - Larger touch targets */}
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-3 pt-3 border-t border-border">
+
+            {statusButtons.map((button) => {
+              const isServices = button.action === ("services" as any);
+              const isAlmoco = button.action === ("almoco" as any);
+              const isDisabledByMaintenance =
+                isInMaintenance && !isServices;
+              const isDisabledByNoShift = !shiftStarted;
+              const isBlocked = isDisabledByMaintenance || isDisabledByNoShift;
+              const isCurrentStatus = !isServices && currentStatus === button.action;
+
+              return (
+                <Button
+                  key={button.id}
+                  variant="outline"
+                  className={`relative h-auto min-h-[60px] py-3 flex flex-col items-center gap-1.5 touch-manipulation transition-transform active:scale-95 overflow-hidden ${
+                    isCurrentStatus ? "ring-2 ring-primary ring-offset-2 bg-primary/5 border-primary/20" : ""
+                  } ${button.color}`}
+                  onClick={() => {
+                    if (!canIdentifyLoggedDriver) {
+                      toast.error("Aguarde carregar o motorista logado");
+                      return;
+                    }
+                    if (isDisabledByNoShift) {
+                      toast.error("Inicie o turno para usar este botão");
+                      return;
+                    }
+                    if (isDisabledByMaintenance && !isServices) {
+                      toast.error("Equipamento em manutenção. Apenas Serviços disponível.");
+                      return;
+                    }
+                    // Serviços: abre direto a lista, sem confirmação
+                    if (isServices) {
+                      setServicesOpen(true);
+                      return;
+                    }
+                    void confirmOnce(
+                      `status:${selectedVehicleId ?? "x"}:${button.action}`,
+                      `Tem certeza que deseja selecionar "${button.label}"?`,
+                      async () => {
+                        await handleStatusChange(button.action);
+                      },
+                    );
+                  }}
+                  disabled={isUpdating || isProfileLoading || !canIdentifyLoggedDriver || (isCurrentStatus && !isBlocked)}
+                >
+                  {isCurrentStatus && (
+                    <div className="absolute top-2 right-2">
+                      <span className="relative flex h-2.5 w-2.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span>
+                      </span>
+                    </div>
+                  )}
+                  {isUpdating && !isServices ? (
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  ) : (
+                    button.icon
+                  )}
+                  <span className="text-xs font-semibold">{button.label}</span>
+                </Button>
+              );
+            })}
+
+          </div>
+
+
+          {/* End of Shift Button - Prominent and easy to tap */}
+          <Button
+            variant="outline"
+            className={`w-full h-auto min-h-[52px] py-3 flex items-center justify-center gap-2.5 touch-manipulation transition-transform active:scale-95 ${
+              currentStatus === "end_of_shift" ? "ring-2 ring-primary ring-offset-2" : ""
+            } bg-gray-600 hover:bg-gray-700 active:bg-gray-800 text-white border-gray-600`}
+            onClick={() => {
+              if (!canIdentifyLoggedDriver) {
+                toast.error("Aguarde carregar o motorista logado");
+                return;
+              }
+              if (!shiftStarted) {
+                toast.error("Inicie o turno para usar este botão");
+                return;
+              }
+              if (isInMaintenance) {
+                toast.error("Equipamento em manutenção. Apenas Serviços disponível.");
+                return;
+              }
+              void confirmOnce(
+                `status:${selectedVehicleId ?? "x"}:end_of_shift`,
+                'Tem certeza que deseja selecionar "Fim de Turno"?',
+                async () => {
+                  await handleStatusChange("end_of_shift" as StopReason);
+                },
+              );
+            }}
+
+            disabled={isUpdating || isProfileLoading || !canIdentifyLoggedDriver || currentStatus === "end_of_shift"}
+          >
+            {isUpdating ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <Power className="h-5 w-5" />
+            )}
+            <span className="text-sm font-semibold">Fim de Turno</span>
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* Start Shift Dialog with Horimeter and KM */}
       <Dialog open={showStartShiftDialog} onOpenChange={setShowStartShiftDialog}>
