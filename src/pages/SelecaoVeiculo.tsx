@@ -5,6 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useEquipment } from "@/hooks/useEquipment";
@@ -59,6 +67,28 @@ export default function SelecaoVeiculo() {
   const [selectedVehicle, setSelectedVehicle] = useState<string | null>(null);
   const [helperName, setHelperName] = useState("");
   const [isConfirming, setIsConfirming] = useState(false);
+  const [lastUsedEquipmentId, setLastUsedEquipmentId] = useState<string | null>(null);
+
+  // Fetch the last used equipment by the driver
+  useEffect(() => {
+    if (!profile?.full_name) return;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("daily_shift_records")
+          .select("equipment_id")
+          .eq("driver_name", profile.full_name)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (!error && data?.equipment_id) {
+          setLastUsedEquipmentId(data.equipment_id);
+        }
+      } catch (err) {
+        console.error("Failed to fetch last used equipment", err);
+      }
+    })();
+  }, [profile?.full_name]);
 
   // Fixed vehicle assignments disabled: every driver may pick any Pipa/Munk
   // that is not currently held by another driver.
@@ -417,25 +447,19 @@ export default function SelecaoVeiculo() {
           <>
             {/* Vehicle Grid */}
             <div className="grid gap-3">
-              {availableVehicles.map((vehicle) => (
+              {[...availableVehicles].sort((a, b) => {
+                if (a.id === lastUsedEquipmentId) return -1;
+                if (b.id === lastUsedEquipmentId) return 1;
+                return 0;
+              }).map((vehicle) => (
                 <Card
                   key={vehicle.id}
-                  className={`cursor-pointer transition-all duration-200 ${
-                    selectedVehicle === vehicle.id
-                      ? "ring-2 ring-primary bg-primary/5 border-primary"
-                      : "hover:border-primary/50"
-                  }`}
+                  className="cursor-pointer transition-all duration-200 hover:border-primary/50 group"
                   onClick={() => handleSelectVehicle(vehicle.id)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center gap-4">
-                      <div
-                        className={`p-3 rounded-lg ${
-                          selectedVehicle === vehicle.id
-                            ? "bg-primary/10 text-primary"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                      >
+                      <div className="p-3 rounded-lg bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
                         <VehicleIcon 
                           type={vehicle.equipment_type as "pipa" | "munk" | "camionete" | "onibus"} 
                           size="lg" 
@@ -443,7 +467,14 @@ export default function SelecaoVeiculo() {
                         />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-base sm:text-lg truncate">{vehicle.name}</h3>
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-base sm:text-lg truncate leading-none">{vehicle.name}</h3>
+                          {vehicle.id === lastUsedEquipmentId && (
+                            <Badge variant="secondary" className="text-[10px] h-5 px-1.5 bg-green-500/20 text-green-500 border-none">
+                              Último utilizado
+                            </Badge>
+                          )}
+                        </div>
                         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-sm text-muted-foreground">
                           <span className="font-mono bg-muted px-2 py-0.5 rounded">
                             {vehicle.plate}
@@ -452,74 +483,104 @@ export default function SelecaoVeiculo() {
                           <span>{getVehicleTypeLabel(vehicle.equipment_type)}</span>
                         </div>
                       </div>
-                      <div
-                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          selectedVehicle === vehicle.id
-                            ? "border-primary bg-primary"
-                            : "border-muted-foreground"
-                        }`}
-                      >
-                        {selectedVehicle === vehicle.id && (
-                          <div className="w-2 h-2 rounded-full bg-white" />
-                        )}
-                      </div>
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
 
-            {/* Helper/Sinaleiro Name Input - Show only when vehicle is selected - REQUIRED */}
-            {selectedVehicle && (() => {
-              const selectedVehicleData = availableVehicles.find(v => v.id === selectedVehicle);
-              const helperLabel = selectedVehicleData ? getHelperLabel(selectedVehicleData.equipment_type) : "Nome do Ajudante";
-              const helperPlaceholder = selectedVehicleData ? getHelperPlaceholder(selectedVehicleData.equipment_type) : "Digite o nome do ajudante";
-              
-              return (
-                <Card className={`mt-4 ${helperName.trim() ? 'border-primary/30 bg-primary/5' : 'border-destructive/50 bg-destructive/5'}`}>
-                  <CardContent className="p-3">
-                    <div className="flex items-center gap-2 mb-2">
+          </>
+        )}
+      </main>
+
+      <Dialog open={!!selectedVehicle} onOpenChange={(open) => !open && setSelectedVehicle(null)}>
+        <DialogContent className="sm:max-w-md w-[95vw] rounded-2xl p-0 overflow-hidden">
+          {(() => {
+            const selectedVehicleData = availableVehicles.find(v => v.id === selectedVehicle);
+            if (!selectedVehicleData) return null;
+            
+            const helperLabel = getHelperLabel(selectedVehicleData.equipment_type);
+            const helperPlaceholder = getHelperPlaceholder(selectedVehicleData.equipment_type);
+            
+            return (
+              <>
+                <DialogHeader className="p-5 pb-0">
+                  <DialogTitle className="text-xl font-bold flex items-center gap-2">
+                    <Truck className="w-5 h-5 text-primary" /> Iniciar Turno
+                  </DialogTitle>
+                </DialogHeader>
+                
+                <div className="p-5 space-y-5">
+                  <div className="bg-primary/5 border border-primary/20 p-3.5 rounded-xl flex items-center gap-3">
+                    <div className="p-2.5 rounded-lg bg-primary/10 text-primary">
+                      <VehicleIcon 
+                        type={selectedVehicleData.equipment_type as "pipa" | "munk" | "camionete" | "onibus"} 
+                        size="md" 
+                        imageUrl={(selectedVehicleData as any).image_url}
+                      />
+                    </div>
+                    <div>
+                      <span className="block text-xs font-semibold uppercase tracking-wider text-primary/70 mb-0.5">Veículo Selecionado</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-base leading-tight">{selectedVehicleData.name}</span>
+                        <span className="font-mono text-[10px] bg-background px-1.5 py-0.5 rounded border">
+                          {selectedVehicleData.plate}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <div className="flex items-center gap-2 mb-1">
                       <UserPlus className={`h-4 w-4 ${helperName.trim() ? 'text-primary' : 'text-destructive'}`} />
-                      <Label htmlFor="helper-name" className="text-sm font-semibold">
+                      <Label htmlFor="dialog-helper-name" className="text-sm font-semibold">
                         {helperLabel} <span className="text-destructive">*</span>
                       </Label>
                     </div>
                     <Input
-                      id="helper-name"
+                      id="dialog-helper-name"
                       placeholder={helperPlaceholder}
                       value={helperName}
                       onChange={(e) => setHelperName(e.target.value)}
-                      className={`h-10 text-sm ${!helperName.trim() ? 'border-destructive/50 focus-visible:ring-destructive' : ''}`}
+                      className={`h-12 text-base shadow-sm ${!helperName.trim() ? 'border-destructive/50 focus-visible:ring-destructive' : 'focus-visible:ring-primary'}`}
                       required
+                      autoFocus
                     />
                     {!helperName.trim() && (
-                      <p className="text-xs text-destructive mt-1">
-                        Campo obrigatório para iniciar o turno
+                      <p className="text-xs text-destructive flex items-center gap-1 mt-1">
+                        <span className="w-1 h-1 rounded-full bg-destructive"></span> Campo obrigatório
                       </p>
                     )}
-                  </CardContent>
-                </Card>
-              );
-            })()}
+                  </div>
+                </div>
 
-            {/* Confirm Button */}
-            <div className="mt-4 pb-6">
-              <Button
-                className="w-full h-12 text-base font-bold"
-                disabled={!selectedVehicle || isConfirming || !helperName.trim()}
-                onClick={handleConfirm}
-              >
-                {isConfirming ? (
-                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                ) : (
-                  <Truck className="h-5 w-5 mr-2" />
-                )}
-                {isConfirming ? "Confirmando..." : "Confirmar Veículo"}
-              </Button>
-            </div>
-          </>
-        )}
-      </main>
+                <DialogFooter className="p-5 pt-0 flex flex-col sm:flex-row gap-2">
+                  <Button
+                    variant="outline"
+                    className="w-full h-11 sm:w-auto font-semibold"
+                    onClick={() => setSelectedVehicle(null)}
+                    disabled={isConfirming}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    className="w-full h-11 text-base font-bold sm:flex-1 shadow-md shadow-primary/20"
+                    disabled={!selectedVehicle || isConfirming || !helperName.trim()}
+                    onClick={handleConfirm}
+                  >
+                    {isConfirming ? (
+                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    ) : (
+                      <Truck className="h-5 w-5 mr-2" />
+                    )}
+                    {isConfirming ? "Confirmando..." : "Confirmar e Iniciar"}
+                  </Button>
+                </DialogFooter>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

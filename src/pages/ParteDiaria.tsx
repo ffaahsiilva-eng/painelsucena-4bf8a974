@@ -81,7 +81,6 @@ export default function ParteDiaria() {
   });
   const [editingEquipment, setEditingEquipment] = useState<any>(null);
 
-  // Filter only Pipa and Munk vehicles (driver vehicles)
   const driverVehicles = equipment.filter(
     (eq) => eq.equipment_type === "pipa" || eq.equipment_type === "munk"
   );
