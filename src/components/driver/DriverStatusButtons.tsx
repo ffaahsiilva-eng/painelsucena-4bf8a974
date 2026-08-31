@@ -1785,49 +1785,6 @@ export function DriverStatusButtons() {
             <Input
               value={customServiceText}
               onChange={(e) => setCustomServiceText(e.target.value)}
-              placeholder="Ex: Pipa com bomba quebrada"
-              className="w-full"
-            />
-          </div>
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setCustomServiceDialogOpen(false)}
-              disabled={submittingServiceId === "custom"}
-              className="w-full sm:w-auto"
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={submitCustomService}
-              disabled={submittingServiceId === "custom" || !customServiceText.trim()}
-              className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              {submittingServiceId === "custom" ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <CheckCircle2 className="h-4 w-4 mr-2" />
-              )}
-              Confirmar Serviço
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={customServiceDialogOpen} onOpenChange={(o) => !submittingServiceId && setCustomServiceDialogOpen(o)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" /> Outro Serviço
-            </DialogTitle>
-            <DialogDescription>
-              Digite qual serviço está sendo realizado.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <Input
-              value={customServiceText}
-              onChange={(e) => setCustomServiceText(e.target.value)}
-              placeholder="Ex: Pipa com bomba quebrada"
               className="w-full"
             />
           </div>
