@@ -198,8 +198,76 @@ Deno.serve(async (req) => {
     }
     message += `━━━━━━━━━━━━━━━━━━━━`;
 
-    // Dedup robusto: se já existe QUALQUER mensagem com o mesmo status
-    // (newLabel) para este equipamento nos últimos 10 minutos, ignora.
+    // LÓGICA DA PARTE DIÁRIA (PNG) - Executada ANTES do early-return de dedup do status de texto
+    if (imageUrl && typeof imageUrl === "string" && isEndOfShift) {
+      const pngKind = "daily-shift-png-end";
+
+      if (shiftRecordId) {
+        // Dedup exato do PNG
+        const { data: existingImage } = await admin
+          .from("wapi_outbox")
+          .select("id")
+          .eq("origin", "driver-status")
+          .eq("external_kind", pngKind)
+          .eq("external_id", shiftRecordId)
+          .in("status", ["pending", "processing", "sent"])
+          .limit(1);
+
+        if (!existingImage || existingImage.length === 0) {
+          // Busca a mensagem rica do DB trigger para usar como legenda
+          const { data: dbTriggerMsgs } = await admin
+            .from("wapi_outbox")
+            .select("id, message, status")
+            .eq("origin", "daily-shift-report")
+            .eq("external_id", shiftRecordId)
+            .order("created_at", { ascending: false })
+            .limit(1);
+
+          if (dbTriggerMsgs && dbTriggerMsgs.length > 0) {
+            const dbMsg = dbTriggerMsgs[0];
+            if (dbMsg.status === "pending") {
+              // Atualiza a mensagem original para imagem
+              await admin
+                .from("wapi_outbox")
+                .update({
+                  kind: "image",
+                  image_url: imageUrl,
+                  caption: dbMsg.message,
+                  message: null,
+                  external_kind: pngKind, // Atualiza para o kind de imagem
+                })
+                .eq("id", dbMsg.id);
+            } else {
+              // Já foi enviada, então criamos uma nova mensagem de imagem com a mesma legenda
+              await admin.from("wapi_outbox").insert({
+                kind: "image",
+                target_type: "group",
+                phone: targetGroupId,
+                image_url: imageUrl,
+                caption: dbMsg.message,
+                origin: "driver-status",
+                external_kind: pngKind,
+                external_id: shiftRecordId,
+              });
+            }
+          } else {
+             // Fallback caso o gatilho falhou por algum motivo
+             await admin.from("wapi_outbox").insert({
+                kind: "image",
+                target_type: "group",
+                phone: targetGroupId,
+                image_url: imageUrl,
+                caption: imageCaption || `📄 Parte Diária — ${eqName}`,
+                origin: "driver-status",
+                external_kind: pngKind,
+                external_id: shiftRecordId,
+              });
+          }
+        }
+      }
+    }
+
+    // Dedup robusto: se já existe QUALQUER mensagem de texto com o mesmo status (newLabel) para este equipamento nos últimos 10 minutos, ignora o texto.
     let recentOutbox = null;
     if (equipmentId) {
       const { data: sameStatusRecent } = await admin
@@ -269,70 +337,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Optional: also enqueue an image (e.g. Parte Diária PNG) to the same group.
-    if (imageUrl && typeof imageUrl === "string") {
-      // Diferencia PNG de FIM DE TURNO das PNGs de meio-turno para dedup limpo.
-      const pngKind = isEndOfShift ? "daily-shift-png-end" : "daily-shift-png";
-
-      // 1) Dedup por shiftRecordId + kind (evita duplicar a MESMA parte diária de fim de turno)
-      if (shiftRecordId) {
-        const { data: existingImage } = await admin
-          .from("wapi_outbox")
-          .select("id")
-          .eq("origin", "driver-status")
-          .eq("external_kind", pngKind)
-          .eq("external_id", shiftRecordId)
-          .in("status", ["pending", "processing", "sent"])
-          .limit(1);
-
-        if (existingImage && existingImage.length > 0) {
-          return new Response(JSON.stringify({ success: true, queued: true, imageSkipped: "duplicate-shift" }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-      }
-
-      // 2) Dedup por equipamento + dia + kind — só aplicado quando NÃO temos shiftRecordId
-      //    (com shiftRecordId a dedup do passo 1 já é precisa por turno). Isso evita
-      //    que um PNG enfileirado tarde (backfill de outro turno enviado hoje) bloqueie
-      //    o PNG do fim de turno real do dia.
-      if (!shiftRecordId && equipmentId) {
-        const paraDate = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString().slice(0, 10);
-        const { data: existingDayImage } = await admin
-          .from("wapi_outbox")
-          .select("id")
-          .eq("origin", "driver-status")
-          .eq("external_kind", pngKind)
-          .ilike("caption", `%${eqName}%`)
-          .gte("created_at", `${paraDate}T03:00:00.000Z`)
-          .in("status", ["pending", "processing", "sent"])
-          .limit(1);
-
-        if (existingDayImage && existingDayImage.length > 0) {
-          return new Response(JSON.stringify({ success: true, queued: true, imageSkipped: "duplicate-equipment-day" }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-      }
-
-
-      const { error: imgErr } = await admin.from("wapi_outbox").insert({
-        kind: "image",
-        target_type: "group",
-        phone: targetGroupId,
-        image_url: imageUrl,
-        caption: imageCaption || `📄 Parte Diária — ${eqName} (${eqPlate})`,
-        origin: "driver-status",
-        external_kind: pngKind,
-        external_id: shiftRecordId || equipmentId || null,
-        dedupe_key: shiftRecordId
-          ? `driver-status|${pngKind}|${shiftRecordId}`
-          : equipmentId
-            ? `driver-status|${pngKind}|${equipmentId}|${new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString().slice(0, 10)}`
-            : null,
-      });
-      if (imgErr) console.warn("[wapi-driver-status-notify] image enqueue error", imgErr);
-    }
 
     return new Response(JSON.stringify({ success: true, queued: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
