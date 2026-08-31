@@ -239,57 +239,61 @@ Deno.serve(async (req) => {
     if (finalImageUrl && typeof finalImageUrl === "string" && isEndOfShift) {
       const pngKind = "daily-shift-png-end";
 
-      if (shiftRecordId) {
+      // Chave de dedup: usa shiftRecordId se disponível, senão equipmentId+data
+      const pngExternalId = shiftRecordId || (equipmentId ? `${equipmentId}-${new Date().toISOString().slice(0, 10)}` : null);
+
+      if (pngExternalId) {
         // Dedup exato do PNG
         const { data: existingImage } = await admin
           .from("wapi_outbox")
           .select("id")
           .eq("origin", "driver-status")
           .eq("external_kind", pngKind)
-          .eq("external_id", shiftRecordId)
+          .eq("external_id", pngExternalId)
           .in("status", ["pending", "processing", "sent"])
           .limit(1);
 
         if (!existingImage || existingImage.length === 0) {
-          // Busca a mensagem rica do DB trigger para usar como legenda
-          const { data: dbTriggerMsgs } = await admin
-            .from("wapi_outbox")
-            .select("id, message, status")
-            .eq("origin", "daily-shift-report")
-            .eq("external_id", shiftRecordId)
-            .order("created_at", { ascending: false })
-            .limit(1);
+          if (shiftRecordId) {
+            // Busca a mensagem rica do DB trigger para usar como legenda
+            const { data: dbTriggerMsgs } = await admin
+              .from("wapi_outbox")
+              .select("id, message, status")
+              .eq("origin", "daily-shift-report")
+              .eq("external_id", shiftRecordId)
+              .order("created_at", { ascending: false })
+              .limit(1);
 
-          if (dbTriggerMsgs && dbTriggerMsgs.length > 0) {
-            const dbMsg = dbTriggerMsgs[0];
-            if (dbMsg.status === "pending") {
-              // Atualiza a mensagem original para imagem
-              await admin
-                .from("wapi_outbox")
-                .update({
+            if (dbTriggerMsgs && dbTriggerMsgs.length > 0) {
+              const dbMsg = dbTriggerMsgs[0];
+              if (dbMsg.status === "pending") {
+                // Atualiza a mensagem original para imagem
+                await admin
+                  .from("wapi_outbox")
+                  .update({
+                    kind: "image",
+                    image_url: finalImageUrl,
+                    caption: dbMsg.message,
+                    message: null,
+                    external_kind: pngKind,
+                  })
+                  .eq("id", dbMsg.id);
+              } else {
+                // Já foi enviada, então criamos uma nova mensagem de imagem com a mesma legenda
+                await admin.from("wapi_outbox").insert({
                   kind: "image",
+                  target_type: "group",
+                  phone: targetGroupId,
                   image_url: finalImageUrl,
                   caption: dbMsg.message,
-                  message: null,
-                  external_kind: pngKind, // Atualiza para o kind de imagem
-                })
-                .eq("id", dbMsg.id);
+                  origin: "driver-status",
+                  external_kind: pngKind,
+                  external_id: pngExternalId,
+                });
+              }
             } else {
-              // Já foi enviada, então criamos uma nova mensagem de imagem com a mesma legenda
+              // Fallback: trigger não encontrou mensagem — insere imagem diretamente
               await admin.from("wapi_outbox").insert({
-                kind: "image",
-                target_type: "group",
-                phone: targetGroupId,
-                image_url: finalImageUrl,
-                caption: dbMsg.message,
-                origin: "driver-status",
-                external_kind: pngKind,
-                external_id: shiftRecordId,
-              });
-            }
-          } else {
-             // Fallback caso o gatilho falhou por algum motivo
-             await admin.from("wapi_outbox").insert({
                 kind: "image",
                 target_type: "group",
                 phone: targetGroupId,
@@ -297,10 +301,35 @@ Deno.serve(async (req) => {
                 caption: imageCaption || `📄 Parte Diária — ${eqName}`,
                 origin: "driver-status",
                 external_kind: pngKind,
-                external_id: shiftRecordId,
+                external_id: pngExternalId,
               });
+            }
+          } else {
+            // Sem shiftRecordId: insere imagem diretamente (dedup por equipmentId+data)
+            await admin.from("wapi_outbox").insert({
+              kind: "image",
+              target_type: "group",
+              phone: targetGroupId,
+              image_url: finalImageUrl,
+              caption: imageCaption || `📄 Parte Diária — ${eqName}`,
+              origin: "driver-status",
+              external_kind: pngKind,
+              external_id: pngExternalId,
+            });
           }
         }
+      } else {
+        // Sem qualquer ID para dedup: insere sem dedup (último recurso)
+        await admin.from("wapi_outbox").insert({
+          kind: "image",
+          target_type: "group",
+          phone: targetGroupId,
+          image_url: finalImageUrl,
+          caption: imageCaption || `📄 Parte Diária — ${eqName}`,
+          origin: "driver-status",
+          external_kind: pngKind,
+          external_id: null,
+        });
       }
     }
 

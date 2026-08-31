@@ -526,6 +526,23 @@ export function DriverStatusButtons() {
         } catch (err) {
           console.warn("Online upsert shift record failed, will save offline", err);
         }
+
+        // Fallback: upsert com RLS às vezes não retorna linhas — busca o ID diretamente
+        if (shiftSuccess && !savedShiftRecordId) {
+          try {
+            const { data: fetched } = await (supabase as any)
+              .from("daily_shift_records")
+              .select("id")
+              .eq("equipment_id", selectedVehicleId)
+              .eq("shift_date", shiftData.shift_date)
+              .order("shift_start_time", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            savedShiftRecordId = fetched?.id || null;
+          } catch (_e) {
+            console.warn("Fallback SELECT for shiftRecordId failed", _e);
+          }
+        }
       }
 
       if (!shiftSuccess) {
