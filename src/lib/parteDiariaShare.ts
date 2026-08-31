@@ -135,10 +135,8 @@ export function buildParteDiariaFormHtml(params: BuildParteDiariaParams): string
         body { font-family: Arial, Helvetica, sans-serif; color: #000 !important; font-size: 11px; line-height: 1.3; print-color-adjust: exact; -webkit-print-color-adjust: exact; padding: 0; background: #fff; }
         body, body * { color: #000 !important; text-shadow: none !important; }
         .sheet { border: 2px solid #000; width: 100%; max-width: 190mm; margin: 0 auto; }
-        .logo-row { display: flex; align-items: center; justify-content: center; padding: 8px; border-bottom: 1px solid #000; }
-        .logo-row img { height: 40px; }
-        .top { display: flex; border-bottom: 1px solid #000; }
-        .top-title { flex: 1; background: #e6e6e6; font-weight: 700; text-align: center; padding: 8px 10px; border-right: 1px solid #000; font-size: 14px; letter-spacing: .5px; }
+        .top { display: flex; border-bottom: 1px solid #000; align-items: stretch; }
+        .top-title { flex: 1; background: #e6e6e6; font-weight: 700; text-align: center; display: flex; align-items: center; justify-content: center; padding: 8px 10px; border-right: 1px solid #000; font-size: 14px; letter-spacing: .5px; }
         .obra { width: 180px; display: flex; }
         .obra .label { background: #e6e6e6; font-weight: 700; padding: 8px 10px; border-right: 1px solid #000; font-size: 11px; }
         .obra .value { flex: 1; padding: 8px 10px; font-size: 11px; }
@@ -169,8 +167,7 @@ export function buildParteDiariaFormHtml(params: BuildParteDiariaParams): string
         .desc { width: auto; }
         .signatures { display: flex; justify-content: space-between; align-items: flex-end; gap: 14px; padding: 34px 20px 14px; }
         .sig { text-align: center; width: 30%; min-width: 0; }
-        .sig-name { font-weight: bold; font-size: 11px; margin: 0; padding: 0 4px; padding-bottom: 3px; line-height: 1.3; min-height: 16px; white-space: normal; overflow: visible; word-break: keep-all; }
-        .sig .line { border-top: 1px solid #000; margin: 0 0 5px; }
+        .sig-name { font-weight: bold; font-size: 11px; margin: 0 0 5px; padding: 0 4px 3px; line-height: 1.3; min-height: 16px; white-space: normal; overflow: visible; word-break: keep-all; border-bottom: 1px solid #000; }
         .sig .lbl { font-size: 9px; line-height: 1.2; color: #000 !important; }
         .instructions { border-top: 1px solid #000; padding: 8px 10px; font-size: 8px; line-height: 1.4; }
         .instructions strong { font-weight: 700; }
@@ -178,8 +175,8 @@ export function buildParteDiariaFormHtml(params: BuildParteDiariaParams): string
     </head>
     <body>
       <div class="sheet">
-        ${params.logoBase64 ? `<div class="logo-row"><img src="${params.logoBase64}" alt="Sucena" /></div>` : ""}
         <div class="top">
+          ${params.logoBase64 ? `<div style="padding: 8px 15px; border-right: 1px solid #000; background: #fff; display: flex; align-items: center; justify-content: center;"><img src="${params.logoBase64}" alt="Sucena" style="height: 35px; display: block;" /></div>` : ""}
           <div class="top-title">PARTE DIÁRIA DE EQUIPAMENTO</div>
           <div class="obra"><div class="label">OBRA:</div><div class="value">460001269</div></div>
         </div>
@@ -243,9 +240,9 @@ export function buildParteDiariaFormHtml(params: BuildParteDiariaParams): string
           </div>
         </div>
         <div class="signatures">
-          <div class="sig"><div class="sig-name">${escapeHtml(params.driverName || "")}</div><div class="line"></div><div class="lbl">Motorista/Operador</div></div>
-          <div class="sig"><div class="sig-name">Creriane Navegantes</div><div class="line"></div><div class="lbl">Encarregada/Apontadora</div></div>
-          <div class="sig"><div class="sig-name">Luís Carlos</div><div class="line"></div><div class="lbl">Gerência</div></div>
+          <div class="sig"><div class="sig-name">${escapeHtml(params.driverName || "")}</div><div class="lbl">Motorista/Operador</div></div>
+          <div class="sig"><div class="sig-name">Creriane Navegantes</div><div class="lbl">Encarregada/Apontadora</div></div>
+          <div class="sig"><div class="sig-name">Luís Carlos</div><div class="lbl">Gerência</div></div>
         </div>
         <div class="instructions"><strong>INSTRUÇÃO:</strong> ${instructionText}</div>
       </div>

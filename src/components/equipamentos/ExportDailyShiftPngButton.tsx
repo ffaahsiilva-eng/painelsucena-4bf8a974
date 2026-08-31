@@ -1,11 +1,12 @@
 import { useState, forwardRef } from "react";
 import { Button } from "@/components/ui/button";
-import { FileText, Loader2 } from "lucide-react";
+import { Image as ImageIcon, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { getLogoBase64 } from "@/lib/pdfLogo";
-import { downloadPdfFromHtml } from "@/lib/pdfDownload";
+import { triggerBlobDownload } from "@/lib/pdfDownload";
+import { renderParteDiariaHtmlToPngBlob } from "@/lib/parteDiariaShare";
 import type { DailyShiftRecord, StatusHistoryEntry } from "@/hooks/useDailyShiftRecords";
 import {
   buildFuelGaugeSvg,
@@ -23,7 +24,7 @@ interface EquipmentMovement {
   observation: string | null;
 }
 
-interface ExportDailyShiftPdfButtonProps {
+interface ExportDailyShiftPngButtonProps {
   record: DailyShiftRecord;
   isLoading?: boolean;
 }
@@ -80,8 +81,8 @@ const isReturnAfterRefuelingEntry = (entry: StatusHistoryEntry) => {
   );
 };
 
-export const ExportDailyShiftPdfButton = forwardRef<HTMLButtonElement, ExportDailyShiftPdfButtonProps>(
-  function ExportDailyShiftPdfButton({ record, isLoading }, ref) {
+export const ExportDailyShiftPngButton = forwardRef<HTMLButtonElement, ExportDailyShiftPngButtonProps>(
+  function ExportDailyShiftPngButton({ record, isLoading }, ref) {
   const [isExporting, setIsExporting] = useState(false);
 
   const handleExport = async () => {
@@ -583,12 +584,14 @@ export const ExportDailyShiftPdfButton = forwardRef<HTMLButtonElement, ExportDai
         </html>
       `;
 
-      await downloadPdfFromHtml(htmlContent, `relatorio-turno-${activeRecord.plate}-${activeRecord.shift_date}.pdf`);
+      const safeEquip = activeRecord.equipmentName?.replace(/[^a-z0-9]/gi, "_") || "equip";
+      const blob = await renderParteDiariaHtmlToPngBlob(htmlContent);
+      triggerBlobDownload(blob, `parte_diaria_${safeEquip}_${formattedDate.replace(/\//g, "-")}.png`);
 
-      toast.success("Relatório gerado com sucesso!");
+      toast.success("Imagem gerada com sucesso!");
     } catch (error) {
-      console.error("Error generating PDF:", error);
-      toast.error("Erro ao gerar relatório");
+      console.error("Error generating PNG:", error);
+      toast.error("Erro ao gerar imagem");
     } finally {
       setIsExporting(false);
     }
@@ -602,12 +605,12 @@ export const ExportDailyShiftPdfButton = forwardRef<HTMLButtonElement, ExportDai
       onClick={handleExport}
       disabled={isLoading || isExporting}
       className="h-8 w-8 p-0"
-      title="Exportar PDF"
+      title="Exportar Imagem"
     >
       {isLoading || isExporting ? (
-        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+        <Loader2 className="h-4 w-4 animate-spin" />
       ) : (
-        <FileText className="h-4 w-4 text-red-600" />
+        <ImageIcon className="h-4 w-4 text-emerald-600" />
       )}
     </Button>
   );

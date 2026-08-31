@@ -45,6 +45,7 @@ import { useAllUsers } from "@/hooks/useAllUsers";
  import { Badge } from "@/components/ui/badge";
  import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ExportDailyShiftPdfButton } from "@/components/equipamentos/ExportDailyShiftPdfButton";
+import { ExportDailyShiftPngButton } from "@/components/equipamentos/ExportDailyShiftPngButton";
  
  interface AdminStatusEditorProps {
    equipmentId: string;
@@ -552,7 +553,10 @@ const getStatusColor = (status: string) => {
                className="h-8 w-auto"
              />
              {currentRecord && (
-               <ExportDailyShiftPdfButton ref={pdfButtonRef} record={currentRecord} isLoading={autoGeneratingPdf} />
+               <div className="flex items-center gap-1">
+                 <ExportDailyShiftPdfButton ref={pdfButtonRef} record={currentRecord} isLoading={autoGeneratingPdf} />
+                 <ExportDailyShiftPngButton record={currentRecord} isLoading={autoGeneratingPdf} />
+               </div>
              )}
            </div>
            
