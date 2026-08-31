@@ -1658,13 +1658,22 @@ export function DriverStatusButtons() {
               { id: "outros", label: "Outros...", icon: <FileText className="h-5 w-5" />, color: "bg-slate-500 hover:bg-slate-600" },
             ].map((s) => {
               const loading = submittingServiceId === s.id;
+              const isActiveService = currentStatus === "servico" && (
+                activeServiceDescription === `Serviço: ${s.label}` || 
+                (selectedVehicleId && localStorage.getItem(`active_service_${selectedVehicleId}`) === s.id)
+              );
+              
               return (
                 <Button
                   key={s.id}
                   type="button"
                   variant="outline"
-                    disabled={!!submittingServiceId || isProfileLoading || !canIdentifyLoggedDriver}
-                  className={`h-auto min-h-[56px] py-3 px-3 flex items-center justify-start gap-3 text-white border-transparent ${s.color}`}
+                  disabled={isActiveService || !!submittingServiceId || isProfileLoading || !canIdentifyLoggedDriver}
+                  className={`h-auto min-h-[56px] py-3 px-3 flex items-center justify-start gap-3 text-white transition-all ${
+                    isActiveService 
+                      ? 'border-2 border-white ring-2 ring-white/50 opacity-100' 
+                      : 'border-transparent opacity-90 hover:opacity-100'
+                  } ${s.color}`}
                   onClick={async () => {
                     if (!selectedVehicleId || !selectedVehicle) {
                       toast.error("Nenhum veículo selecionado");
@@ -1778,8 +1787,19 @@ export function DriverStatusButtons() {
                     }
                   }}
                 >
-                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : s.icon}
+                  {loading ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : isActiveService ? (
+                    <CheckCircle2 className="h-5 w-5 animate-pulse" />
+                  ) : (
+                    s.icon
+                  )}
                   <span className="text-sm font-semibold text-left flex-1">{s.label}</span>
+                  {isActiveService && (
+                    <span className="text-[10px] uppercase font-bold tracking-wider bg-white/20 px-2 py-1 rounded-full animate-pulse">
+                      Ativo
+                    </span>
+                  )}
                 </Button>
               );
             })}
