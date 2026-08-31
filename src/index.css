@@ -3883,3 +3883,20 @@ html[data-layout="legacy"] .force-dark-title {
     box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
   }
 }
+
+@keyframes neon-pulse-green {
+  0%, 100% {
+    box-shadow: 0 0 5px #4ade80, 0 0 10px #4ade80, 0 0 20px #4ade80, inset 0 0 10px #4ade80;
+    border-color: #fff;
+  }
+  50% {
+    box-shadow: 0 0 2px #4ade80, 0 0 5px #4ade80, 0 0 10px #4ade80, inset 0 0 5px #4ade80;
+    border-color: #4ade80;
+  }
+}
+
+.animate-neon-pulse-green {
+  animation: neon-pulse-green 1.5s ease-in-out infinite;
+  border-width: 2px;
+  border-style: solid;
+}

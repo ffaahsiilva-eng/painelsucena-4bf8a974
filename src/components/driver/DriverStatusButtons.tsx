@@ -1671,9 +1671,9 @@ export function DriverStatusButtons() {
                   disabled={isActiveService || !!submittingServiceId || isProfileLoading || !canIdentifyLoggedDriver}
                   className={`h-auto min-h-[56px] py-3 px-3 flex items-center justify-start gap-3 text-white transition-all ${
                     isActiveService 
-                      ? 'bg-emerald-500 border-2 border-emerald-300 shadow-[0_0_15px_rgba(52,211,153,0.8)] animate-pulse opacity-100' 
-                      : `border-transparent opacity-90 hover:opacity-100 ${s.color}`
-                  }`}
+                      ? 'animate-neon-pulse-green opacity-100 z-10' 
+                      : 'border-transparent opacity-90 hover:opacity-100'
+                  } ${s.color}`}
                   onClick={async () => {
                     if (!selectedVehicleId || !selectedVehicle) {
                       toast.error("Nenhum veículo selecionado");
