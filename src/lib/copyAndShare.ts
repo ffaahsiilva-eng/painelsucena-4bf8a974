@@ -2,24 +2,26 @@
  * Copies text to clipboard and opens WhatsApp Web with the text pre-filled.
  */
 export async function copyAndShareWhatsApp(text: string): Promise<boolean> {
+  let copied = false;
   try {
-    let copied = false;
     if (navigator?.clipboard?.writeText) {
       await navigator.clipboard.writeText(text);
       copied = true;
-    } else {
-      copied = fallbackCopyTextToClipboard(text);
     }
-    
-    if (copied) {
-      const encoded = encodeURIComponent(text);
-      window.open(`https://api.whatsapp.com/send?text=${encoded}`, "_blank");
-      return true;
-    }
-    return false;
-  } catch {
-    return false;
+  } catch (err) {
+    console.warn("navigator.clipboard.writeText failed, trying fallback.", err);
   }
+
+  if (!copied) {
+    copied = fallbackCopyTextToClipboard(text);
+  }
+
+  if (copied) {
+    const encoded = encodeURIComponent(text);
+    window.open(`https://api.whatsapp.com/send?text=${encoded}`, "_blank");
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -30,12 +32,11 @@ export async function copyToClipboard(text: string): Promise<boolean> {
     if (navigator?.clipboard?.writeText) {
       await navigator.clipboard.writeText(text);
       return true;
-    } else {
-      return fallbackCopyTextToClipboard(text);
     }
-  } catch {
-    return false;
+  } catch (err) {
+    console.warn("navigator.clipboard.writeText failed, trying fallback.", err);
   }
+  return fallbackCopyTextToClipboard(text);
 }
 
 function fallbackCopyTextToClipboard(text: string): boolean {
