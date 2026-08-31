@@ -14,6 +14,7 @@ import { generateAndUploadParteDiariaPng } from "@/lib/parteDiariaShare";
  */
 export function useShiftPngBackfill(enabled: boolean = true) {
   const runningRef = useRef(false);
+  const processedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (!enabled) return;
@@ -54,16 +55,19 @@ export function useShiftPngBackfill(enabled: boolean = true) {
           .eq("external_kind", "daily-shift-png-end")
           .in("external_id", ids);
 
+        // Qualquer registro existente (inclusive failed) conta como "já tratado"
+        // para evitar reenvio em loop no grupo do WhatsApp.
         const alreadyDone = new Set(
-          (existingPng || [])
-            .filter((r) => ["pending", "processing", "sent"].includes(r.status as string))
-            .map((r) => r.external_id as string)
+          (existingPng || []).map((r) => r.external_id as string)
         );
 
-        const pending = shifts.filter((s) => !alreadyDone.has(s.id));
+        const pending = shifts.filter(
+          (s) => !alreadyDone.has(s.id) && !processedRef.current.has(s.id)
+        );
         if (pending.length === 0) return;
 
         for (const shift of pending) {
+          processedRef.current.add(shift.id);
           try {
             const { data: eq } = await supabase
               .from("equipment")
@@ -122,7 +126,7 @@ export function useShiftPngBackfill(enabled: boolean = true) {
 
     // Primeiro tick rápido para recuperar Fim de Turno em backlog.
     const initial = setTimeout(tick, 4000);
-    const interval = setInterval(tick, 60_000);
+    const interval = setInterval(tick, 180_000);
     return () => {
       clearTimeout(initial);
       clearInterval(interval);
