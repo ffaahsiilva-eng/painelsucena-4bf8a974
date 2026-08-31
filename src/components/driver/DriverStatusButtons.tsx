@@ -35,7 +35,10 @@ import {
   CloudDrizzle,
   CarFront,
   CheckCircle2,
-  FileText
+  FileText,
+  MessageCircle,
+  Send,
+  ArrowLeft
 } from "lucide-react";
 
 import { useEquipment, useUpdateEquipmentStatus, useEquipmentStopHistory, type StopReason } from "@/hooks/useEquipment";
@@ -159,6 +162,20 @@ export function DriverStatusButtons() {
   const [initialHorimeter, setInitialHorimeter] = useState<string | null>(null);
   const [initialKm, setInitialKm] = useState<string | null>(null);
   const [endShiftError, setEndShiftError] = useState<string | null>(null);
+  // Tela de sucesso pós-fim de turno
+  const [showShiftSuccess, setShowShiftSuccess] = useState(false);
+  const [isSendingParteDiaria, setIsSendingParteDiaria] = useState(false);
+  const [parteDiariaJaEnviada, setParteDiariaJaEnviada] = useState(false);
+  const [savedShiftMeta, setSavedShiftMeta] = useState<{
+    shiftRecordId: string | null;
+    vehicle: any;
+    driverName: string;
+    helperName: string;
+    fuelLevel: FuelLevel;
+    horimeter: string;
+    km: string;
+    previousStatus: string;
+  } | null>(null);
   const { data: equipment = [], isLoading } = useEquipment();
   const { data: profile, isLoading: isProfileLoading } = useProfile();
   const updateStatus = useUpdateEquipmentStatus();
@@ -526,62 +543,17 @@ export function DriverStatusButtons() {
         .maybeSingle() : { data: null };
       const equipmentForPng = (freshEquipment as any) || selectedVehicle;
       
-      // Parte Diária PNG é gerada para TODOS os equipamentos no fim de turno (padrão).
-      // Porém, offline não conseguimos gerar o PNG (pois a edge function precisa do Storage)
-      const shouldGeneratePng = isOnline;
-      let parteDiariaUrl: string | null = null;
-      if (shouldGeneratePng) {
-        toast.info("Gerando Parte Diária para envio...");
-        let lastErr: any = null;
-        for (let attempt = 1; attempt <= 3; attempt++) {
-          try {
-            parteDiariaUrl = await generateAndUploadParteDiariaPng(equipmentForPng as any);
-            if (parteDiariaUrl) break;
-          } catch (e: any) {
-            lastErr = e;
-            console.error(`parte diária png tentativa ${attempt} falhou`, e);
-            await new Promise((r) => setTimeout(r, 700));
-          }
-        }
-        if (!parteDiariaUrl) {
-          toast.error(`Falha ao gerar PNG da Parte Diária: ${lastErr?.message || lastErr || "erro desconhecido"}. Enviando somente texto.`, { duration: 8000 });
-        }
-      }
-
-      const wapiBody = {
-        equipmentId: selectedVehicleId,
-        equipmentName: selectedVehicle.name,
-        plate: selectedVehicle.plate,
-        newStatus: "end_of_shift",
+      // Salva metadados para a tela de sucesso (envio manual da Parte Diária)
+      setSavedShiftMeta({
+        shiftRecordId: savedShiftRecordId,
+        vehicle: equipmentForPng,
+        driverName: currentDriverName || "—",
+        helperName: currentHelperName || "",
+        fuelLevel: endShiftFuelLevel,
+        horimeter: endShiftHorimeter,
+        km: endShiftKm,
         previousStatus: currentStatus,
-        driverName: currentDriverName || null,
-        helperName: currentHelperName || null,
-        extraInfo: `*Combustível final:* ${getFuelLevelLabel(endShiftFuelLevel)}${endShiftHorimeter ? `\n*Horímetro:* ${endShiftHorimeter}` : ""}${endShiftKm ? `\n*KM:* ${endShiftKm}` : ""}`,
-        shiftRecordId: savedShiftRecordId || null,
-        imageUrl: parteDiariaUrl,
-        imageCaption: parteDiariaUrl ? `📄 *PARTE DIÁRIA*\n${selectedVehicle.name} — ${selectedVehicle.plate}\nMotorista: ${currentDriverName || "—"}` : undefined,
-        timestamp: now,
-      };
-      
-      try {
-        if (isOnline) {
-          const notifyUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wapi-driver-status-notify`;
-          const resp = await fetch(notifyUrl, {
-            method: "POST",
-            headers: { 
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
-            },
-            keepalive: true,
-            body: JSON.stringify(wapiBody),
-          });
-          if (!resp.ok) console.warn("wapi notify returned", resp.status);
-        } else {
-          await addPendingAction("wapi_invoke", { functionName: "wapi-driver-status-notify", body: wapiBody });
-        }
-      } catch (err) {
-        console.warn("wapi-driver-status-notify error", err);
-      }
+      });
 
       // Fim de Turno does NOT register as equipment exit (saída)
       // The equipment remains on site, only the shift ends
@@ -595,34 +567,16 @@ export function DriverStatusButtons() {
         })
         .eq("id", selectedVehicleId);
 
-      // Clear the selected vehicle and shift data from localStorage
-      localStorage.removeItem("selectedVehicleId");
-      localStorage.removeItem(`shift_horimeter_${selectedVehicleId}`);
-      localStorage.removeItem(`shift_km_${selectedVehicleId}`);
-      localStorage.removeItem(`shift_start_time_${selectedVehicleId}`);
-      localStorage.removeItem(`cached_shift_${selectedVehicleId}_${today}`);
-      setInitialHorimeter(null);
-      setInitialKm(null);
-      setElapsedSeconds(0);
-
       // Invalida cache do React Query para que ao re-selecionar o veículo
       // não re-hidrate o turno já finalizado como se ainda estivesse aberto
       queryClient.removeQueries({ queryKey: ["daily-shift-record", selectedVehicleId] });
       queryClient.invalidateQueries({ queryKey: ["equipment"] });
 
       setShowEndShiftDialog(false);
-      
-      const details = [
-        `Combustível: ${getFuelLevelLabel(endShiftFuelLevel)}`,
-        endShiftHorimeter && `Horímetro: ${endShiftHorimeter}`,
-        endShiftKm && `KM: ${endShiftKm}`,
-      ].filter(Boolean).join(" | ");
-      
-      toast.success(`Fim de turno registrado. ${details}`);
       void commitDriverAction(clientActionId);
-      
-      // Navigate to vehicle selection page
-      navigate("/selecao-veiculo", { replace: true });
+
+      // Exibe a tela de sucesso com botão para enviar a Parte Diária
+      setShowShiftSuccess(true);
     } catch (error: any) {
       console.error("Error ending shift:", error);
       toast.error("Erro ao registrar fim de turno");
@@ -646,6 +600,86 @@ export function DriverStatusButtons() {
       setIsUpdating(false);
       release(`end_shift:${selectedVehicleId}`);
     }
+  };
+
+  // Função chamada ao clicar em "Gerar e Enviar Parte Diária" na tela de sucesso
+  const handleSendParteDiaria = async () => {
+    if (!savedShiftMeta) return;
+    setIsSendingParteDiaria(true);
+    try {
+      toast.info("Gerando Parte Diária...");
+      let parteDiariaUrl: string | null = null;
+      let lastErr: any = null;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          parteDiariaUrl = await generateAndUploadParteDiariaPng(savedShiftMeta.vehicle);
+          if (parteDiariaUrl) break;
+        } catch (e: any) {
+          lastErr = e;
+          await new Promise((r) => setTimeout(r, 700));
+        }
+      }
+
+      if (!parteDiariaUrl) {
+        toast.error(`Falha ao gerar o PNG: ${lastErr?.message || "erro desconhecido"}`, { duration: 8000 });
+        return;
+      }
+
+      const wapiBody = {
+        equipmentId: savedShiftMeta.vehicle?.id || null,
+        equipmentName: savedShiftMeta.vehicle?.name || "",
+        plate: savedShiftMeta.vehicle?.plate || "",
+        newStatus: "end_of_shift",
+        previousStatus: savedShiftMeta.previousStatus,
+        driverName: savedShiftMeta.driverName || null,
+        helperName: savedShiftMeta.helperName || null,
+        extraInfo: `*Combustível final:* ${getFuelLevelLabel(savedShiftMeta.fuelLevel)}${savedShiftMeta.horimeter ? `\n*Horímetro:* ${savedShiftMeta.horimeter}` : ""}${savedShiftMeta.km ? `\n*KM:* ${savedShiftMeta.km}` : ""}`,
+        shiftRecordId: savedShiftMeta.shiftRecordId || null,
+        imageUrl: parteDiariaUrl,
+        imageCaption: `📄 *PARTE DIÁRIA*\n${savedShiftMeta.vehicle?.name} — ${savedShiftMeta.vehicle?.plate}\nMotorista: ${savedShiftMeta.driverName || "—"}`,
+        timestamp: new Date().toISOString(),
+      };
+
+      const notifyUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wapi-driver-status-notify`;
+      const resp = await fetch(notifyUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        keepalive: true,
+        body: JSON.stringify(wapiBody),
+      });
+      if (!resp.ok) {
+        toast.error(`Erro ao enviar para o WhatsApp (${resp.status})`);
+      } else {
+        toast.success("✅ Parte Diária enviada com sucesso para o WhatsApp!");
+        setParteDiariaJaEnviada(true);
+      }
+    } catch (err: any) {
+      toast.error(`Erro: ${err?.message || "falha desconhecida"}`);
+    } finally {
+      setIsSendingParteDiaria(false);
+    }
+  };
+
+  // Volta para a seleção de veículo após fim de turno
+  const handleGoBack = () => {
+    if (savedShiftMeta?.vehicle?.id) {
+      const vid = savedShiftMeta.vehicle.id;
+      localStorage.removeItem("selectedVehicleId");
+      localStorage.removeItem(`shift_horimeter_${vid}`);
+      localStorage.removeItem(`shift_km_${vid}`);
+      localStorage.removeItem(`shift_start_time_${vid}`);
+      localStorage.removeItem(`cached_shift_${vid}_${new Date().toLocaleDateString("sv-SE")}`);
+    }
+    setInitialHorimeter(null);
+    setInitialKm(null);
+    setElapsedSeconds(0);
+    setShowShiftSuccess(false);
+    setSavedShiftMeta(null);
+    setParteDiariaJaEnviada(false);
+    navigate("/selecao-veiculo", { replace: true });
   };
 
   const handleStartShift = async () => {
@@ -1201,6 +1235,93 @@ export function DriverStatusButtons() {
       setSubmittingServiceId(null);
     }
   };
+
+  // Se o turno acabou de ser finalizado, exibe tela de sucesso
+  if (showShiftSuccess && savedShiftMeta) {
+    return (
+      <div className="flex flex-col min-h-[60vh] items-center justify-center gap-6 p-4">
+        {/* Ícone de sucesso */}
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-20 h-20 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center shadow-lg">
+            <CheckCircle2 className="w-11 h-11 text-emerald-500" />
+          </div>
+          <h2 className="text-xl font-bold text-foreground">Turno Finalizado!</h2>
+          <p className="text-sm text-muted-foreground text-center max-w-xs">
+            Os dados foram salvos com sucesso.
+          </p>
+        </div>
+
+        {/* Resumo do turno */}
+        <div className="w-full max-w-sm bg-muted/50 border border-border rounded-xl p-4 space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Equipamento</span>
+            <span className="font-semibold">{savedShiftMeta.vehicle?.name}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Placa</span>
+            <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">{savedShiftMeta.vehicle?.plate}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Motorista</span>
+            <span className="font-semibold">{savedShiftMeta.driverName}</span>
+          </div>
+          {savedShiftMeta.horimeter && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Horímetro</span>
+              <span>{savedShiftMeta.horimeter}</span>
+            </div>
+          )}
+          {savedShiftMeta.km && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">KM Final</span>
+              <span>{savedShiftMeta.km}</span>
+            </div>
+          )}
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Combustível</span>
+            <span>{getFuelLevelLabel(savedShiftMeta.fuelLevel)}</span>
+          </div>
+        </div>
+
+        {/* Botão principal: Enviar Parte Diária */}
+        {!parteDiariaJaEnviada ? (
+          <Button
+            onClick={handleSendParteDiaria}
+            disabled={isSendingParteDiaria}
+            className="w-full max-w-sm h-auto min-h-[60px] py-4 flex items-center justify-center gap-3 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white text-base font-bold rounded-xl shadow-lg transition-transform active:scale-95"
+          >
+            {isSendingParteDiaria ? (
+              <>
+                <Loader2 className="h-6 w-6 animate-spin" />
+                <span>Gerando e enviando...</span>
+              </>
+            ) : (
+              <>
+                <Send className="h-6 w-6" />
+                <span>Enviar Parte Diária (WhatsApp)</span>
+              </>
+            )}
+          </Button>
+        ) : (
+          <div className="w-full max-w-sm flex items-center justify-center gap-3 py-4 px-6 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 rounded-xl">
+            <CheckCircle2 className="h-6 w-6 text-emerald-500 shrink-0" />
+            <span className="text-emerald-700 dark:text-emerald-300 font-semibold text-sm">Parte Diária enviada com sucesso!</span>
+          </div>
+        )}
+
+        {/* Botão secundário: Voltar */}
+        <Button
+          variant="outline"
+          onClick={handleGoBack}
+          disabled={isSendingParteDiaria}
+          className="w-full max-w-sm h-auto min-h-[48px] flex items-center justify-center gap-2 text-sm"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Voltar à Seleção de Equipamento
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <>
