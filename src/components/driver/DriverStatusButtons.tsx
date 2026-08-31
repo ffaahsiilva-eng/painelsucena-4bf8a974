@@ -739,8 +739,8 @@ export function DriverStatusButtons() {
         try {
           await updateStatus.mutateAsync({
             id: selectedVehicleId,
-            stop_reason: "none",
-            stop_start_time: null,
+            stop_reason: "waiting",
+            stop_start_time: now,
             previousStopReason: (currentStatus as any) || "none",
             previousStopStartTime: selectedVehicle.stop_start_time,
             changed_by_driver: currentDriverName || null,
@@ -752,15 +752,15 @@ export function DriverStatusButtons() {
       } else {
         await addPendingAction("equipment_status", {
           id: selectedVehicleId,
-          stop_reason: "none",
-          stop_start_time: null,
+          stop_reason: "waiting",
+          stop_start_time: now,
         });
         
         // Optimistic update
         queryClient.setQueryData(["equipment"], (old: any) => {
           if (!old) return old;
           const newData = old.map((eq: any) =>
-            eq.id === selectedVehicleId ? { ...eq, stop_reason: "none", stop_start_time: null } : eq
+            eq.id === selectedVehicleId ? { ...eq, stop_reason: "waiting", stop_start_time: now } : eq
           );
           const env = localStorage.getItem("selected_environment") ?? sessionStorage.getItem("selected_environment");
           localStorage.setItem(`cached_equipment_${env || "default"}`, JSON.stringify(newData));
