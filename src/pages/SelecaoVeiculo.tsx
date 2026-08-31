@@ -106,6 +106,13 @@ export default function SelecaoVeiculo() {
 
     // No localStorage selection — try to recover from the DB.
     if (!profile?.full_name) return;
+    
+    // Se o usuário acabou de vir do "Voltar" após fim de turno, não auto-restaura
+    if (sessionStorage.getItem("skipAutoRestore") === "true") {
+      sessionStorage.removeItem("skipAutoRestore");
+      return;
+    }
+
     (async () => {
       try {
         const { data, error } = await supabase

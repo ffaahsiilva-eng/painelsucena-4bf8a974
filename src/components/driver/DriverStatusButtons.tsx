@@ -690,6 +690,8 @@ export function DriverStatusButtons() {
       localStorage.removeItem(`shift_start_time_${vid}`);
       localStorage.removeItem(`cached_shift_${vid}_${new Date().toLocaleDateString("sv-SE")}`);
     }
+    // Impede que SelecaoVeiculo auto-restaure este veículo do DB e jogue o usuário de volta para o painel imediatamente
+    sessionStorage.setItem("skipAutoRestore", "true");
     setInitialHorimeter(null);
     setInitialKm(null);
     setElapsedSeconds(0);
