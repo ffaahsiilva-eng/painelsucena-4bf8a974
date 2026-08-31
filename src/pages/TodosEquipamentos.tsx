@@ -86,6 +86,30 @@ const emptyForm: FormState = {
   mobilization_status: "mobilizado",
 };
 
+const JardinagemImage = ({ url, name }: { url: string | null | undefined; name: string }) => {
+  const [error, setError] = useState(false);
+  const isValid = !error && typeof url === 'string' && (url.startsWith('http') || url.startsWith('data:'));
+
+  if (isValid) {
+    return (
+      <img
+        loading="lazy"
+        decoding="async"
+        src={url as string}
+        alt={name}
+        className="h-20 w-20 object-contain"
+        onError={() => setError(true)}
+      />
+    );
+  }
+
+  return (
+    <div className="h-12 w-12 rounded border flex items-center justify-center bg-muted/40 text-emerald-500/40">
+      <Sprout className="h-6 w-6" />
+    </div>
+  );
+};
+
 export default function TodosEquipamentos() {
   const { data: equipment = [], isLoading } = useEquipment({ includeDesmobilized: true });
   const createMut = useCreateEquipment();
@@ -364,13 +388,7 @@ export default function TodosEquipamentos() {
                 filteredJardinagem.map((eq) => (
                   <TableRow key={eq.id}>
                     <TableCell>
-                      {eq.image_url ? (
-                        <img loading="lazy" decoding="async" src={eq.image_url} alt={eq.name} className="h-20 w-20 object-contain" />
-                      ) : (
-                        <div className="h-12 w-12 rounded border flex items-center justify-center bg-muted/40">
-                          <ImageIcon className="h-5 w-5 text-muted-foreground" />
-                        </div>
-                      )}
+                      <JardinagemImage url={eq.image_url} name={eq.name} />
                     </TableCell>
                     <TableCell className="font-medium">{eq.name}</TableCell>
                     <TableCell>
