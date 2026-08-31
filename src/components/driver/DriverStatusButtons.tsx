@@ -670,8 +670,9 @@ export function DriverStatusButtons() {
       if (!resp.ok) {
         toast.error(`Erro ao enviar para o WhatsApp (${resp.status})`);
       } else {
-        toast.success("✅ Parte Diária enviada com sucesso para o WhatsApp!");
+        toast.success("✅ Parte Diária enviada! Voltando em 5 segundos...");
         setParteDiariaJaEnviada(true);
+        setTimeout(() => handleGoBack(), 5000);
       }
     } catch (err: any) {
       toast.error(`Erro: ${err?.message || "falha desconhecida"}`);
