@@ -57,6 +57,7 @@ Deno.serve(async (req) => {
       imageUrl,
       imageCaption,
       timestamp,
+      helperName,
     } = payload || {};
 
     if (!newStatus) {
@@ -84,33 +85,36 @@ Deno.serve(async (req) => {
     let eqDriver = "";
     let shiftDriver = "";
     let latestStatusDriver = "";
+    let eqHelper = helperName || "";
     if (equipmentId && (!equipmentName || !plate)) {
       const { data: eq } = await admin
         .from("equipment")
-        .select("name, plate, driver")
+        .select("name, plate, driver, helper")
         .eq("id", equipmentId)
         .maybeSingle();
       if (eq) {
         eqName = eq.name || eqName;
         eqPlate = eq.plate || eqPlate;
         eqDriver = eq.driver || "";
+        eqHelper = eqHelper || eq.helper || "";
       }
     }
 
-    if (equipmentId && !eqDriver) {
+    if (equipmentId && (!eqDriver || !eqHelper)) {
       const { data: eq } = await admin
         .from("equipment")
-        .select("driver")
+        .select("driver, helper")
         .eq("id", equipmentId)
         .maybeSingle();
-      eqDriver = eq?.driver || "";
+      eqDriver = eqDriver || eq?.driver || "";
+      eqHelper = eqHelper || eq?.helper || "";
     }
 
     if (equipmentId) {
       const paraDate = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString().slice(0, 10);
       const { data: shift } = await admin
         .from("daily_shift_records")
-        .select("driver_name")
+        .select("driver_name, helper_name")
         .eq("equipment_id", equipmentId)
         .eq("shift_date", paraDate)
         .is("shift_end_time", null)
@@ -118,6 +122,7 @@ Deno.serve(async (req) => {
         .limit(1)
         .maybeSingle();
       shiftDriver = shift?.driver_name || "";
+      eqHelper = eqHelper || shift?.helper_name || "";
 
       const { data: latestHistory } = await admin
         .from("equipment_stop_history")
@@ -193,8 +198,11 @@ Deno.serve(async (req) => {
     }
 
     message +=
-      `\n*Motorista:* ${resolvedDriverName}\n` +
-      `━━━━━━━━━━━━━━━━━━━━`;
+      `\n*Motorista:* ${resolvedDriverName}\n`;
+    if (eqHelper && eqHelper !== "—" && eqHelper !== "-") {
+      message += `*Ajudante:* ${eqHelper}\n`;
+    }
+    message += `━━━━━━━━━━━━━━━━━━━━`;
 
     // Dedup robusto: se já existe QUALQUER mensagem com o mesmo status
     // (newLabel) para este equipamento nos últimos 10 minutos, ignora.

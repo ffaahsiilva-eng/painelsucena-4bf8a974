@@ -549,6 +549,7 @@ export function DriverStatusButtons() {
         newStatus: "end_of_shift",
         previousStatus: currentStatus,
         driverName: currentDriverName || null,
+        helperName: selectedVehicle.helper || null,
         extraInfo: `*Combustível final:* ${getFuelLevelLabel(endShiftFuelLevel)}${endShiftHorimeter ? `\n*Horímetro:* ${endShiftHorimeter}` : ""}${endShiftKm ? `\n*KM:* ${endShiftKm}` : ""}`,
         shiftRecordId: savedShiftRecordId || null,
         imageUrl: parteDiariaUrl,
@@ -761,6 +762,7 @@ export function DriverStatusButtons() {
           newStatus: "waiting",
           previousStatus: null,
           driverName: currentDriverName || null,
+          helperName: selectedVehicle.helper || null,
           extraInfo: `*Combustível:* ${getFuelLevelLabel(fuelLevel)}\n*Horímetro:* ${startShiftHorimeter}\n*KM:* ${startShiftKm}`,
           timestamp: new Date().toISOString(),
         };
@@ -1014,6 +1016,7 @@ export function DriverStatusButtons() {
         newStatus,
         previousStatus: currentStatus,
         driverName: currentDriverName || null,
+        helperName: selectedVehicle.helper || null,
         timestamp: new Date().toISOString(),
       };
       if (isOnline) {
@@ -1566,6 +1569,7 @@ export function DriverStatusButtons() {
                       newStatus: "servico",
                       previousStatus: selectedVehicle.stop_reason || "none",
                       driverName: currentDriverName || null,
+                      helperName: selectedVehicle.helper || null,
                       extraInfo: `*Serviço:* ${s.label}`,
                       timestamp: now,
                     };

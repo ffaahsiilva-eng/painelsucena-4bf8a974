@@ -65,6 +65,7 @@ export function AbastecendoQuickButton() {
           newStatus,
           previousStatus: currentStatus,
           driverName: profile?.full_name || null,
+          helperName: selectedVehicle.helper || null,
           timestamp: now,
         };
 
