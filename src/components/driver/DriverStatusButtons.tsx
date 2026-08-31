@@ -1671,9 +1671,9 @@ export function DriverStatusButtons() {
                   disabled={isActiveService || !!submittingServiceId || isProfileLoading || !canIdentifyLoggedDriver}
                   className={`h-auto min-h-[56px] py-3 px-3 flex items-center justify-start gap-3 text-white transition-all ${
                     isActiveService 
-                      ? 'border-2 border-white ring-2 ring-white/50 opacity-100' 
-                      : 'border-transparent opacity-90 hover:opacity-100'
-                  } ${s.color}`}
+                      ? 'bg-emerald-500 border-2 border-emerald-300 shadow-[0_0_15px_rgba(52,211,153,0.8)] animate-pulse opacity-100' 
+                      : `border-transparent opacity-90 hover:opacity-100 ${s.color}`
+                  }`}
                   onClick={async () => {
                     if (!selectedVehicleId || !selectedVehicle) {
                       toast.error("Nenhum veículo selecionado");
@@ -1790,13 +1790,13 @@ export function DriverStatusButtons() {
                   {loading ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
                   ) : isActiveService ? (
-                    <CheckCircle2 className="h-5 w-5 animate-pulse" />
+                    <CheckCircle2 className="h-5 w-5" />
                   ) : (
                     s.icon
                   )}
                   <span className="text-sm font-semibold text-left flex-1">{s.label}</span>
                   {isActiveService && (
-                    <span className="text-[10px] uppercase font-bold tracking-wider bg-white/20 px-2 py-1 rounded-full animate-pulse">
+                    <span className="text-[10px] uppercase font-bold tracking-wider bg-white/20 px-2 py-1 rounded-full">
                       Ativo
                     </span>
                   )}
