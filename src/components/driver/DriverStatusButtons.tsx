@@ -1633,7 +1633,8 @@ export function DriverStatusButtons() {
           <div className="grid grid-cols-1 gap-2.5 py-2">
             {[
               { id: "lavagem_mirante", label: "Lavagem Mirante", icon: <Waves className="h-5 w-5" />, color: "bg-cyan-600 hover:bg-cyan-700" },
-              { id: "irrigacao_carretel", label: "Irrigação Carretel", icon: <Droplets className="h-5 w-5" />, color: "bg-blue-600 hover:bg-blue-700" },
+              { id: "irrigacao_carretel_ca01", label: "Irrigação Carretel CA01", icon: <Droplets className="h-5 w-5" />, color: "bg-blue-600 hover:bg-blue-700" },
+              { id: "irrigacao_carretel_ca02", label: "Irrigação Carretel CA02", icon: <Droplets className="h-5 w-5" />, color: "bg-blue-600 hover:bg-blue-700" },
               { id: "irrigacao_faixa_3_4", label: "Irrigação FAIXA 3 e 4", icon: <Sprout className="h-5 w-5" />, color: "bg-emerald-600 hover:bg-emerald-700" },
               { id: "abastecimento_tanque_irrigacao", label: "Abastecimento do Tanque de Irrigação", icon: <Fuel className="h-5 w-5" />, color: "bg-indigo-600 hover:bg-indigo-700" },
               { id: "lavagem_vertedouro", label: "Lavagem Vertedouro", icon: <Waves className="h-5 w-5" />, color: "bg-teal-600 hover:bg-teal-700" },
