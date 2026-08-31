@@ -43,6 +43,7 @@ import {
   useDeleteJardinagemEquipment,
 } from "@/hooks/useJardinagemEquipment";
 import {
+  VehicleIcon,
   equipmentTypeLabels,
   type EquipmentType,
 } from "@/components/equipamentos/VehicleIcons";
@@ -294,13 +295,12 @@ export default function TodosEquipamentos() {
                 filtered.map((eq) => (
                   <TableRow key={eq.id}>
                     <TableCell>
-                      {eq.image_url ? (
-                        <img loading="lazy" decoding="async" src={eq.image_url} alt={eq.name} className="h-20 w-20 object-contain" />
-                      ) : (
-                        <div className="h-12 w-12 rounded border flex items-center justify-center bg-muted/40">
-                          <ImageIcon className="h-5 w-5 text-muted-foreground" />
-                        </div>
-                      )}
+                      <VehicleIcon
+                        type={eq.equipment_type}
+                        imageUrl={eq.image_url}
+                        className="h-20 w-20"
+                        size="lg"
+                      />
                     </TableCell>
                     <TableCell className="font-medium">{eq.name}</TableCell>
                     <TableCell>{eq.plate}</TableCell>
