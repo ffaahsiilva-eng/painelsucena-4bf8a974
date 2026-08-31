@@ -664,7 +664,6 @@ export function DriverStatusButtons() {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        keepalive: true,
         body: JSON.stringify(wapiBody),
       });
       if (!resp.ok) {
