@@ -485,11 +485,11 @@ export async function renderParteDiariaHtmlToPngBlob(htmlContent: string): Promi
   const wrapper = document.createElement("div");
   wrapper.setAttribute("data-parte-diaria-render", "true");
   wrapper.style.position = "fixed";
-  wrapper.style.left = "0";
+  wrapper.style.left = "-9999px";
   wrapper.style.top = "0";
   wrapper.style.width = "794px";
   wrapper.style.background = "#ffffff";
-  wrapper.style.zIndex = "2147483647";
+  wrapper.style.zIndex = "-1";
   wrapper.style.pointerEvents = "none";
   wrapper.style.opacity = "1";
   wrapper.style.visibility = "visible";
