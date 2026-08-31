@@ -84,7 +84,13 @@ const StatusGeralEquipamentos = () => {
       const activeStop = activeStops.find((s) => s.equipment_id === eq.id);
       let eqReason = isActuallyOut ? mov.reason : (eq.driver ? "No Canteiro (Em Uso)" : "No Canteiro (Livre)");
       
-      if (!isActuallyOut && eq.stop_reason === "servico" && activeStop?.defect_description) {
+      if (!isActuallyOut && activeStop?.defect_description?.startsWith("Serviço:")) {
+        badgeLabel = "SERVIÇO";
+        badgeColor = "bg-emerald-600 hover:bg-emerald-700 text-white";
+        eqReason = activeStop.defect_description.replace(/^Serviço:\s*/i, "");
+      } else if (!isActuallyOut && eq.stop_reason === "servico" && activeStop?.defect_description) {
+        badgeLabel = "SERVIÇO";
+        badgeColor = "bg-emerald-600 hover:bg-emerald-700 text-white";
         eqReason = activeStop.defect_description.replace(/^Serviço:\s*/i, "");
       }
 
