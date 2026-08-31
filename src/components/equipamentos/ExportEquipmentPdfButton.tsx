@@ -280,12 +280,7 @@ export function ExportEquipmentPdfButton({
           }
           .sig .lbl { font-size: 9px; }
 
-          .instructions {
-            border-top: 1px solid #000;
-            padding: 8px 10px;
-            font-size: 8px;
-            line-height: 1.4;
-          }
+          .instructions { border-top: 1px solid #000; padding: 4px 10px; font-size: 6px; line-height: 1.1; }
           .instructions strong { font-weight: 700; }
 
           @media print {

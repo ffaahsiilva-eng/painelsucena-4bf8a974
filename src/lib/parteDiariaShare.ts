@@ -169,7 +169,7 @@ export function buildParteDiariaFormHtml(params: BuildParteDiariaParams): string
         .sig { text-align: center; width: 30%; min-width: 0; }
         .sig-name { font-weight: bold; font-size: 11px; margin: 0 0 5px; padding: 0 4px 3px; line-height: 1.3; min-height: 16px; white-space: normal; overflow: visible; word-break: keep-all; border-bottom: 1px solid #000; }
         .sig .lbl { font-size: 9px; line-height: 1.2; color: #000 !important; }
-        .instructions { border-top: 1px solid #000; padding: 8px 10px; font-size: 8px; line-height: 1.4; }
+        .instructions { border-top: 1px solid #000; padding: 4px 10px; font-size: 6px; line-height: 1.1; }
         .instructions strong { font-weight: 700; }
       </style>
     </head>

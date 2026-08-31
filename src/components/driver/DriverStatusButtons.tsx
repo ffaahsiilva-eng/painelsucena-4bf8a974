@@ -208,6 +208,7 @@ export function DriverStatusButtons() {
   // Activity timer - counts elapsed time since current status was selected
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const hasTriggeredAutoSend = useRef(false);
 
   useEffect(() => {
     const vehicleId = localStorage.getItem("selectedVehicleId");
@@ -1262,6 +1263,13 @@ export function DriverStatusButtons() {
       setSubmittingServiceId(null);
     }
   };
+  // Disparo automático do PNG no Fim de Turno
+  useEffect(() => {
+    if (showShiftSuccess && savedShiftMeta && !hasTriggeredAutoSend.current && !parteDiariaJaEnviada && !isSendingParteDiaria) {
+      hasTriggeredAutoSend.current = true;
+      handleSendParteDiaria();
+    }
+  }, [showShiftSuccess, savedShiftMeta]); // Só deve rodar ao entrar na tela de sucesso
 
   // Se o turno acabou de ser finalizado, exibe tela de sucesso
   if (showShiftSuccess && savedShiftMeta) {

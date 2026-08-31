@@ -34,6 +34,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AdminStatusEditor } from "@/components/partediaria/AdminStatusEditor";
 import { AdminCountersEditor } from "@/components/partediaria/AdminCountersEditor";
 import { ExportEquipmentPdfButton } from "@/components/equipamentos/ExportEquipmentPdfButton";
+import { ExportEquipmentPngButton } from "@/components/equipamentos/ExportEquipmentPngButton";
 import { ExportMovementsByDateButton } from "@/components/equipamentos/ExportMovementsByDateButton";
 import { MovementHistoryDialog } from "@/components/equipamentos/MovementHistoryDialog";
 import { useEquipment, useCreateEquipment, useDeleteEquipment, useUpdateEquipment, useEquipmentStopHistory } from "@/hooks/useEquipment";
@@ -382,6 +383,11 @@ export default function ParteDiaria() {
                           <div className="flex items-center gap-1">
                             <ExportMovementsByDateButton equipment={vehicle} />
                             <ExportEquipmentPdfButton
+                              equipment={vehicle}
+                              movements={movements.filter((m) => m.plate === vehicle.plate)}
+                              stopHistory={stopHistory.filter((h) => h.equipment_id === vehicle.id)}
+                            />
+                            <ExportEquipmentPngButton
                               equipment={vehicle}
                               movements={movements.filter((m) => m.plate === vehicle.plate)}
                               stopHistory={stopHistory.filter((h) => h.equipment_id === vehicle.id)}

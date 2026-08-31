@@ -1,49 +1,33 @@
 import { useState } from "react";
-import { CalendarSearch, FileText, Loader2, Gauge } from "lucide-react";
+import { Image as ImageIcon, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { toast } from "sonner";
-import { downloadPdfFromHtml } from "@/lib/pdfDownload";
 import { getLogoBase64 } from "@/lib/pdfLogo";
+import { triggerBlobDownload } from "@/lib/pdfDownload";
+import { renderParteDiariaHtmlToPngBlob } from "@/lib/parteDiariaShare";
+import type { Equipment, EquipmentStopHistory } from "@/hooks/useEquipment";
+import type { EquipmentMovement } from "@/hooks/useEquipmentMovements";
 import { supabase } from "@/integrations/supabase/client";
 import {
   buildFuelGaugeSvg,
   fuelLevelToLabel,
+  fuelLevelToPercentage,
 } from "@/lib/pdf/fuelGauge";
-import { AdminCountersEditor } from "@/components/partediaria/AdminCountersEditor";
-import { useIsAdmin } from "@/hooks/useUserRole";
 
-interface Equipment {
-  id: string;
-  name: string;
-  plate: string;
-  equipment_type: string;
-  driver: string;
-  helper: string;
-}
-
-interface ExportMovementsByDateButtonProps {
+interface ExportEquipmentPngButtonProps {
   equipment: Equipment;
+  movements: EquipmentMovement[];
+  stopHistory: EquipmentStopHistory[];
 }
 
-export function ExportMovementsByDateButton({ equipment }: ExportMovementsByDateButtonProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function ExportEquipmentPngButton({
+  equipment,
+  movements,
+  stopHistory,
+}: ExportEquipmentPngButtonProps) {
   const [isExporting, setIsExporting] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [showCounterEditor, setShowCounterEditor] = useState(false);
-  const isAdmin = useIsAdmin();
 
   const normalizeText = (value: string) =>
     value
@@ -51,9 +35,9 @@ export function ExportMovementsByDateButton({ equipment }: ExportMovementsByDate
       .replace(/[\u0300-\u036f]/g, "")
       .toLowerCase();
 
-  const isReturnAfterRefuelingStop = (stop: { stop_reason: string; defect_description: string | null }) => {
+  const isReturnAfterRefuelingStop = (stop: EquipmentStopHistory) => {
     const desc = stop.defect_description ?? "";
-    const reason = stop.stop_reason ?? "";
+    const reason = (stop.stop_reason as string | null) ?? "";
     const nDesc = normalizeText(desc);
     const nReason = normalizeText(reason);
     return (
@@ -62,28 +46,6 @@ export function ExportMovementsByDateButton({ equipment }: ExportMovementsByDate
       nReason.includes("retorno_abastecimento") ||
       nReason.includes("retorno abastecimento")
     );
-  };
-
-  const getStatusLabel = (stopReason: string | null) => {
-    if (!stopReason || stopReason === "none") {
-      return "Operando";
-    }
-    const labels: Record<string, string> = {
-      operando: "Operando",
-      maintenance: "Manutenção",
-      waiting: "Aguardando Frente",
-      waiting_front: "Aguardando Frente",
-      end_of_shift: "Fim de Turno",
-      fim_turno: "Fim de Turno",
-      end_of_day: "Abastecendo",
-      abastecimento: "Abastecendo",
-      rain: "Parado (Chuva)",
-      manutencao_corretiva: "Manutenção Corretiva",
-      manutencao_preventiva: "Manutenção Preventiva",
-      vistoria: "Vistoria",
-      aguardando_frente_servico: "Aguardando Frente",
-    };
-    return labels[stopReason] || stopReason;
   };
 
   const buildParteDiariaFormHtml = (params: {
@@ -102,71 +64,29 @@ export function ExportMovementsByDateButton({ equipment }: ExportMovementsByDate
     initialHorimeter?: number | null;
     finalHorimeter?: number | null;
   }) => {
-    const ROWS_PER_TABLE = 16;
-    
-    // Split activities into tables of 20 rows each
-    const activityTables: Array<Array<{ start: string; end: string; description: string }>> = [];
-    
-    for (let i = 0; i < params.activities.length; i += ROWS_PER_TABLE) {
-      const tableRows = params.activities.slice(i, i + ROWS_PER_TABLE);
-      // Fill with empty rows to complete the table
-      const emptyRowsNeeded = ROWS_PER_TABLE - tableRows.length;
-      for (let j = 0; j < emptyRowsNeeded; j++) {
-        tableRows.push({ start: "", end: "", description: "" });
-      }
-      activityTables.push(tableRows);
-    }
-    
-    // If no activities, create one empty table
-    if (activityTables.length === 0) {
-      activityTables.push(
-        Array.from({ length: ROWS_PER_TABLE }).map(() => ({ start: "", end: "", description: "" }))
+    const maxRows = 20;
+    const rows = [...params.activities]
+      .slice(0, maxRows)
+      .concat(
+        Array.from({ length: Math.max(0, maxRows - params.activities.length) }).map(() => ({
+          start: "",
+          end: "",
+          description: "",
+        }))
       );
-    }
 
-    // No extra blank continuation table
-    
-    // Generate HTML for a single activity table
-    const buildActivityTableHtml = (rows: Array<{ start: string; end: string; description: string }>, tableIndex: number) => {
-      const rowsHtml = rows.map(r => `
-        <tr>
-          <td class="cell horario">${r.start}</td>
-          <td class="cell as">ÀS</td>
-          <td class="cell horario">${r.end}</td>
-          <td class="cell desc">${r.description}</td>
-        </tr>
-      `).join("");
-      
-      return `
-        <div class="desc-title">${tableIndex === 0 ? 'DESCRIMINAÇÃO: SERVIÇOS, PARADAS E OBS.' : 'CONTINUAÇÃO - ATIVIDADES'}</div>
-        <table>
-          <thead>
-            <tr>
-              <th class="cell horario" style="background:#f0f0f0;">HORÁRIO</th>
-              <th class="cell as" style="background:#f0f0f0;"></th>
-              <th class="cell horario" style="background:#f0f0f0;">FINAL</th>
-              <th class="cell desc" style="background:#f0f0f0;"></th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rowsHtml}
-          </tbody>
-        </table>
-      `;
-    };
-    
-    // First table goes in the main layout
-    const mainActivityTableHtml = buildActivityTableHtml(activityTables[0], 0);
-    
-    // Additional tables go below the main form
-    const additionalTablesHtml = activityTables.slice(1).map((rows, idx) => `
-      <div class="additional-table" style="page-break-before: auto; margin-top: 15px; border: 1px solid #000;">
-        <div style="background: #f0f0f0; padding: 4px 8px; font-weight: bold; font-size: 10px; border-bottom: 1px solid #000;">
-          ${params.equipmentName} - ${params.dateLabel} (Página ${idx + 2})
-        </div>
-        ${buildActivityTableHtml(rows, idx + 1)}
-      </div>
-    `).join("");
+    const activityRowsHtml = rows
+      .map(
+        (r) => `
+          <tr>
+            <td class="cell horario">${r.start}</td>
+            <td class="cell as">ÀS</td>
+            <td class="cell horario">${r.end}</td>
+            <td class="cell desc">${r.description}</td>
+          </tr>
+        `
+      )
+      .join("");
 
     const instructionText =
       "01 - PREENCHER O CABEÇALHO COM NOME, DATA, TIPO DE EQUIPAMENTO E PLACA/TAG - " +
@@ -176,6 +96,11 @@ export function ExportMovementsByDateButton({ equipment }: ExportMovementsByDate
       "05 - AO FINAL DA JORNADA DE TRABALHO ASSINAR E ENTREGAR PARA APONTADOR OU ENCARREGADO RESPONSÁVEL. " +
       "06 - A PARTE DIÁRIA DEVERÁ SER PREENCHIDA TODOS OS DIAS INCLUSIVE DOMINGOS E FÉRIADOS. " +
       "07 - O MOTORISTA/OPERADOR TEM ATÉ O DIA 02 DE CADA MÊS PARA ENTREGAR TODAS AS PARTES DIÁRIAS, E O APONTADOR TEM ATÉ O DIA 04 PARA ENVIAR PARA O SETOR DE CONFERÊNCIA, O DESCUMPRIMENTO DESSE ITEM IRÁ GERAR ADVERTÊNCIA POR ESCRITO.";
+
+    const initialFuelPct = fuelLevelToPercentage(params.initialFuelLevel);
+    const finalFuelPct = fuelLevelToPercentage(
+      params.finalFuelLevel ?? params.initialFuelLevel
+    );
 
     return `
       <!DOCTYPE html>
@@ -209,18 +134,8 @@ export function ExportMovementsByDateButton({ equipment }: ExportMovementsByDate
             max-width: 190mm;
             margin: 0 auto;
           }
-          .logo-row {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 8px;
-            border-bottom: 1px solid #000;
-          }
-          .logo-row img { height: 40px; }
-
           .top { display: flex; border-bottom: 1px solid #000; align-items: stretch; }
           .top-title { flex: 1; background: #e6e6e6; font-weight: 700; text-align: center; display: flex; align-items: center; justify-content: center; padding: 8px 10px; border-right: 1px solid #000; font-size: 14px; letter-spacing: .5px; }
-
           .obra {
             width: 180px;
             display: flex;
@@ -352,6 +267,8 @@ export function ExportMovementsByDateButton({ equipment }: ExportMovementsByDate
           }
           .sig-name {
             font-weight: bold;
+          .sig-name {
+            font-weight: bold;
             font-size: 10px;
             margin: 0 0 5px;
             padding: 0 4px 3px;
@@ -438,12 +355,22 @@ export function ExportMovementsByDateButton({ equipment }: ExportMovementsByDate
             </div>
 
             <div class="right">
-              ${mainActivityTableHtml}
+              <div class="desc-title">DESCRIMINAÇÃO: SERVIÇOS, PARADAS E OBS.</div>
+              <table>
+                <thead>
+                  <tr>
+                    <th class="cell horario" style="background:#f0f0f0;">HORÁRIO</th>
+                    <th class="cell as" style="background:#f0f0f0;"></th>
+                    <th class="cell horario" style="background:#f0f0f0;">FINAL</th>
+                    <th class="cell desc" style="background:#f0f0f0;"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${activityRowsHtml}
+                </tbody>
+              </table>
             </div>
           </div>
-          
-          <!-- Additional Activity Tables (if more than 12 activities) -->
-          ${additionalTablesHtml}
 
           <div class="signatures">
             <div class="sig"><div class="sig-name">${params.driverName || ""}</div><div class="lbl">Ass. Motorista/Op</div></div>
@@ -458,43 +385,76 @@ export function ExportMovementsByDateButton({ equipment }: ExportMovementsByDate
     `;
   };
 
-  const exportToPDF = async () => {
-    if (!selectedDate) {
-      toast.error("Selecione uma data");
-      return;
+  const getStatusLabel = (stopReason: string | null) => {
+    if (!stopReason || stopReason === "none") {
+      return "Operando";
     }
+    const labels: Record<string, string> = {
+      operando: "Operando",
+      maintenance: "Manutenção",
+      waiting: "Aguardando Frente",
+      waiting_front: "Aguardando Frente",
+      end_of_shift: "Fim de Turno",
+      fim_turno: "Fim de Turno",
+      end_of_day: "Abastecendo",
+      abastecimento: "Abastecendo",
+      rain: "Parado (Chuva)",
+      manutencao_corretiva: "Manutenção Corretiva",
+      manutencao_preventiva: "Manutenção Preventiva",
+      vistoria: "Vistoria",
+      aguardando_frente_servico: "Aguardando Frente",
+    };
+    return labels[stopReason] || stopReason;
+  };
 
+  const getExitReasonLabel = (reason: string | null) => {
+    if (!reason) return "-";
+    switch (reason) {
+      case "manutencao_corretiva":
+        return "Manutenção Corretiva";
+      case "manutencao_preventiva":
+        return "Manutenção Preventiva";
+      case "vistoria":
+        return "Vistoria";
+      case "operando":
+        return "Operando";
+      case "aguardando_frente_servico":
+        return "Aguardando Frente";
+      case "fim_turno":
+        return "Fim de Turno";
+      default:
+        return reason;
+    }
+  };
+
+  const formatDuration = (minutes: number | null) => {
+    if (!minutes) return "-";
+    if (minutes >= 60) {
+      const h = Math.floor(minutes / 60);
+      const m = minutes % 60;
+      return `${h}h${m > 0 ? ` ${m}min` : ""}`;
+    }
+    return `${minutes}min`;
+  };
+
+  const exportToPDF = async () => {
     setIsExporting(true);
     try {
       const logoBase64 = await getLogoBase64();
-      const targetDate = format(selectedDate, "yyyy-MM-dd");
-      const dateLabel = format(selectedDate, "dd/MM/yyyy", { locale: ptBR });
+      const today = format(new Date(), "yyyy-MM-dd");
+      const dateLabel = format(new Date(), "dd/MM/yyyy", { locale: ptBR });
 
-      // Load shift record for the selected date
+      // Try to load telemetry data from today's shift record (when available)
       const { data: shiftRecord } = await supabase
         .from("daily_shift_records")
-        .select("*")
+        .select("initial_fuel_level, final_fuel_level, initial_km, final_km, initial_horimeter, final_horimeter, shift_end_time, driver_name, helper_name, status_history")
         .eq("equipment_id", equipment.id)
-        .eq("shift_date", targetDate)
+        .eq("shift_date", today)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
 
-      // Load stop history for the selected date
-      const startOfDay = `${targetDate}T00:00:00`;
-      const endOfDay = `${targetDate}T23:59:59`;
-      
-      const { data: stopHistory } = await supabase
-        .from("equipment_stop_history")
-        .select("*")
-        .eq("equipment_id", equipment.id)
-        .gte("started_at", startOfDay)
-        .lte("started_at", endOfDay)
-        .order("started_at", { ascending: true });
-
-      const dateStops = (stopHistory || []).filter(s => !isReturnAfterRefuelingStop(s));
-
-      // Fallback: if no initial values for the target date, use previous day's final values
+      // Fallback: if no initial values for today, use previous day's final values
       let fallbackInitialHorimeter: number | null = null;
       let fallbackInitialKm: number | null = null;
       let fallbackInitialFuel: string | null = null;
@@ -503,7 +463,7 @@ export function ExportMovementsByDateButton({ equipment }: ExportMovementsByDate
           .from("daily_shift_records")
           .select("final_horimeter, final_km, final_fuel_level, initial_horimeter, initial_km, initial_fuel_level")
           .eq("equipment_id", equipment.id)
-          .lt("shift_date", targetDate)
+          .lt("shift_date", today)
           .order("shift_date", { ascending: false })
           .limit(1)
           .maybeSingle();
@@ -522,7 +482,7 @@ export function ExportMovementsByDateButton({ equipment }: ExportMovementsByDate
           .from("daily_shift_records")
           .select("initial_horimeter, initial_km")
           .eq("equipment_id", equipment.id)
-          .gt("shift_date", targetDate)
+          .gt("shift_date", today)
           .order("shift_date", { ascending: true })
           .limit(1)
           .maybeSingle();
@@ -532,49 +492,110 @@ export function ExportMovementsByDateButton({ equipment }: ExportMovementsByDate
         }
       }
 
-      // Build activities from stop history
-      const activities: Array<{ start: string; end: string; description: string }> = [];
-      
-      // Filter consecutive duplicates
-      const filteredStops = dateStops.filter((entry, index, arr) => {
+      // 1. Use equipment.driver if available
+      // 2. Else use shiftRecord.driver_name if available
+      // 3. Else search for changed_by in status_history
+      let driverName = equipment.driver || "";
+      if (!driverName && shiftRecord?.driver_name) {
+        driverName = shiftRecord.driver_name;
+      }
+      if (!driverName && shiftRecord?.status_history) {
+        const history = Array.isArray(shiftRecord.status_history) 
+          ? shiftRecord.status_history as Array<{ changed_by?: string | null }>
+          : [];
+        for (const entry of history) {
+          if (entry.changed_by && !entry.changed_by.includes("(Editado)")) {
+            driverName = entry.changed_by;
+            break;
+          }
+        }
+      }
+
+      // Determine helper name with fallback
+      let helperName = equipment.helper || "";
+      if (!helperName && shiftRecord?.helper_name) {
+        helperName = shiftRecord.helper_name;
+      }
+
+      // Re-fetch fresh stop history from DB to ensure deleted entries are excluded
+      const { data: freshStopHistory } = await supabase
+        .from("equipment_stop_history")
+        .select("*")
+        .eq("equipment_id", equipment.id)
+        .order("started_at", { ascending: true });
+
+      const activeStopHistory = freshStopHistory || stopHistory;
+
+      // Filter today's data
+      const todayMovements = movements.filter((m) => m.movement_date === today);
+      const todayStops = activeStopHistory.filter((h) => {
+        const stopDate = format(new Date(h.started_at), "yyyy-MM-dd");
+        return stopDate === today;
+      });
+
+      // Calculate total stop time
+      const totalStopMinutes = todayStops.reduce(
+        (acc, stop) => acc + (stop.duration_minutes || 0),
+        0
+      );
+
+      // Sort stops and filter out consecutive duplicates
+      const sortedStops = [...todayStops].sort(
+        (a, b) => new Date(a.started_at).getTime() - new Date(b.started_at).getTime()
+      );
+
+      // Only remove if same reason AND same description consecutively
+      const filteredStops = sortedStops.filter((stop, index, arr) => {
         if (index === 0) return true;
         const prev = arr[index - 1];
-        return entry.stop_reason !== prev.stop_reason || entry.defect_description !== prev.defect_description;
+        return (
+          stop.stop_reason !== prev.stop_reason ||
+          stop.defect_description !== prev.defect_description
+        );
       });
 
-      filteredStops.forEach((stop, idx) => {
-        const startTime = format(new Date(stop.started_at), "HH:mm");
-        let endTime = "";
-        
-        // For "Fim de Turno" entries, always prefer shift_end_time from the shift record
-        const isEndOfShift = stop.stop_reason === "end_of_shift" || stop.stop_reason === "fim_turno";
-        if (isEndOfShift && shiftRecord?.shift_end_time) {
-          endTime = format(new Date(shiftRecord.shift_end_time), "HH:mm");
-        } else if (stop.ended_at) {
-          endTime = format(new Date(stop.ended_at), "HH:mm");
-        } else if (idx < filteredStops.length - 1) {
-          endTime = format(new Date(filteredStops[idx + 1].started_at), "HH:mm");
+      // Build activities with proper end times:
+      // - Use start time of next status as end time
+      // - Leave blank for last status UNLESS it's "Fim de Turno"
+      // - Special rule: legacy "Operando - Retorno após abastecimento" must NOT be printed;
+      //   it only closes the previous "Abastecimento" time range.
+      const activities: Array<{ start: string; end: string; description: string }> = [];
+      for (let i = 0; i < filteredStops.length; i++) {
+        const stop = filteredStops[i];
+        if (isReturnAfterRefuelingStop(stop)) {
+          continue;
         }
 
-        const statusLabel = getStatusLabel(stop.stop_reason);
-        const description = stop.defect_description 
-          ? `${statusLabel} - ${stop.defect_description}`
-          : statusLabel;
+        const nextStop = filteredStops[i + 1];
+        const isLastEntry = i === filteredStops.length - 1;
+        const isEndOfShift = stop.stop_reason === "end_of_shift" || stop.stop_reason === "fim_turno";
+
+        let endTime = "";
+
+        // Rule: last status is always blank UNLESS it's "Fim de Turno".
+        // For non-last entries, use next status start time (or ended_at if available).
+        if (nextStop) {
+          // Use ended_at if available (e.g., closed abastecimento), else next start time
+          endTime = stop.ended_at
+            ? format(new Date(stop.ended_at), "HH:mm", { locale: ptBR })
+            : format(new Date(nextStop.started_at), "HH:mm", { locale: ptBR });
+          if (isReturnAfterRefuelingStop(nextStop)) {
+            i++; // consume marker without printing
+          }
+        } else if (isLastEntry && isEndOfShift) {
+          // Only "Fim de Turno" shows an end time when it's the last status.
+          endTime = stop.ended_at
+            ? format(new Date(stop.ended_at), "HH:mm", { locale: ptBR })
+            : format(new Date(stop.started_at), "HH:mm", { locale: ptBR });
+        }
+        // Otherwise (last entry, not end of shift) → endTime stays blank
 
         activities.push({
-          start: startTime,
+          start: format(new Date(stop.started_at), "HH:mm", { locale: ptBR }),
           end: endTime,
-          description,
+          description: `${getStatusLabel(stop.stop_reason)}${stop.defect_description ? ` - ${stop.defect_description}` : ""}`,
         });
-      });
-
-      // Get driver name from shift record, equipment, or stop history (changed_by_driver)
-      const driverFromHistory = dateStops.find(s => s.changed_by_driver)?.changed_by_driver || "";
-      const driverName = shiftRecord?.driver_name || equipment.driver || driverFromHistory || "";
-      const helperName = shiftRecord?.helper_name || equipment.helper || "";
-      
-      // Use "SINALEIRO" for Munk equipment, "AJUDANTE" for others
-      const helperLabel = equipment.equipment_type === "munk" ? "SINALEIRO" : "AJUDANTE";
+      }
 
       const htmlContent = buildParteDiariaFormHtml({
         logoBase64,
@@ -583,98 +604,42 @@ export function ExportMovementsByDateButton({ equipment }: ExportMovementsByDate
         plate: equipment.plate,
         driverName,
         helperName,
-        helperLabel,
+        helperLabel: equipment.equipment_type === "munk" ? "SINALEIRO" : "AJUDANTE",
         activities,
         initialFuelLevel: shiftRecord?.initial_fuel_level ?? fallbackInitialFuel,
         finalFuelLevel: shiftRecord?.final_fuel_level ?? null,
-        initialKm: shiftRecord?.initial_km ? Number(shiftRecord.initial_km) : fallbackInitialKm,
-        finalKm: shiftRecord?.final_km ? Number(shiftRecord.final_km) : fallbackFinalKm,
-        initialHorimeter: shiftRecord?.initial_horimeter ? Number(shiftRecord.initial_horimeter) : fallbackInitialHorimeter,
-        finalHorimeter: shiftRecord?.final_horimeter ? Number(shiftRecord.final_horimeter) : fallbackFinalHorimeter,
+        initialKm: shiftRecord?.initial_km ?? fallbackInitialKm,
+        finalKm: shiftRecord?.final_km ?? fallbackFinalKm,
+        initialHorimeter: shiftRecord?.initial_horimeter ?? fallbackInitialHorimeter,
+        finalHorimeter: shiftRecord?.final_horimeter ?? fallbackFinalHorimeter,
       });
 
-      await downloadPdfFromHtml(htmlContent, `movimentacoes-${format(new Date(), "yyyy-MM-dd")}.pdf`);
+      const blob = await renderParteDiariaHtmlToPngBlob(htmlContent);
+      triggerBlobDownload(blob, `parte-diaria-${equipment.name}-${format(new Date(), "yyyy-MM-dd")}.png`);
 
-      setIsOpen(false);
-      toast.success(`PDF gerado para ${dateLabel}`);
+      toast.success("PNG gerado com sucesso!");
     } catch (error) {
-      console.error("Error exporting PDF:", error);
-      toast.error("Erro ao exportar PDF");
+      console.error("Error exporting to PNG:", error);
+      toast.error("Erro ao exportar para PNG");
     } finally {
       setIsExporting(false);
     }
   };
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          title="Exportar PDF por data"
-        >
-          <CalendarSearch className="h-4 w-4" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="end">
-        <div className="p-3 space-y-3">
-          <div className="text-sm font-medium text-center">
-            Selecione a data para exportar
-          </div>
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={(date) => {
-              setSelectedDate(date);
-              setShowCounterEditor(false);
-            }}
-            locale={ptBR}
-            disabled={(date) => date > new Date()}
-            initialFocus
-            className="pointer-events-auto"
-          />
-
-          {/* Admin counter editor */}
-          {isAdmin && selectedDate && (
-            <Collapsible open={showCounterEditor} onOpenChange={setShowCounterEditor}>
-              <CollapsibleTrigger asChild>
-                <Button variant="outline" size="sm" className="w-full gap-2 text-xs">
-                  <Gauge className="h-3.5 w-3.5" />
-                  Corrigir Horímetro / KM
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="pt-2">
-                <AdminCountersEditor
-                  equipmentId={equipment.id}
-                  equipmentName={equipment.name}
-                  date={format(selectedDate, "yyyy-MM-dd")}
-                  inline
-                  onSaved={() => setShowCounterEditor(false)}
-                />
-              </CollapsibleContent>
-            </Collapsible>
-          )}
-
-          <Button
-            onClick={exportToPDF}
-            disabled={isExporting || !selectedDate}
-            className="w-full"
-          >
-            {isExporting ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Exportando...
-              </>
-            ) : (
-              <>
-                <FileText className="h-4 w-4 mr-2" />
-                Exportar PDF
-              </>
-            )}
-          </Button>
-        </div>
-      </PopoverContent>
-    </Popover>
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={exportToPDF}
+      disabled={isExporting}
+      className="h-8 w-8 text-primary hover:bg-primary/10"
+      title="Exportar Imagem (PNG)"
+    >
+      {isExporting ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <ImageIcon className="h-4 w-4" />
+      )}
+    </Button>
   );
 }

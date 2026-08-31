@@ -431,20 +431,8 @@ export const ExportDailyShiftPdfButton = forwardRef<HTMLButtonElement, ExportDai
             .sig-box { text-align: center; width: 30%; }
             .sig-name { font-weight: bold; font-size: 10px; margin: 0 0 5px; padding: 0 4px 3px; line-height: 1.2; min-height: 12px; white-space: normal; overflow: visible; word-break: keep-all; border-bottom: 1px solid #000; }
             .sig-label { font-size: 8px; margin-top: 2px; }
-            .instructions {
-              background: #f5f5f5;
-              padding: 6px 8px;
-              font-size: 7px;
-              line-height: 1.4;
-              border-top: 1px solid #000;
-            }
-            .instructions {
-              background: #f5f5f5;
-              padding: 6px 8px;
-              font-size: 7px;
-              line-height: 1.4;
-              border-top: 1px solid #000;
-            }
+            .instructions { border-top: 1px solid #000; padding: 4px 10px; font-size: 6px; line-height: 1.1; }
+            .instructions { border-top: 1px solid #000; padding: 4px 10px; font-size: 6px; line-height: 1.1; }
             @media print {
               body { padding: 0; }
             }
