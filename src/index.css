@@ -365,6 +365,23 @@ html, body, #root {
     --sidebar-ring: 45 100% 48%;
   }
 
+  /* === Light Popovers for Modern Layout === */
+  .dark[data-layout="modern"] {
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+    
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+    
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 40%;
+    
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 10%;
+    
+    --border: 0 0% 90%;
+  }
+
   /* === Dark theme — Sucena Gold (refinamento exato da referência) === */
   .dark body {
     background:
