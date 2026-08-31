@@ -147,6 +147,7 @@ export function DriverStatusButtons() {
   const [servicesOpen, setServicesOpen] = useState(false);
   const [submittingServiceId, setSubmittingServiceId] = useState<string | null>(null);
   const [fuelLevel, setFuelLevel] = useState<FuelLevel>("half");
+  const [isFuelLocked, setIsFuelLocked] = useState(false);
   const [showEndShiftDialog, setShowEndShiftDialog] = useState(false);
   const [showStartShiftDialog, setShowStartShiftDialog] = useState(false);
   const [endShiftFuelLevel, setEndShiftFuelLevel] = useState<FuelLevel>("half");
@@ -205,6 +206,33 @@ export function DriverStatusButtons() {
       // using the reactive hook currentShiftRecord instead of manual query.
     }
   }, []);
+
+  useEffect(() => {
+    if (!selectedVehicleId) return;
+    const fetchLastShiftFuel = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("daily_shift_records")
+          .select("final_fuel_level")
+          .eq("equipment_id", selectedVehicleId)
+          .not("shift_end_time", "is", null)
+          .order("shift_end_time", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+          
+        if (data && data.final_fuel_level) {
+          setFuelLevel(data.final_fuel_level as FuelLevel);
+          setIsFuelLocked(true);
+        } else {
+          setIsFuelLocked(false);
+          setFuelLevel("half");
+        }
+      } catch (err) {
+        console.warn("Could not fetch last shift fuel level", err);
+      }
+    };
+    fetchLastShiftFuel();
+  }, [selectedVehicleId]);
 
 
   const selectedVehicle = equipment.find((eq) => eq.id === selectedVehicleId);
@@ -1102,7 +1130,7 @@ export function DriverStatusButtons() {
             <FuelLevelGauge
               selectedLevel={fuelLevel}
               onLevelChange={setFuelLevel}
-              disabled={isUpdating || isProfileLoading || !canIdentifyLoggedDriver}
+              disabled={isUpdating || isProfileLoading || !canIdentifyLoggedDriver || isFuelLocked}
             />
           </div>
 
