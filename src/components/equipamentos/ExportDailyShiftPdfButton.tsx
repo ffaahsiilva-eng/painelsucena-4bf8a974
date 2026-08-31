@@ -424,8 +424,8 @@ export const ExportDailyShiftPdfButton = forwardRef<HTMLButtonElement, ExportDai
               border-top: 1px solid #000;
             }
             .sig-box { text-align: center; width: 30%; }
-            .sig-name { font-weight: bold; font-size: 10px; margin: 0; padding: 0; line-height: 1; min-height: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .sig-line { border-top: 1px solid #000; margin-top: 2px; }
+            .sig-name { font-weight: bold; font-size: 10px; margin: 0; padding: 0; padding-bottom: 3px; line-height: 1; min-height: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .sig-line { border-top: 1px solid #000; margin-top: 0px; }
             .sig-label { font-size: 8px; margin-top: 2px; }
             .instructions {
               background: #f5f5f5;

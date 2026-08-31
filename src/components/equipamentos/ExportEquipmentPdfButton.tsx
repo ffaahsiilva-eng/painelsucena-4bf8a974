@@ -290,6 +290,7 @@ export function ExportEquipmentPdfButton({
             font-size: 10px;
             margin: 0;
             padding: 0;
+            padding-bottom: 3px;
             line-height: 1;
             min-height: 12px;
             white-space: nowrap;
@@ -298,7 +299,7 @@ export function ExportEquipmentPdfButton({
           }
           .sig .line {
             border-top: 1px solid #000;
-            margin-top: 2px;
+            margin-top: 0px;
             margin-bottom: 5px;
           }
           .sig .lbl { font-size: 9px; }
