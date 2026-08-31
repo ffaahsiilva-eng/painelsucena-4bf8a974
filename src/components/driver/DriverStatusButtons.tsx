@@ -584,42 +584,41 @@ export function DriverStatusButtons() {
         console.warn("wapi-driver-status-notify error", err);
       }
 
-      // Insere o PNG diretamente no wapi_outbox pelo cliente (sem depender da Edge Function)
+      // Segunda chamada à Edge Function especificamente para o PNG.
+      // Usa newStatus "end_of_shift" que na versão deployada pula o texto
+      // (isEndOfShift=true → text skipped) mas insere a imagem com pngKind
+      // "daily-shift-png-end". Isso contorna o RLS que bloqueia inserts diretos
+      // por motoristas não-admin.
       if (parteDiariaUrl && isOnline) {
         try {
-          const { data: cfg } = await supabase
-            .from("wapi_config")
-            .select("enabled, group_id, group_id_driver_status, auto_send_driver_status")
-            .limit(1)
-            .maybeSingle();
-
-          const targetGroup = (cfg?.group_id_driver_status?.trim() || cfg?.group_id?.trim() || "");
-
-          if (cfg?.enabled && cfg?.auto_send_driver_status !== false && targetGroup) {
-            const pngDedupeKey = savedShiftRecordId
-              ? `driver-status|daily-shift-png-end|${savedShiftRecordId}`
-              : `driver-status|daily-shift-png-end|${selectedVehicleId}|${now.split("T")[0]}`;
-
-            const { error: imgErr } = await supabase.from("wapi_outbox").insert({
-              kind: "image",
-              target_type: "group",
-              phone: targetGroup,
-              image_url: parteDiariaUrl,
-              caption: `📄 *PARTE DIÁRIA*\n${selectedVehicle.name} — ${selectedVehicle.plate}\nMotorista: ${currentDriverName || "—"}`,
-              origin: "driver-status",
-              external_kind: "daily-shift-png-end",
-              external_id: savedShiftRecordId || selectedVehicleId || null,
-              dedupe_key: pngDedupeKey,
-            });
-
-            if (imgErr) {
-              console.warn("Falha ao enfileirar PNG direto no outbox:", imgErr);
-            } else {
-              console.log("[driver] PNG da Parte Diária enfileirado diretamente no outbox");
-            }
+          const pngBody = {
+            equipmentId: selectedVehicleId,
+            equipmentName: selectedVehicle.name,
+            plate: selectedVehicle.plate,
+            newStatus: "end_of_shift",
+            driverName: currentDriverName || null,
+            helperName: currentHelperName || null,
+            shiftRecordId: savedShiftRecordId || null,
+            imageUrl: parteDiariaUrl,
+            imageCaption: `📄 *PARTE DIÁRIA*\n${selectedVehicle.name} — ${selectedVehicle.plate}\nMotorista: ${currentDriverName || "—"}`,
+            timestamp: now,
+          };
+          const notifyUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wapi-driver-status-notify`;
+          const pngResp = await fetch(notifyUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify(pngBody),
+          });
+          if (!pngResp.ok) {
+            console.warn("[driver] PNG edge-function call returned", pngResp.status);
+          } else {
+            console.log("[driver] PNG da Parte Diária enfileirado via edge function");
           }
         } catch (pngErr) {
-          console.warn("Erro ao inserir PNG no outbox:", pngErr);
+          console.warn("[driver] Erro ao enviar PNG via edge function:", pngErr);
         }
       }
 
