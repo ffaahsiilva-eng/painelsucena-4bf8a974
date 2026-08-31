@@ -122,6 +122,16 @@ export default {
           "0%, 100%": { transform: "translate(-50%, 0)" },
           "50%": { transform: "translate(-50%, -6px)" },
         },
+        "neon-pulse-border": {
+          "0%, 100%": { 
+            borderColor: "rgba(74, 222, 128, 1)", 
+            boxShadow: "0 0 5px rgba(74,222,128,0.5), 0 0 10px rgba(74,222,128,0.5), inset 0 0 5px rgba(74,222,128,0.3)" 
+          },
+          "50%": { 
+            borderColor: "rgba(34, 197, 94, 0.4)", 
+            boxShadow: "0 0 2px rgba(74,222,128,0.2), 0 0 5px rgba(74,222,128,0.2), inset 0 0 2px rgba(74,222,128,0.1)" 
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -130,6 +140,7 @@ export default {
         "ticker": "ticker 120s linear infinite",
         "admin-glow": "admin-glow 2.2s ease-in-out infinite",
         "admin-spin": "admin-spin 6s linear infinite",
+        "neon-pulse-border": "neon-pulse-border 1.5s ease-in-out infinite",
       },
     },
   },
