@@ -640,7 +640,15 @@ export function DriverStatusButtons() {
       localStorage.removeItem(`shift_horimeter_${selectedVehicleId}`);
       localStorage.removeItem(`shift_km_${selectedVehicleId}`);
       localStorage.removeItem(`shift_start_time_${selectedVehicleId}`);
+      localStorage.removeItem(`cached_shift_${selectedVehicleId}_${today}`);
+      setInitialHorimeter(null);
+      setInitialKm(null);
       setElapsedSeconds(0);
+
+      // Invalida cache do React Query para que ao re-selecionar o veículo
+      // não re-hidrate o turno já finalizado como se ainda estivesse aberto
+      queryClient.removeQueries({ queryKey: ["daily-shift-record", selectedVehicleId] });
+      queryClient.invalidateQueries({ queryKey: ["equipment"] });
 
       setShowEndShiftDialog(false);
       
