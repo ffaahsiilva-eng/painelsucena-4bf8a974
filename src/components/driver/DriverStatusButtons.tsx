@@ -208,9 +208,25 @@ export function DriverStatusButtons() {
 
   useEffect(() => {
     if (!selectedVehicleId) return;
-    const fetchLastShiftFuel = async () => {
+    const fetchFuelLevel = async () => {
       try {
-        const { data, error } = await supabase
+        // 1. Check if there's a current open shift — use its initial_fuel_level
+        const { data: openShift } = await supabase
+          .from("daily_shift_records")
+          .select("initial_fuel_level")
+          .eq("equipment_id", selectedVehicleId)
+          .is("shift_end_time", null)
+          .order("shift_start_time", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (openShift?.initial_fuel_level) {
+          setFuelLevel(openShift.initial_fuel_level as FuelLevel);
+          return;
+        }
+
+        // 2. No open shift — use the last completed shift's final_fuel_level
+        const { data: lastShift } = await supabase
           .from("daily_shift_records")
           .select("final_fuel_level")
           .eq("equipment_id", selectedVehicleId)
@@ -218,17 +234,17 @@ export function DriverStatusButtons() {
           .order("shift_end_time", { ascending: false })
           .limit(1)
           .maybeSingle();
-          
-        if (data && data.final_fuel_level) {
-          setFuelLevel(data.final_fuel_level as FuelLevel);
+
+        if (lastShift?.final_fuel_level) {
+          setFuelLevel(lastShift.final_fuel_level as FuelLevel);
         } else {
           setFuelLevel("half");
         }
       } catch (err) {
-        console.warn("Could not fetch last shift fuel level", err);
+        console.warn("Could not fetch fuel level", err);
       }
     };
-    fetchLastShiftFuel();
+    fetchFuelLevel();
   }, [selectedVehicleId]);
 
 
