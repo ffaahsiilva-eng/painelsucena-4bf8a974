@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
       const dayLabel = mode === "tomorrow" ? "amanhã" : "hoje";
       const message = `${header}\n\n👤 *Palestrante:* ${presenterName}\n📅 *Data:* ${dateBR} (${dayLabel})\n📋 *Tema:* ${dds.theme}\n\n_Mensagem automática - Sucena_`;
 
-      const dedupeKey = `dds-${mode}-${dds.id}-${targetDate}`;
+      const dedupeKey = `dds-${mode}-${dds.id}-${targetDate}-${presenterPhone || 'nophone'}`;
 
       let qErr = null;
       if (targetGroup) {
@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
           origin: "dds",
           external_kind: "dds-schedule-private",
           external_id: dds.id,
-          dedupe_key: `dds-${mode}-${dds.id}-${targetDate}-private`,
+          dedupe_key: `dds-${mode}-${dds.id}-${targetDate}-${presenterPhone || 'nophone'}-private`,
         });
         privateOk = !pErr;
         privateErr = pErr?.message;

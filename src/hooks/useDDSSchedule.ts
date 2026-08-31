@@ -304,6 +304,19 @@ export const useCreateDDSSchedule = () => {
       if (variables.length > 0) {
         queryClient.invalidateQueries({ queryKey: ["dds-schedule", variables[0].month_year] });
       }
+      
+      // Trigger notifications automatically
+      const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+      if (baseUrl) {
+        Promise.all([
+          fetch(`${baseUrl}/functions/v1/wapi-dds-notify`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "today" }) }).catch(console.error),
+          fetch(`${baseUrl}/functions/v1/wapi-dds-notify`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "tomorrow" }) }).catch(console.error)
+        ]).finally(() => {
+          setTimeout(() => {
+            fetch(`${baseUrl}/functions/v1/wapi-queue-worker`, { method: "POST" }).catch(console.error);
+          }, 1000);
+        });
+      }
     },
   });
 };
@@ -341,6 +354,19 @@ export const useUpdateDDSSchedule = () => {
       queryClient.invalidateQueries({ queryKey: ["dds-schedule", data.month_year] });
       queryClient.invalidateQueries({ queryKey: ["dds-today"] });
       queryClient.invalidateQueries({ queryKey: ["dds-tomorrow"] });
+      
+      // Trigger notifications automatically
+      const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+      if (baseUrl) {
+        Promise.all([
+          fetch(`${baseUrl}/functions/v1/wapi-dds-notify`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "today" }) }).catch(console.error),
+          fetch(`${baseUrl}/functions/v1/wapi-dds-notify`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "tomorrow" }) }).catch(console.error)
+        ]).finally(() => {
+          setTimeout(() => {
+            fetch(`${baseUrl}/functions/v1/wapi-queue-worker`, { method: "POST" }).catch(console.error);
+          }, 1000);
+        });
+      }
     },
   });
 };
