@@ -584,6 +584,45 @@ export function DriverStatusButtons() {
         console.warn("wapi-driver-status-notify error", err);
       }
 
+      // Insere o PNG diretamente no wapi_outbox pelo cliente (sem depender da Edge Function)
+      if (parteDiariaUrl && isOnline) {
+        try {
+          const { data: cfg } = await supabase
+            .from("wapi_config")
+            .select("enabled, group_id, group_id_driver_status, auto_send_driver_status")
+            .limit(1)
+            .maybeSingle();
+
+          const targetGroup = (cfg?.group_id_driver_status?.trim() || cfg?.group_id?.trim() || "");
+
+          if (cfg?.enabled && cfg?.auto_send_driver_status !== false && targetGroup) {
+            const pngDedupeKey = savedShiftRecordId
+              ? `driver-status|daily-shift-png-end|${savedShiftRecordId}`
+              : `driver-status|daily-shift-png-end|${selectedVehicleId}|${now.split("T")[0]}`;
+
+            const { error: imgErr } = await supabase.from("wapi_outbox").insert({
+              kind: "image",
+              target_type: "group",
+              phone: targetGroup,
+              image_url: parteDiariaUrl,
+              caption: `📄 *PARTE DIÁRIA*\n${selectedVehicle.name} — ${selectedVehicle.plate}\nMotorista: ${currentDriverName || "—"}`,
+              origin: "driver-status",
+              external_kind: "daily-shift-png-end",
+              external_id: savedShiftRecordId || selectedVehicleId || null,
+              dedupe_key: pngDedupeKey,
+            });
+
+            if (imgErr) {
+              console.warn("Falha ao enfileirar PNG direto no outbox:", imgErr);
+            } else {
+              console.log("[driver] PNG da Parte Diária enfileirado diretamente no outbox");
+            }
+          }
+        } catch (pngErr) {
+          console.warn("Erro ao inserir PNG no outbox:", pngErr);
+        }
+      }
+
       // Fim de Turno does NOT register as equipment exit (saída)
       // The equipment remains on site, only the shift ends
 
