@@ -39,9 +39,15 @@ html[data-layout="modern"].dark body {
   color: var(--text-primary);
 }
 html[data-layout="modern"] .bg-card, 
+html[data-layout="modern"] .bg-popover,
+html[data-layout="modern"] [role="dialog"],
+html[data-layout="modern"] [role="alertdialog"],
 html[data-layout="modern"] .glass-card,
 html[data-layout="modern"] [class*="bg-card"],
 html[data-layout="modern"].dark .bg-card, 
+html[data-layout="modern"].dark .bg-popover,
+html[data-layout="modern"].dark [role="dialog"],
+html[data-layout="modern"].dark [role="alertdialog"],
 html[data-layout="modern"].dark .glass-card,
 html[data-layout="modern"].dark [class*="bg-card"] {
   background: var(--surface) !important;
@@ -52,8 +58,14 @@ html[data-layout="modern"].dark [class*="bg-card"] {
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
 }
 html[data-layout="modern"] .bg-card *,
+html[data-layout="modern"] .bg-popover *,
+html[data-layout="modern"] [role="dialog"] *,
+html[data-layout="modern"] [role="alertdialog"] *,
 html[data-layout="modern"] .glass-card *,
 html[data-layout="modern"].dark .bg-card *,
+html[data-layout="modern"].dark .bg-popover *,
+html[data-layout="modern"].dark [role="dialog"] *,
+html[data-layout="modern"].dark [role="alertdialog"] *,
 html[data-layout="modern"].dark .glass-card * {
   border-color: rgba(0,0,0,0.08);
 }
@@ -152,10 +164,16 @@ html[data-layout="legacy"].dark body {
   color: var(--text-primary);
 }
 html[data-layout="legacy"] .bg-card, 
+html[data-layout="legacy"] .bg-popover,
+html[data-layout="legacy"] [role="dialog"],
+html[data-layout="legacy"] [role="alertdialog"],
 html[data-layout="legacy"] .glass-card,
 html[data-layout="legacy"] .dgv4-card,
 html[data-layout="legacy"] [class*="bg-card"],
 html[data-layout="legacy"].dark .bg-card, 
+html[data-layout="legacy"].dark .bg-popover,
+html[data-layout="legacy"].dark [role="dialog"],
+html[data-layout="legacy"].dark [role="alertdialog"],
 html[data-layout="legacy"].dark .glass-card,
 html[data-layout="legacy"].dark .dgv4-card,
 html[data-layout="legacy"].dark [class*="bg-card"] {
@@ -167,9 +185,15 @@ html[data-layout="legacy"].dark [class*="bg-card"] {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
 }
 html[data-layout="legacy"] .bg-card *,
+html[data-layout="legacy"] .bg-popover *,
+html[data-layout="legacy"] [role="dialog"] *,
+html[data-layout="legacy"] [role="alertdialog"] *,
 html[data-layout="legacy"] .glass-card *,
 html[data-layout="legacy"] .dgv4-card *,
 html[data-layout="legacy"].dark .bg-card *,
+html[data-layout="legacy"].dark .bg-popover *,
+html[data-layout="legacy"].dark [role="dialog"] *,
+html[data-layout="legacy"].dark [role="alertdialog"] *,
 html[data-layout="legacy"].dark .glass-card *,
 html[data-layout="legacy"].dark .dgv4-card * {
   border-color: rgba(192, 145, 45, 0.15);

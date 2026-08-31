@@ -367,6 +367,9 @@ html, body, #root {
 
   /* === Light Popovers for Modern Layout === */
   .dark[data-layout="modern"] {
+    --background: 45 10% 92%;
+    --foreground: 0 0% 10%;
+
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 10%;
     
@@ -379,6 +382,9 @@ html, body, #root {
     --accent: 0 0% 96%;
     --accent-foreground: 0 0% 10%;
     
+    --secondary: 0 0% 90%;
+    --secondary-foreground: 0 0% 10%;
+
     --border: 0 0% 90%;
   }
 
@@ -401,6 +407,13 @@ html, body, #root {
   .dark h1, .dark h2, .dark h3 {
     color: hsl(0 0% 100%);
   }
+  
+  /* Override for Modern Layout headers to ensure readability */
+  .dark[data-layout="modern"] h1, 
+  .dark[data-layout="modern"] h2, 
+  .dark[data-layout="modern"] h3 {
+    color: var(--text-primary) !important;
+  }
 
   /* Inputs / selects / textareas com borda dourada suave */
   .dark input,
@@ -417,6 +430,21 @@ html, body, #root {
     box-shadow: 0 0 0 3px hsl(45 100% 48% / 0.12) !important;
   }
 
+  /* Override for Modern Layout inputs to remove golden theme */
+  .dark[data-layout="modern"] input,
+  .dark[data-layout="modern"] select,
+  .dark[data-layout="modern"] textarea {
+    background: rgba(255, 255, 255, 0.5) !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+    color: var(--text-primary) !important;
+  }
+  .dark[data-layout="modern"] input:focus,
+  .dark[data-layout="modern"] select:focus,
+  .dark[data-layout="modern"] textarea:focus {
+    border-color: rgba(0, 0, 0, 0.3) !important;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1) !important;
+  }
+
   /* Tabelas — header dourado claro */
   .dark th {
     color: hsl(45 50% 75%) !important;
@@ -425,6 +453,16 @@ html, body, #root {
   }
   .dark td {
     border-bottom: 1px solid hsl(0 0% 100% / 0.05) !important;
+  }
+
+  /* Override for Modern Layout tables to remove golden theme */
+  .dark[data-layout="modern"] th {
+    color: var(--text-primary) !important;
+    border-bottom: 1px solid rgba(0,0,0,0.1) !important;
+  }
+  .dark[data-layout="modern"] td {
+    border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+    color: var(--text-primary) !important;
   }
 
   /* Botão primário com gradiente dourado e sombra */
