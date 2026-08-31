@@ -13,10 +13,12 @@ export function triggerBlobDownload(blob: Blob, filename: string): void {
   // Use setTimeout to ensure the click is processed
   setTimeout(() => {
     link.click();
+    // In Electron/Desktop wrappers, the Save Dialog pauses execution or takes time.
+    // If we revoke too fast, the download fails. Give it 60 seconds to be safe.
     setTimeout(() => {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-    }, 250);
+    }, 60000);
   }, 0);
 }
 
@@ -79,16 +81,19 @@ export async function downloadPdfFromHtml(
 
   // Wait for images to load
   const images = contentDiv.querySelectorAll("img");
-  await Promise.all(
-    Array.from(images).map(
-      (img) =>
-        new Promise<void>((resolve) => {
-          if (img.complete) return resolve();
-          img.onload = () => resolve();
-          img.onerror = () => resolve();
-        })
-    )
+  const loadPromises = Array.from(images).map(
+    (img) =>
+      new Promise<void>((resolve) => {
+        if (img.complete) return resolve();
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+      })
   );
+
+  await Promise.race([
+    Promise.all(loadPromises),
+    new Promise<void>((resolve) => setTimeout(resolve, 1500))
+  ]);
 
   // Small delay for rendering
   await new Promise((r) => setTimeout(r, 200));
