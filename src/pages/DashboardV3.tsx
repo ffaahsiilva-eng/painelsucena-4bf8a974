@@ -582,7 +582,6 @@ const Dashboard = () => {
           <SimpleTree className="w-16 h-16 grayscale" />
         </div>
       </div>
-          </div>
     </Layout>
   );
 };
