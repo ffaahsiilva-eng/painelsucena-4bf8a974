@@ -34,7 +34,8 @@ import {
   Waves,
   CloudDrizzle,
   CarFront,
-  CheckCircle2
+  CheckCircle2,
+  FileText
 } from "lucide-react";
 
 import { useEquipment, useUpdateEquipmentStatus, useEquipmentStopHistory, type StopReason } from "@/hooks/useEquipment";
@@ -146,6 +147,8 @@ export function DriverStatusButtons() {
   };
   const [servicesOpen, setServicesOpen] = useState(false);
   const [submittingServiceId, setSubmittingServiceId] = useState<string | null>(null);
+  const [customServiceDialogOpen, setCustomServiceDialogOpen] = useState(false);
+  const [customServiceText, setCustomServiceText] = useState("");
   const [fuelLevel, setFuelLevel] = useState<FuelLevel>("half");
   const [showEndShiftDialog, setShowEndShiftDialog] = useState(false);
   const [showStartShiftDialog, setShowStartShiftDialog] = useState(false);
@@ -1078,6 +1081,100 @@ export function DriverStatusButtons() {
     );
   }
 
+  const submitCustomService = async () => {
+    if (!customServiceText.trim()) {
+      toast.error("Digite o serviço");
+      return;
+    }
+    if (!selectedVehicleId || !selectedVehicle) {
+      toast.error("Nenhum veículo selecionado");
+      return;
+    }
+    if (!canIdentifyLoggedDriver) {
+      toast.error("Aguarde carregar o motorista logado");
+      return;
+    }
+
+    setSubmittingServiceId("custom");
+    const now = new Date().toISOString();
+    const serviceLabel = customServiceText.trim();
+    const wapiBody = {
+      equipmentId: selectedVehicleId,
+      equipmentName: selectedVehicle.name,
+      plate: selectedVehicle.plate,
+      newStatus: "servico",
+      previousStatus: selectedVehicle.stop_reason || "none",
+      driverName: currentDriverName || null,
+      helperName: selectedVehicle.helper || null,
+      extraInfo: `*Serviço:* ${serviceLabel}`,
+      timestamp: now,
+    };
+
+    if (!isOnline) {
+      addPendingAction("equipment_status", {
+        id: selectedVehicleId,
+        stop_reason: "servico",
+        stop_start_time: now,
+      }).catch(e => console.warn(e));
+      addPendingAction("stop_history", {
+        equipment_id: selectedVehicleId,
+        stop_reason: "servico",
+        started_at: now,
+        changed_by_driver: currentDriverName || null,
+        defect_description: `Serviço: ${serviceLabel}`,
+      }).catch(e => console.warn(e));
+      addPendingAction("wapi_invoke", {
+        functionName: "wapi-driver-status-notify",
+        body: wapiBody,
+      }).catch(e => console.warn(e));
+      
+      localStorage.setItem(`active_service_${selectedVehicleId}`, "custom");
+      localStorage.setItem(`active_service_label_${selectedVehicleId}`, `Serviço: ${serviceLabel}`);
+      toast.success(`Serviço salvo offline: ${serviceLabel}`);
+      setCustomServiceDialogOpen(false);
+      setCustomServiceText("");
+      setSubmittingServiceId(null);
+      return;
+    }
+
+    try {
+      await updateStatus.mutateAsync({
+        id: selectedVehicleId,
+        stop_reason: "servico",
+        stop_start_time: now,
+        previousStopReason: selectedVehicle.stop_reason as any,
+        previousStopStartTime: selectedVehicle.stop_start_time,
+        changed_by_driver: currentDriverName || null,
+      });
+
+      await addStatusToHistory.mutateAsync({
+        equipmentId: selectedVehicleId,
+        status: "servico",
+        changedBy: currentDriverName || null,
+        defect_description: `Serviço: ${serviceLabel}`,
+      });
+
+      supabase.functions
+        .invoke("wapi-driver-status-notify", { body: wapiBody })
+        .catch((e) => console.warn("driver-status-notify failed", e));
+
+      localStorage.setItem(`active_service_${selectedVehicleId}`, "custom");
+      localStorage.setItem(`active_service_label_${selectedVehicleId}`, `Serviço: ${serviceLabel}`);
+      toast.success(`Serviço registrado: ${serviceLabel}`);
+    } catch (err) {
+      console.error(err);
+      toast.warning("Erro de conexão. Serviço salvo para sincronizar depois.");
+      addPendingAction("wapi_invoke", {
+        functionName: "wapi-driver-status-notify",
+        body: wapiBody,
+      }).catch(e => console.warn(e));
+    } finally {
+      setCustomServiceDialogOpen(false);
+      setCustomServiceText("");
+      setSubmittingServiceId(null);
+    }
+  };
+
   return (
     <>
       <Card className="shadow-md">
@@ -1542,6 +1639,10 @@ export function DriverStatusButtons() {
               { id: "lavagem_vertedouro", label: "Lavagem Vertedouro", icon: <Waves className="h-5 w-5" />, color: "bg-teal-600 hover:bg-teal-700" },
               { id: "umectacao_vias", label: "Umectação de Vias", icon: <CloudDrizzle className="h-5 w-5" />, color: "bg-sky-600 hover:bg-sky-700" },
               { id: "lavagem_carro", label: "Lavagem de Carro", icon: <CarFront className="h-5 w-5" />, color: "bg-slate-600 hover:bg-slate-700" },
+              { id: "lavagem_97_ambulatorio", label: "Lavagem 97 Ambulatório", icon: <Waves className="h-5 w-5" />, color: "bg-cyan-500 hover:bg-cyan-600" },
+              { id: "irrigacao_faixa_5", label: "Irrigação Faixa 5", icon: <Sprout className="h-5 w-5" />, color: "bg-emerald-500 hover:bg-emerald-600" },
+              { id: "apoio_sistema_irrigacao", label: "Apoio sistema de irrigação", icon: <Droplets className="h-5 w-5" />, color: "bg-blue-500 hover:bg-blue-600" },
+              { id: "outros", label: "Outros...", icon: <FileText className="h-5 w-5" />, color: "bg-slate-500 hover:bg-slate-600" },
             ].map((s) => {
               const loading = submittingServiceId === s.id;
               return (
@@ -1558,6 +1659,12 @@ export function DriverStatusButtons() {
                     }
                     if (!canIdentifyLoggedDriver) {
                       toast.error("Aguarde carregar o motorista logado");
+                      return;
+                    }
+                    if (s.id === "outros") {
+                      setServicesOpen(false);
+                      setCustomServiceText("");
+                      setCustomServiceDialogOpen(true);
                       return;
                     }
                     setSubmittingServiceId(s.id);
@@ -1659,6 +1766,90 @@ export function DriverStatusButtons() {
               disabled={!!submittingServiceId}
             >
               Cancelar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={customServiceDialogOpen} onOpenChange={(o) => !submittingServiceId && setCustomServiceDialogOpen(o)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" /> Outro Serviço
+            </DialogTitle>
+            <DialogDescription>
+              Digite qual serviço está sendo realizado.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              value={customServiceText}
+              onChange={(e) => setCustomServiceText(e.target.value)}
+              placeholder="Ex: Pipa com bomba quebrada"
+              className="w-full"
+            />
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setCustomServiceDialogOpen(false)}
+              disabled={submittingServiceId === "custom"}
+              className="w-full sm:w-auto"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={submitCustomService}
+              disabled={submittingServiceId === "custom" || !customServiceText.trim()}
+              className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              {submittingServiceId === "custom" ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4 mr-2" />
+              )}
+              Confirmar Serviço
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={customServiceDialogOpen} onOpenChange={(o) => !submittingServiceId && setCustomServiceDialogOpen(o)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" /> Outro Serviço
+            </DialogTitle>
+            <DialogDescription>
+              Digite qual serviço está sendo realizado.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              value={customServiceText}
+              onChange={(e) => setCustomServiceText(e.target.value)}
+              placeholder="Ex: Pipa com bomba quebrada"
+              className="w-full"
+            />
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setCustomServiceDialogOpen(false)}
+              disabled={submittingServiceId === "custom"}
+              className="w-full sm:w-auto"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={submitCustomService}
+              disabled={submittingServiceId === "custom" || !customServiceText.trim()}
+              className="w-full sm:w-auto bg-emerald-600 text-white hover:bg-emerald-700"
+            >
+              {submittingServiceId === "custom" ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4 mr-2" />
+              )}
+              Confirmar Serviço
             </Button>
           </DialogFooter>
         </DialogContent>
