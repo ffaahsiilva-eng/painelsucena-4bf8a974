@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (!cfg.auto_send_training_alert && !force) {
+    if (cfg.auto_send_training_alert === false && !force) {
       return new Response(JSON.stringify({ skipped: true, reason: "Alerta de treinamento desabilitado" }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

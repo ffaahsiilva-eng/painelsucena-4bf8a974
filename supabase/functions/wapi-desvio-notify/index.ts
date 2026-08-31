@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     const targetGroupId = (cfg?.group_id_desvios || cfg?.group_id || "").trim();
-    if (!cfg || !cfg.enabled || !cfg.auto_send_desvios || !targetGroupId) {
+    if (!cfg || !cfg.enabled || cfg.auto_send_desvios === false || !targetGroupId) {
       return new Response(JSON.stringify({ skipped: true, reason: "disabled-or-no-group" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

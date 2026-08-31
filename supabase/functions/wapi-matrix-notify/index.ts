@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (!cfg.auto_send_matrix_alert && !force) {
+    if (cfg.auto_send_matrix_alert === false && !force) {
       return new Response(JSON.stringify({ skipped: true, reason: "Alerta de Matriz desabilitado" }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

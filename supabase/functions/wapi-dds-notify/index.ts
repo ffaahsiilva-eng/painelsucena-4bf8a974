@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
 
     const { data: cfg } = await admin
       .from("wapi_config")
-      .select("enabled, dds_auto_notify, dds_notify_day_before, group_id_dds")
+      .select("enabled, dds_auto_notify, dds_notify_day_before, group_id, group_id_dds")
       .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -43,18 +43,13 @@ Deno.serve(async (req) => {
     }
 
     const flagOk = mode === "tomorrow" ? cfg.dds_notify_day_before : cfg.dds_auto_notify;
-    if (!flagOk) {
+    if (flagOk === false) {
       return new Response(JSON.stringify({ skipped: true, reason: `Lembrete '${mode}' desabilitado` }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const targetGroup = (cfg.group_id_dds || "").trim();
-    if (!targetGroup) {
-      return new Response(JSON.stringify({ skipped: true, reason: "ID do grupo DDS não configurado" }), {
-        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const targetGroup = (cfg.group_id_dds || cfg.group_id || "").trim();
 
     const targetDate = mode === "tomorrow" ? getParaDateISO(1) : getParaDateISO(0);
 
@@ -94,16 +89,20 @@ Deno.serve(async (req) => {
 
       const dedupeKey = `dds-${mode}-${dds.id}-${targetDate}`;
 
-      const { error: qErr } = await admin.from("wapi_outbox").insert({
-        kind: "text",
-        target_type: "group",
-        phone: targetGroup,
-        message,
-        origin: "dds",
-        external_kind: "dds-schedule",
-        external_id: dds.id,
-        dedupe_key: dedupeKey,
-      });
+      let qErr = null;
+      if (targetGroup) {
+        const { error } = await admin.from("wapi_outbox").insert({
+          kind: "text",
+          target_type: "group",
+          phone: targetGroup,
+          message,
+          origin: "dds",
+          external_kind: "dds-schedule",
+          external_id: dds.id,
+          dedupe_key: dedupeKey,
+        });
+        qErr = error;
+      }
 
       // Also send to presenter's personal WhatsApp
       let privateOk = false;

@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
     }
 
     const { data: cfg } = await admin.from("wapi_config").select("*").limit(1).single();
-    if (!cfg || !cfg.enabled || !cfg.auto_send_driver_status) {
+    if (!cfg || !cfg.enabled || cfg.auto_send_driver_status === false) {
       return new Response(JSON.stringify({ skipped: true, reason: "disabled" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
