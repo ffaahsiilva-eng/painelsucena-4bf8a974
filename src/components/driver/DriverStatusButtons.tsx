@@ -46,7 +46,6 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { FuelLevelGauge, type FuelLevel } from "./FuelLevelGauge";
 import { useQueryClient } from "@tanstack/react-query";
-import { useVehicleSelection } from "@/hooks/useVehicleSelection";
 import { useOfflineSyncV2 } from "@/hooks/useOfflineSyncV2";
 import { useCreateShiftRecord, useUpdateShiftRecord, useAddStatusToHistory, useShiftRecordByEquipment } from "@/hooks/useDailyShiftRecords";
 import { useCreateEquipmentMovement } from "@/hooks/useEquipmentMovements";

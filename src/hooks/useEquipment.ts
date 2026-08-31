@@ -5,7 +5,7 @@ import type { EquipmentType } from "@/components/equipamentos/VehicleIcons";
 import { useEnvironment } from "@/hooks/useEnvironment";
 import { subscribeToTable } from "@/lib/realtimeManager";
 
-export type StopReason = "none" | "maintenance" | "waiting" | "rain" | "end_of_shift" | "end_of_day" | "almoco" | "manutencao_fora" | "manutencao_externa" | "oficina_externa" | "trabalho_externo";
+export type StopReason = "none" | "maintenance" | "waiting" | "rain" | "end_of_shift" | "end_of_day" | "almoco" | "manutencao_fora" | "manutencao_externa" | "oficina_externa" | "trabalho_externo" | "servico";
 
 export type MobilizationStatus = "mobilizando" | "mobilizado" | "desmobilizando" | "desmobilizado";
 
