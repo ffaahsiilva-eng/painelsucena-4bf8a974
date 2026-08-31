@@ -1178,7 +1178,7 @@ export function DriverStatusButtons() {
         equipmentId: selectedVehicleId,
         status: "servico",
         changedBy: currentDriverName || null,
-        defect_description: `Serviço: ${serviceLabel}`,
+        description: `Serviço: ${serviceLabel}`,
       });
 
       supabase.functions
