@@ -624,9 +624,9 @@ export function DriverStatusButtons() {
   const handleSendParteDiaria = async () => {
     if (!savedShiftMeta) return;
     setIsSendingParteDiaria(true);
+    let parteDiariaBase64: string | null = null;
     try {
       toast.info("Gerando Parte Diária...");
-      let parteDiariaBase64: string | null = null;
       let lastErr: any = null;
       for (let attempt = 1; attempt <= 3; attempt++) {
         try {
@@ -700,7 +700,7 @@ export function DriverStatusButtons() {
             helperName: savedShiftMeta.helperName || null,
             extraInfo: `*Combustível final:* ${getFuelLevelLabel(savedShiftMeta.fuelLevel)}${savedShiftMeta.horimeter ? `\n*Horímetro:* ${savedShiftMeta.horimeter}` : ""}${savedShiftMeta.km ? `\n*KM:* ${savedShiftMeta.km}` : ""}`,
             shiftRecordId: savedShiftMeta.shiftRecordId || null,
-            imageBase64: parteDiariaBase64, // we need this from upper scope but it's available! wait, it's defined inside the try block
+            imageBase64: parteDiariaBase64,
             imageCaption: `📄 *PARTE DIÁRIA*\n${savedShiftMeta.vehicle?.name} — ${savedShiftMeta.vehicle?.plate}\nMotorista: ${savedShiftMeta.driverName || "—"}`,
             timestamp: new Date().toISOString(),
           };
