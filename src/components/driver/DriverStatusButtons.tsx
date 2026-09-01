@@ -624,9 +624,9 @@ export function DriverStatusButtons() {
   const handleSendParteDiaria = async () => {
     if (!savedShiftMeta) return;
     setIsSendingParteDiaria(true);
+    let parteDiariaBase64: string | null = null;
     try {
       toast.info("Gerando Parte Diária...");
-      let parteDiariaBase64: string | null = null;
       let lastErr: any = null;
       for (let attempt = 1; attempt <= 3; attempt++) {
         try {
