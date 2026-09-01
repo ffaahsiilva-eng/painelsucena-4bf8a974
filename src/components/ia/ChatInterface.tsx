@@ -146,7 +146,7 @@ export const ChatInterface = ({ onClose }: ChatInterfaceProps) => {
     setAttachedImage(null);
 
     try {
-      const b64Key = import.meta.env.VITE_GEMINI_KEY_B64;
+      const b64Key = import.meta.env.VITE_GEMINI_KEY_B64 || "QVEuQWI4Uk42SjUzTDhnUEdXUWNYVEYxREllM2NlZEpqeEpBX0ZmZ05ab0kzZFpaZVJvcmc=";
       const GEMINI_API_KEY = b64Key ? atob(b64Key) : import.meta.env.VITE_GEMINI_API_KEY;
       
       if (!GEMINI_API_KEY) {
