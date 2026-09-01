@@ -470,8 +470,8 @@ export const useAllUsers = () => {
         ...profile,
         isOnline,
         isCurrentUser,
-        isAdmin: adminUserIds?.all?.includes(profile.user_id) ?? false,
-        isModerator: adminUserIds?.moderators?.includes(profile.user_id) ?? false,
+        isAdmin: Array.isArray(adminUserIds?.all) ? adminUserIds.all.includes(profile.user_id) : false,
+        isModerator: Array.isArray(adminUserIds?.moderators) ? adminUserIds.moderators.includes(profile.user_id) : false,
         lastSeen: isOnline ? undefined : fallbackLastSeen,
         justCameOnline: justOnlineIds.has(profile.user_id),
       };
