@@ -572,7 +572,7 @@ export const ExportDailyShiftPngButton = forwardRef<HTMLButtonElement, ExportDai
         </html>
       `;
 
-      const safeEquip = activeRecord.equipmentName?.replace(/[^a-z0-9]/gi, "_") || "equip";
+      const safeEquip = activeRecord.equipment_name?.replace(/[^a-z0-9]/gi, "_") || "equip";
       const blob = await renderParteDiariaHtmlToPngBlob(htmlContent);
       triggerBlobDownload(blob, `parte_diaria_${safeEquip}_${formattedDate.replace(/\//g, "-")}.png`);
 
