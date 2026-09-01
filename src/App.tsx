@@ -6,6 +6,9 @@ import { ConfirmDialogHost } from "@/components/ConfirmDialogHost";
 import { AppUpdateChecker } from "@/components/AppUpdateChecker";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
+import * as idb from "idb-keyval";
 import { QueryClient } from "@tanstack/query-core";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -153,20 +156,23 @@ export const queryClient = new QueryClient({
   },
 });
 
-// Hidrata o cache do React Query a partir do localStorage para garantir
-// que o Painel do Motorista funcione offline (leituras) imediatamente
-// após reload, e inicia a persistência contínua das queries críticas.
-if (typeof window !== "undefined") {
-  import("@/lib/queryCachePersister").then(({ hydrateQueryCache, startQueryCachePersistence }) => {
-    hydrateQueryCache(queryClient);
-    startQueryCachePersistence(queryClient);
-  }).catch((e) => console.warn("[queryCachePersister] init failed", e));
+const idbPersister = createAsyncStoragePersister({
+  storage: {
+    getItem: async (key) => await idb.get(key),
+    setItem: async (key, value) => await idb.set(key, value),
+    removeItem: async (key) => await idb.del(key),
+  },
+});
 
-  // Limpa todo o cache de queries quando o ambiente é trocado para evitar
-  // que dados do ambiente anterior fiquem visíveis.
+// Limpa todo o cache de queries quando o ambiente é trocado para evitar
+// que dados do ambiente anterior fiquem visíveis.
+if (typeof window !== "undefined") {
   window.addEventListener("environment-changed", () => {
     queryClient.clear();
-    try { localStorage.removeItem("driver_query_cache_v1"); } catch {}
+    try { 
+      localStorage.removeItem("driver_query_cache_v1");
+      idb.clear();
+    } catch {}
   });
 }
 
@@ -174,7 +180,29 @@ const App = () => (
   <ErrorBoundary>
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
       <LayoutModeProvider>
-      <QueryClientProvider client={queryClient}>
+      <PersistQueryClientProvider 
+        client={queryClient} 
+        persistOptions={{ 
+          persister: idbPersister,
+          dehydrateOptions: {
+            shouldDehydrateQuery: (query) => {
+              const k = query.queryKey?.[0];
+              if (typeof k !== "string") return false;
+              const PERSISTED_PREFIXES = [
+                "equipment",
+                "equipment-movements",
+                "equipment-currently-out-v2",
+                "equipment-stop-history",
+                "profile",
+                "daily-shift-records",
+                "user-roles",
+                "driver-checklists",
+              ];
+              return PERSISTED_PREFIXES.some((p) => k === p || k.startsWith(p));
+            }
+          }
+        }}
+      >
         <TooltipProvider>
             <Toaster />
             <Sonner />
@@ -283,7 +311,7 @@ const App = () => (
               </EditModeProvider>
             </BrowserRouter>
         </TooltipProvider>
-      </QueryClientProvider>
+      </PersistQueryClientProvider>
       </LayoutModeProvider>
     </ThemeProvider>
   </ErrorBoundary>

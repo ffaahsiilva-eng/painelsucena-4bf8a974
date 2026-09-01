@@ -112,9 +112,9 @@ if (isPreviewRuntime) {
           return networkResponse;
         } catch {
           const cache = await caches.open("offline-fallback");
-          const cached = await caches.match("/index.html");
+          const cached = await caches.match("/index.html", { ignoreSearch: true });
           if (cached) return cached;
-          const fallback = await cache.match("/offline.html");
+          const fallback = await cache.match("/offline.html", { ignoreSearch: true });
           if (fallback) return fallback;
           return new Response(
             "<!doctype html><meta charset=utf-8><title>Offline</title><body style='font-family:system-ui;background:#0f0f23;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;margin:0'><div style='text-align:center'><h1>Sem conexão</h1><p>Você está offline. Reconecte para continuar.</p></div></body>",

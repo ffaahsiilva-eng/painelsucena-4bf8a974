@@ -77,25 +77,7 @@ const Auth = () => {
   const { settings: envSettings, isLoading: settingsLoading } = useSiteSettings();
   
 
-  // Fetch all site settings to check if signup is enabled in ANY environment
-  // (since user hasn't selected an environment yet on login screen)
-  const { data: allSettings, isLoading: allSettingsLoading } = useQuery({
-    queryKey: ["all-site-settings"],
-    queryFn: async () => {
-      const { data } = await supabase.from("site_settings").select("show_signup_button");
-      return data || [];
-    }
-  });
-
-  const showSignup = useMemo(() => {
-    // If enabled in current environment
-    if (envSettings.show_signup_button) return true;
-    // Or if enabled in any other environment record
-    if (allSettings && allSettings.length > 0) {
-      return allSettings.some(s => s.show_signup_button);
-    }
-    return false;
-  }, [envSettings.show_signup_button, allSettings]);
+  const showSignup = envSettings.show_signup_button;
 
   // Fetch occupied cargos on mount
   useEffect(() => {
