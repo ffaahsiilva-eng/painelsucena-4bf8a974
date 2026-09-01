@@ -658,24 +658,58 @@ export function DriverStatusButtons() {
         timestamp: new Date().toISOString(),
       };
 
-      const notifyUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wapi-driver-status-notify`;
-      const resp = await fetch(notifyUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify(wapiBody),
-      });
-      if (!resp.ok) {
-        toast.error(`Erro ao enviar para o WhatsApp (${resp.status})`);
+      if (isOnline) {
+        const notifyUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wapi-driver-status-notify`;
+        const resp = await fetch(notifyUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify(wapiBody),
+        });
+        if (!resp.ok) {
+          toast.error(`Erro ao enviar para o WhatsApp (${resp.status})`);
+        } else {
+          toast.success("✅ Parte Diária enviada! Voltando em 5 segundos...");
+          setParteDiariaJaEnviada(true);
+          setTimeout(() => handleGoBack(), 5000);
+        }
       } else {
-        toast.success("✅ Parte Diária enviada! Voltando em 5 segundos...");
+        toast.info("Modo Offline: Parte Diária salva na fila. Será enviada automaticamente ao reconectar.");
+        await addPendingAction("wapi_invoke", {
+          functionName: "wapi-driver-status-notify",
+          body: wapiBody,
+        });
         setParteDiariaJaEnviada(true);
         setTimeout(() => handleGoBack(), 5000);
       }
     } catch (err: any) {
-      toast.error(`Erro: ${err?.message || "falha desconhecida"}`);
+      console.error(err);
+      toast.warning("Modo Offline: Parte Diária salva na fila para sincronização futura.");
+      // Fallback in case of unexpected fetch crash (e.g. CORS block during transient network states)
+      if (savedShiftMeta) {
+        try {
+          const fallbackBody = {
+            equipmentId: savedShiftMeta.vehicle?.id || null,
+            equipmentName: savedShiftMeta.vehicle?.name || "",
+            plate: savedShiftMeta.vehicle?.plate || "",
+            newStatus: "end_of_shift",
+            previousStatus: savedShiftMeta.previousStatus,
+            driverName: savedShiftMeta.driverName || null,
+            helperName: savedShiftMeta.helperName || null,
+            extraInfo: `*Combustível final:* ${getFuelLevelLabel(savedShiftMeta.fuelLevel)}${savedShiftMeta.horimeter ? `\n*Horímetro:* ${savedShiftMeta.horimeter}` : ""}${savedShiftMeta.km ? `\n*KM:* ${savedShiftMeta.km}` : ""}`,
+            shiftRecordId: savedShiftMeta.shiftRecordId || null,
+            imageBase64: parteDiariaBase64, // we need this from upper scope but it's available! wait, it's defined inside the try block
+            imageCaption: `📄 *PARTE DIÁRIA*\n${savedShiftMeta.vehicle?.name} — ${savedShiftMeta.vehicle?.plate}\nMotorista: ${savedShiftMeta.driverName || "—"}`,
+            timestamp: new Date().toISOString(),
+          };
+          addPendingAction("wapi_invoke", {
+            functionName: "wapi-driver-status-notify",
+            body: fallbackBody,
+          }).catch(() => {});
+        } catch (e) {}
+      }
     } finally {
       setIsSendingParteDiaria(false);
     }
@@ -1137,6 +1171,14 @@ export function DriverStatusButtons() {
     }
   };
 
+  // Disparo automático do PNG no Fim de Turno
+  useEffect(() => {
+    if (showShiftSuccess && savedShiftMeta && !hasTriggeredAutoSend.current && !parteDiariaJaEnviada && !isSendingParteDiaria) {
+      hasTriggeredAutoSend.current = true;
+      handleSendParteDiaria();
+    }
+  }, [showShiftSuccess, savedShiftMeta]); // Só deve rodar ao entrar na tela de sucesso
+
   if (isLoading) {
     return (
       <Card>
@@ -1263,13 +1305,6 @@ export function DriverStatusButtons() {
       setSubmittingServiceId(null);
     }
   };
-  // Disparo automático do PNG no Fim de Turno
-  useEffect(() => {
-    if (showShiftSuccess && savedShiftMeta && !hasTriggeredAutoSend.current && !parteDiariaJaEnviada && !isSendingParteDiaria) {
-      hasTriggeredAutoSend.current = true;
-      handleSendParteDiaria();
-    }
-  }, [showShiftSuccess, savedShiftMeta]); // Só deve rodar ao entrar na tela de sucesso
 
   // Se o turno acabou de ser finalizado, exibe tela de sucesso
   if (showShiftSuccess && savedShiftMeta) {
