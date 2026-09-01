@@ -1,0 +1,2 @@
+REVOKE ALL ON FUNCTION public.ensure_cron_job(text, text, text) FROM anon, authenticated, public;
+REVOKE ALL ON FUNCTION public.ensure_edge_cron(text, text, text, jsonb) FROM anon, authenticated, public;

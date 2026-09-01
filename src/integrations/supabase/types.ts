@@ -6272,6 +6272,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      ensure_cron_job: {
+        Args: { _command: string; _name: string; _schedule: string }
+        Returns: undefined
+      }
+      ensure_edge_cron: {
+        Args: { _body?: Json; _fn: string; _name: string; _schedule: string }
+        Returns: undefined
+      }
       fn_cleanup_wapi_broadcasts: { Args: never; Returns: undefined }
       get_environment_tables: {
         Args: never
