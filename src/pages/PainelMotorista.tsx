@@ -452,7 +452,10 @@ const PainelMotorista = () => {
                     <div className={`${item.iconColor} mb-2 pointer-events-none`}>
                       {item.icon}
                     </div>
-                    <h3 className={`font-bold ${item.iconColor} text-xs uppercase tracking-wide pointer-events-none`}>
+                    <h3 
+                      className={`font-bold ${item.iconColor} text-xs uppercase tracking-wide pointer-events-none`}
+                      style={item.iconColor.includes("white") ? { color: "#ffffff", WebkitTextFillColor: "#ffffff" } : undefined}
+                    >
                       {item.title}
                     </h3>
                   </div>
