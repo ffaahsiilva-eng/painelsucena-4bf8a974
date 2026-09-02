@@ -93,7 +93,7 @@ export const ForbiddenColorButton = () => {
           title={`Cor proibida do mês: ${forbiddenColor.name} — clique para ver todas`}
         >
           <span
-            className={cn("w-4 h-4 lg:w-5 lg:h-5 rounded-full animate-pulse", forbiddenColor.bgClass)}
+            className={cn("w-4 h-4 lg:w-5 lg:h-5 rounded-full", forbiddenColor.bgClass)}
             style={{
               boxShadow: `0 0 6px ${forbiddenColor.glow}, 0 0 12px ${forbiddenColor.glow}, 0 0 18px ${forbiddenColor.glow}`,
             }}

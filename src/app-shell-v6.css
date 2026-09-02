@@ -147,16 +147,11 @@
 }
 
 [data-layout="modern"] .dashboard-glass-v4 .dgv4-card {
-  background:
-    linear-gradient(
-      145deg,
-      rgba(249,250,249,.60),
-      rgba(245,247,246,.40)
-    ) !important;
-  border: 1px solid rgba(255,255,255,.68) !important;
+  background: #f1f5f9 !important;
+  border: 1px solid rgba(0,0,0,.05) !important;
   border-radius: 18px !important;
-  backdrop-filter: blur(17px) saturate(118%) !important;
-  -webkit-backdrop-filter: blur(17px) saturate(118%) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   box-shadow:
     0 12px 32px rgba(32,35,37,.06),
     inset 0 1px 0 rgba(255,255,255,.62) !important;
