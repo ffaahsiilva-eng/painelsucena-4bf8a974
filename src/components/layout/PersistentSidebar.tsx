@@ -18,6 +18,18 @@ interface PersistentSidebarProps {
 
 const DRIVER_ROLES = ["motorista_pipa", "motorista_munk"];
 
+// Cache em nível de módulo: garante que o fundo global seja resolvido uma única
+// vez por sessão, evitando recarregamentos/piscadas quando a URL assinada muda.
+const bgBlobCache = new Map<string, string>();
+const bgUrlCache = new Map<string, string>();
+function stableBgUrlFor(key: string, url: string) {
+  const existing = bgUrlCache.get(key);
+  if (existing) return existing;
+  bgUrlCache.set(key, url);
+  return url;
+}
+
+
 export const PersistentSidebar = ({ children }: PersistentSidebarProps) => {
   const { user, loading: authLoading } = useAuth();
   const { data: profile } = useProfile();
