@@ -18,6 +18,18 @@ interface PersistentSidebarProps {
 
 const DRIVER_ROLES = ["motorista_pipa", "motorista_munk"];
 
+// Cache em nível de módulo: garante que o fundo global seja resolvido uma única
+// vez por sessão, evitando recarregamentos/piscadas quando a URL assinada muda.
+const bgBlobCache = new Map<string, string>();
+const bgUrlCache = new Map<string, string>();
+function stableBgUrlFor(key: string, url: string) {
+  const existing = bgUrlCache.get(key);
+  if (existing) return existing;
+  bgUrlCache.set(key, url);
+  return url;
+}
+
+
 export const PersistentSidebar = ({ children }: PersistentSidebarProps) => {
   const { user, loading: authLoading } = useAuth();
   const { data: profile } = useProfile();
@@ -71,15 +83,10 @@ export const PersistentSidebar = ({ children }: PersistentSidebarProps) => {
     const cardOpacity = settings?.card_opacity ?? 0.45;
     root.style.setProperty("--card-opacity", String(cardOpacity));
     root.style.setProperty("--card-opacity-dark", String(Math.max(0, cardOpacity - 0.1)));
-
-    return () => {
-      root.style.removeProperty("--primary");
-      root.style.removeProperty("--ring");
-      root.style.removeProperty("--bg-opacity");
-      root.style.removeProperty("--card-opacity");
-      root.style.removeProperty("--card-opacity-dark");
-    };
+    // NOTE: sem cleanup — remover/reaplicar estas variáveis a cada re-render
+    // causava piscada de cor na tela inteira.
   }, [settings?.primary_color, settings?.global_background_url, settings?.card_opacity]);
+
 
   const layoutReady = isAuthPage || !authLoading;
 
@@ -99,10 +106,16 @@ export const PersistentSidebar = ({ children }: PersistentSidebarProps) => {
   const DEFAULT_BG_URL =
     "https://images.unsplash.com/photo-1542224566-6e85f2e6772f?auto=format&fit=crop&w=1920&q=60";
   const cachedBgUrl = localStorage.getItem("sucena_global_bg_url");
-  const globalBgUrl = settings?.global_background_url || cachedBgUrl || DEFAULT_BG_URL;
-  const isVideoBg = /\.(mp4|webm|ogg|mov|m4v)(\?|$)/i.test(globalBgUrl);
-  
-  const [localBgUrl, setLocalBgUrl] = useState<string>(globalBgUrl);
+  const rawBgUrl = settings?.global_background_url || cachedBgUrl || DEFAULT_BG_URL;
+  // URLs assinadas mudam o token a cada refetch: usamos apenas o caminho como
+  // identidade para o fundo nunca ser recarregado (piscada de cor).
+  const bgKey = rawBgUrl.split("?")[0];
+  const globalBgUrl = stableBgUrlFor(bgKey, rawBgUrl);
+  const isVideoBg = /\.(mp4|webm|ogg|mov|m4v)(\?|$)/i.test(bgKey);
+
+  const [localBgUrl, setLocalBgUrl] = useState<string>(
+    () => bgBlobCache.get(bgKey) || globalBgUrl
+  );
 
   useEffect(() => {
     if (settings?.global_background_url) {
@@ -112,34 +125,42 @@ export const PersistentSidebar = ({ children }: PersistentSidebarProps) => {
 
   useEffect(() => {
     let isMounted = true;
+
+    const cachedBlob = bgBlobCache.get(bgKey);
+    if (cachedBlob) {
+      setLocalBgUrl(cachedBlob);
+      return;
+    }
+
     const fetchAndCacheBg = async () => {
       try {
-        if (!globalBgUrl || isVideoBg) {
+        if (!globalBgUrl || isVideoBg || !("caches" in window)) {
           if (isMounted) setLocalBgUrl(globalBgUrl);
           return;
         }
-        
-        if ('caches' in window) {
-          const cache = await caches.open('sucena-bg-cache-v1');
-          const cachedResponse = await cache.match(globalBgUrl);
-          
-          if (cachedResponse) {
-            const blob = await cachedResponse.blob();
-            if (isMounted) setLocalBgUrl(URL.createObjectURL(blob));
-            return;
-          }
 
-          const response = await fetch(globalBgUrl, { mode: 'cors' });
-          if (response.ok) {
-            await cache.put(globalBgUrl, response.clone());
-            const blob = await response.blob();
-            if (isMounted) setLocalBgUrl(URL.createObjectURL(blob));
-          } else {
-            if (isMounted) setLocalBgUrl(globalBgUrl);
-          }
+        const cache = await caches.open("sucena-bg-cache-v1");
+        const cachedResponse = await cache.match(bgKey);
+        let blob: Blob | null = null;
+
+        if (cachedResponse) {
+          blob = await cachedResponse.blob();
         } else {
-          if (isMounted) setLocalBgUrl(globalBgUrl);
+          const response = await fetch(globalBgUrl, { mode: "cors" });
+          if (response.ok) {
+            await cache.put(bgKey, response.clone());
+            blob = await response.blob();
+          }
         }
+
+        if (!blob) {
+          if (isMounted) setLocalBgUrl(globalBgUrl);
+          return;
+        }
+
+        const objectUrl = bgBlobCache.get(bgKey) || URL.createObjectURL(blob);
+        bgBlobCache.set(bgKey, objectUrl);
+        if (isMounted) setLocalBgUrl(objectUrl);
       } catch (error) {
         console.warn("Could not cache background image, using normal URL", error);
         if (isMounted) setLocalBgUrl(globalBgUrl);
@@ -147,7 +168,8 @@ export const PersistentSidebar = ({ children }: PersistentSidebarProps) => {
     };
     fetchAndCacheBg();
     return () => { isMounted = false; };
-  }, [globalBgUrl, isVideoBg]);
+  }, [bgKey, globalBgUrl, isVideoBg]);
+
 
   if (!layoutReady) {
     return (
