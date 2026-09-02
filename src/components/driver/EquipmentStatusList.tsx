@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { useEquipment } from "@/hooks/useEquipment";
 import { useRefuelingData } from "@/hooks/useRefuelingData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,7 +26,6 @@ const getStatusInfo = (stopReason: string | null) => {
   }
 
   if (reason.includes("manutenc") || reason.includes("manutenç") || reason.includes("oficina") || reason === "maintenance") {
-    // Pode separar se for preventiva, se quiser manter a cor laranja
     if (reason.includes("preventiva")) {
       return {
         label: "Manutenção Preventiva",
@@ -87,24 +87,83 @@ const getStatusInfo = (stopReason: string | null) => {
   }
 };
 
+const VehicleRow = memo(({ vehicle, vehicleRefueling }: { vehicle: any, vehicleRefueling: any }) => {
+  const statusInfo = getStatusInfo(vehicle.stop_reason);
+  const hasRefueling = vehicleRefueling && vehicleRefueling.count > 0;
+  
+  return (
+    <div className="flex flex-col gap-2 p-3 rounded-lg bg-muted/50">
+      <div className="flex items-center gap-3">
+        <div className={vehicle.image_url ? "" : "p-0.5 rounded-lg bg-background"}>
+          <VehicleIcon
+            type={vehicle.equipment_type as "pipa" | "munk" | "camionete" | "onibus"}
+            size="sm"
+            imageUrl={vehicle.image_url}
+          />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-medium text-sm truncate">{vehicle.name}</p>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="font-mono">{vehicle.plate}</span>
+            {vehicle.driver && (
+              <>
+                <span>•</span>
+                <span className="truncate">{vehicle.driver}</span>
+              </>
+            )}
+          </div>
+        </div>
+        <Badge variant="outline" className={`${statusInfo.color} shrink-0 text-xs`}>
+          <span className="mr-1">{statusInfo.icon}</span>
+          {statusInfo.label}
+        </Badge>
+      </div>
+      
+      {vehicle.equipment_type === "pipa" && hasRefueling && vehicleRefueling && (
+        <div className="pl-12 space-y-1">
+          <div className="flex items-center gap-2">
+            <Droplets className="h-3 w-3 text-primary" />
+            <span className="text-xs text-muted-foreground">
+              {vehicleRefueling.count} abastecimento{vehicleRefueling.count !== 1 ? 's' : ''} no mês
+            </span>
+            <span className="text-xs font-medium text-primary">
+              ({vehicleRefueling.liters.toLocaleString('pt-BR')} L)
+            </span>
+          </div>
+          <div className="flex gap-2 text-[10px]">
+            {vehicleRefueling.byPoint["46"] > 0 && (
+              <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">
+                Ponto 46: {vehicleRefueling.byPoint["46"]}
+              </span>
+            )}
+            {vehicleRefueling.byPoint["3C"] > 0 && (
+              <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">
+                Ponto 3C: {vehicleRefueling.byPoint["3C"]}
+              </span>
+            )}
+            {vehicleRefueling.byPoint["3D"] > 0 && (
+              <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">
+                Ponto 3D: {vehicleRefueling.byPoint["3D"]}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+});
 
 export function EquipmentStatusList() {
   const { data: equipment = [], isLoading } = useEquipment();
   const { data: refuelingData, isLoading: isLoadingRefueling } = useRefuelingData();
 
-  // Filter only pipa and munk vehicles
   const vehicles = equipment.filter(
     (eq) => eq.equipment_type === "pipa" || eq.equipment_type === "munk"
   );
 
-  // Get refueling data with point breakdown for a vehicle
   const getVehicleRefuelingData = (vehiclePlate: string) => {
-    if (!refuelingData?.refuelingByVehicleWithPoints) {
-      return null;
-    }
-    return refuelingData.refuelingByVehicleWithPoints.find(
-      (v) => v.plate === vehiclePlate
-    );
+    if (!refuelingData?.refuelingByVehicleWithPoints) return null;
+    return refuelingData.refuelingByVehicleWithPoints.find((v) => v.plate === vehiclePlate);
   };
 
   if (isLoading || isLoadingRefueling) {
@@ -137,79 +196,14 @@ export function EquipmentStatusList() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
-        {vehicles.map((vehicle) => {
-          const statusInfo = getStatusInfo(vehicle.stop_reason);
-          const vehicleRefueling = getVehicleRefuelingData(vehicle.plate);
-          const hasRefueling = vehicleRefueling && vehicleRefueling.count > 0;
-          
-          return (
-            <div
-              key={vehicle.id}
-              className="flex flex-col gap-2 p-3 rounded-lg bg-muted/50"
-            >
-              <div className="flex items-center gap-3">
-                <div className={(vehicle as any).image_url ? "" : "p-0.5 rounded-lg bg-background"}>
-                  <VehicleIcon
-                    type={vehicle.equipment_type as "pipa" | "munk" | "camionete" | "onibus"}
-                    size="sm"
-                    imageUrl={(vehicle as any).image_url}
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate">{vehicle.name}</p>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className="font-mono">{vehicle.plate}</span>
-                    {vehicle.driver && (
-                      <>
-                        <span>•</span>
-                        <span className="truncate">{vehicle.driver}</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-                <Badge variant="outline" className={`${statusInfo.color} shrink-0 text-xs`}>
-                  <span className="mr-1">{statusInfo.icon}</span>
-                  {statusInfo.label}
-                </Badge>
-              </div>
-              
-              {/* Refueling stats with point breakdown - only show for pipa vehicles */}
-              {vehicle.equipment_type === "pipa" && hasRefueling && vehicleRefueling && (
-                <div className="pl-12 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Droplets className="h-3 w-3 text-primary" />
-                    <span className="text-xs text-muted-foreground">
-                      {vehicleRefueling.count} abastecimento{vehicleRefueling.count !== 1 ? 's' : ''} no mês
-                    </span>
-                    <span className="text-xs font-medium text-primary">
-                      ({vehicleRefueling.liters.toLocaleString('pt-BR')} L)
-                    </span>
-                  </div>
-                  {/* Point breakdown */}
-                  <div className="flex gap-2 text-[10px]">
-                    {vehicleRefueling.byPoint["46"] > 0 && (
-                      <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">
-                        Ponto 46: {vehicleRefueling.byPoint["46"]}
-                      </span>
-                    )}
-                    {vehicleRefueling.byPoint["3C"] > 0 && (
-                      <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">
-                        Ponto 3C: {vehicleRefueling.byPoint["3C"]}
-                      </span>
-                    )}
-                    {vehicleRefueling.byPoint["3D"] > 0 && (
-                      <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">
-                        Ponto 3D: {vehicleRefueling.byPoint["3D"]}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
+        {vehicles.map((vehicle) => (
+          <VehicleRow 
+            key={vehicle.id} 
+            vehicle={vehicle} 
+            vehicleRefueling={getVehicleRefuelingData(vehicle.plate)} 
+          />
+        ))}
         
-        {/* Summary of refueling by point */}
         {refuelingData && refuelingData.refuelingByPoint.some(p => p.count > 0) && (
           <div className="mt-4 pt-3 border-t">
             <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">

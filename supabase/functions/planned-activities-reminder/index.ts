@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
     const { data: report, error: reportErr } = await admin
       .from("rdo_reports")
       .select("planned_gabiao_locked, planned_jardinagem_locked")
-      .eq("date", dateStr)
+      .eq("report_date", dateStr)
       .maybeSingle();
 
     if (reportErr) throw reportErr;

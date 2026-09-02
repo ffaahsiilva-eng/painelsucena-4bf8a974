@@ -244,9 +244,10 @@ html, body, #root {
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   overflow-x: hidden;
-  text-rendering: optimizeSpeed;
+  text-rendering: optimizeLegibility;
   /* Melhora o tempo de resposta do toque no mobile */
   touch-action: manipulation;
+  overscroll-behavior-y: none; /* Prevents pull-to-refresh and bounce on mobile */
 }
 
 * {
@@ -485,22 +486,43 @@ html, body, #root {
   }
 
 
-  /* Sidebar: item ativo com glow dourado pulsante e barra lateral
-     (aplicado em ambos temas — sidebar é sempre Sucena Gold/Black) */
+  /* Sidebar: item ativo com glow dourado pulsante otimizado (opacity) */
   [data-sidebar="menu-button"][data-active="true"] {
+    position: relative;
     background: linear-gradient(90deg, hsl(45 100% 55% / 0.18) 0%, hsl(45 100% 55% / 0.06) 100%) !important;
     color: hsl(45 100% 62%) !important;
+  }
+  
+  [data-sidebar="menu-button"][data-active="true"]::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
     box-shadow:
       inset 3px 0 0 hsl(45 100% 55%),
-      0 0 20px hsl(45 100% 55% / 0.25),
-      0 0 40px hsl(45 100% 55% / 0.12);
-    animation: sidebar-active-glow 2.4s ease-in-out infinite;
+      0 0 28px hsl(45 100% 55% / 0.4),
+      0 0 56px hsl(45 100% 55% / 0.18);
+    animation: opacity-pulse 2.4s ease-in-out infinite;
+    will-change: opacity;
+  }
+  
+  /* Fallback glow base sem animação direta de box-shadow */
+  [data-sidebar="menu-button"][data-active="true"]::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    box-shadow:
+      inset 3px 0 0 hsl(45 100% 55%),
+      0 0 18px hsl(45 100% 55% / 0.22);
   }
 
   [data-sidebar="menu-button"][data-active="true"] svg,
   [data-sidebar="menu-button"][data-active="true"] span {
     color: hsl(45 100% 62%) !important;
     filter: drop-shadow(0 0 4px hsl(45 100% 55% / 0.5));
+    position: relative;
+    z-index: 1;
   }
 
   [data-sidebar="menu-button"]:hover:not([data-active="true"]) {
@@ -514,48 +536,40 @@ html, body, #root {
     filter: drop-shadow(0 0 6px hsl(0 90% 50% / 0.6));
   }
 
-  @keyframes sidebar-active-glow {
-    0%, 100% {
-      box-shadow:
-        inset 3px 0 0 hsl(45 100% 55%),
-        0 0 18px hsl(45 100% 55% / 0.22),
-        0 0 36px hsl(45 100% 55% / 0.08);
-    }
-    50% {
-      box-shadow:
-        inset 3px 0 0 hsl(45 100% 65%),
-        0 0 28px hsl(45 100% 55% / 0.4),
-        0 0 56px hsl(45 100% 55% / 0.18);
-    }
-  }
-
-  /* Card destacado (clima/featured) — borda dourada vibrante com glow constante */
+  /* Card destacado (clima/featured) — borda dourada vibrante com glow constante (Otimizado) */
   .dark .card-gold-glow {
     border: 1px solid hsl(45 100% 55% / 0.7) !important;
+    position: relative;
+  }
+  .dark .card-gold-glow::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    pointer-events: none;
+    box-shadow:
+      0 0 30px hsl(45 100% 55% / 0.5),
+      0 0 60px hsl(45 100% 55% / 0.25),
+      inset 0 0 40px hsl(45 100% 55% / 0.08);
+    animation: opacity-pulse 3s ease-in-out infinite;
+    will-change: opacity;
+  }
+  .dark .card-gold-glow::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    pointer-events: none;
     box-shadow:
       0 0 20px hsl(45 100% 55% / 0.3),
       0 0 40px hsl(45 100% 55% / 0.15),
       inset 0 0 30px hsl(45 100% 55% / 0.04);
-    animation: card-gold-pulse 3s ease-in-out infinite;
   }
 
-  @keyframes card-gold-pulse {
-    0%, 100% {
-      box-shadow:
-        0 0 20px hsl(45 100% 55% / 0.3),
-        0 0 40px hsl(45 100% 55% / 0.15),
-        inset 0 0 30px hsl(45 100% 55% / 0.04);
-    }
-    50% {
-      box-shadow:
-        0 0 30px hsl(45 100% 55% / 0.5),
-        0 0 60px hsl(45 100% 55% / 0.25),
-        inset 0 0 40px hsl(45 100% 55% / 0.08);
-    }
+  @keyframes opacity-pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
   }
-
-
-
 
   /* Scrollbar dourada */
   .dark ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -655,18 +669,18 @@ html, body, #root {
   }
 
   .animate-neon-pulse {
-    animation: neonPulse 3s ease-in-out infinite;
+    position: relative;
   }
-
-  @keyframes neonPulse {
-    0%, 100% {
-      box-shadow: 0 0 15px -5px hsl(var(--primary) / 0.2), inset 0 0 10px -5px hsl(var(--primary) / 0.1);
-      border-color: hsl(var(--primary) / 0.2);
-    }
-    50% {
-      box-shadow: 0 0 30px 2px hsl(var(--primary) / 0.4), inset 0 0 20px 2px hsl(var(--primary) / 0.2);
-      border-color: hsl(var(--primary) / 0.6);
-    }
+  .animate-neon-pulse::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    border: 1px solid hsl(var(--primary) / 0.6);
+    box-shadow: 0 0 30px 2px hsl(var(--primary) / 0.4), inset 0 0 20px 2px hsl(var(--primary) / 0.2);
+    animation: opacity-pulse 3s ease-in-out infinite;
+    pointer-events: none;
+    will-change: opacity;
   }
 
   .animate-neon-green-text {
@@ -761,42 +775,38 @@ html, body, #root {
 
   /* Neon glow border animation - Green (normal) */
   .neon-glow-border {
-    animation: neonGlow 3s ease-in-out infinite;
+    position: relative;
   }
-
-  @keyframes neonGlow {
-    0%, 100% {
-      box-shadow: 0 0 5px hsl(120 100% 50% / 0.3),
-                  0 0 10px hsl(120 100% 50% / 0.2),
-                  0 0 20px hsl(120 100% 50% / 0.1),
-                  inset 0 0 5px hsl(120 100% 50% / 0.05);
-    }
-    50% {
-      box-shadow: 0 0 10px hsl(120 100% 50% / 0.5),
-                  0 0 20px hsl(120 100% 50% / 0.3),
-                  0 0 30px hsl(120 100% 50% / 0.2),
-                  inset 0 0 10px hsl(120 100% 50% / 0.1);
-    }
+  .neon-glow-border::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    pointer-events: none;
+    box-shadow: 0 0 10px hsl(120 100% 50% / 0.5),
+                0 0 20px hsl(120 100% 50% / 0.3),
+                0 0 30px hsl(120 100% 50% / 0.2),
+                inset 0 0 10px hsl(120 100% 50% / 0.1);
+    animation: opacity-pulse 3s ease-in-out infinite;
+    will-change: opacity;
   }
 
   /* Neon glow border animation - Red (urgent) */
   .neon-glow-border-urgent {
-    animation: neonGlowUrgent 2s ease-in-out infinite;
+    position: relative;
   }
-
-  @keyframes neonGlowUrgent {
-    0%, 100% {
-      box-shadow: 0 0 5px hsl(0 100% 50% / 0.4),
-                  0 0 10px hsl(0 100% 50% / 0.3),
-                  0 0 20px hsl(0 100% 50% / 0.2),
-                  inset 0 0 5px hsl(0 100% 50% / 0.1);
-    }
-    50% {
-      box-shadow: 0 0 15px hsl(0 100% 50% / 0.6),
-                  0 0 25px hsl(0 100% 50% / 0.4),
-                  0 0 40px hsl(0 100% 50% / 0.3),
-                  inset 0 0 15px hsl(0 100% 50% / 0.15);
-    }
+  .neon-glow-border-urgent::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    pointer-events: none;
+    box-shadow: 0 0 15px hsl(0 100% 50% / 0.6),
+                0 0 25px hsl(0 100% 50% / 0.4),
+                0 0 40px hsl(0 100% 50% / 0.3),
+                inset 0 0 15px hsl(0 100% 50% / 0.15);
+    animation: opacity-pulse 2s ease-in-out infinite;
+    will-change: opacity;
   }
 
   /* Neon glow border animation - Orange (warning) */
