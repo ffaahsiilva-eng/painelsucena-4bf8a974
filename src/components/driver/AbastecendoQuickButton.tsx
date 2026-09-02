@@ -166,14 +166,14 @@ export function AbastecendoQuickButton() {
         </div>
       )}
       <div className="p-4 flex flex-col items-center justify-center text-center min-h-[90px] sm:min-h-[110px] pointer-events-none">
-        <div className="text-white mb-2 pointer-events-none">
+        <div className="text-black mb-2 pointer-events-none">
           {isUpdating ? (
             <Loader2 className="w-8 h-8 animate-spin" />
           ) : (
             <Fuel className="w-8 h-8" />
           )}
         </div>
-        <h3 className="font-bold text-white text-xs uppercase tracking-wide pointer-events-none">
+        <h3 className="font-bold text-black text-xs uppercase tracking-wide pointer-events-none">
           {isCurrent ? "Abastecendo (Ativo)" : "Abastecendo"}
         </h3>
       </div>
