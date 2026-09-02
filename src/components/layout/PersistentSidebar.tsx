@@ -71,15 +71,10 @@ export const PersistentSidebar = ({ children }: PersistentSidebarProps) => {
     const cardOpacity = settings?.card_opacity ?? 0.45;
     root.style.setProperty("--card-opacity", String(cardOpacity));
     root.style.setProperty("--card-opacity-dark", String(Math.max(0, cardOpacity - 0.1)));
-
-    return () => {
-      root.style.removeProperty("--primary");
-      root.style.removeProperty("--ring");
-      root.style.removeProperty("--bg-opacity");
-      root.style.removeProperty("--card-opacity");
-      root.style.removeProperty("--card-opacity-dark");
-    };
+    // NOTE: sem cleanup — remover/reaplicar estas variáveis a cada re-render
+    // causava piscada de cor na tela inteira.
   }, [settings?.primary_color, settings?.global_background_url, settings?.card_opacity]);
+
 
   const layoutReady = isAuthPage || !authLoading;
 
