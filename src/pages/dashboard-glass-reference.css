@@ -82,15 +82,12 @@
   min-width: 0;
   overflow: hidden;
   padding: clamp(20px, 1.52vw, 26px);
-  border: 1px solid rgba(255, 255, 255, 0.66);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 19px;
-  background:
-    linear-gradient(145deg, rgba(255,255,255,.58), rgba(248,249,248,.35));
-  backdrop-filter: blur(18px) saturate(122%);
-  -webkit-backdrop-filter: blur(18px) saturate(122%);
+  background: #f1f5f9; /* Solid grey to prevent OS dark mode inversion issues */
   box-shadow:
-    0 14px 34px rgba(34, 37, 39, 0.065),
-    inset 0 1px 0 rgba(255, 255, 255, 0.62);
+    0 14px 34px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .dgv4-weather { height: clamp(270px, 32.2vh, 303px); }
@@ -105,9 +102,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  color: #3d4245;
+  color: #000000 !important;
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -192,9 +189,9 @@
   display: block;
   font-size: clamp(54px, 4.1vw, 70px);
   line-height: 0.94;
-  font-weight: 400;
+  font-weight: 700;
   letter-spacing: -0.055em;
-  color: #2e3234;
+  color: #000000 !important;
 }
 
 .dgv4-temp-row p {
@@ -239,10 +236,10 @@
 
 .dgv4-employee-body > strong {
   font-size: clamp(54px, 4.05vw, 68px);
-  font-weight: 400;
+  font-weight: 700;
   line-height: 1;
   letter-spacing: -0.045em;
-  color: #303436;
+  color: #000000 !important;
 }
 
 .dgv4-employee-body > span {
@@ -290,9 +287,9 @@
 .dgv4-ring-center strong {
   font-size: 38px;
   line-height: 1;
-  font-weight: 400;
+  font-weight: 700;
   letter-spacing: -0.045em;
-  color: #303436;
+  color: #000000 !important;
 }
 
 .dgv4-ring-center span {
@@ -315,8 +312,8 @@
   display: block;
   font-size: 26px;
   line-height: 1;
-  font-weight: 400;
-  color: #3c4144;
+  font-weight: 700;
+  color: #000000 !important;
 }
 
 .dgv4-goal-counts span {
@@ -361,9 +358,9 @@
   margin-top: 6px;
   font-size: 38px;
   line-height: 1;
-  font-weight: 400;
+  font-weight: 700;
   letter-spacing: -0.035em;
-  color: #303436;
+  color: #000000 !important;
 }
 
 .dgv4-mini-svg {
@@ -415,8 +412,8 @@
 
 .dgv4-equipment-count strong {
   font-size: 29px;
-  font-weight: 400;
-  color: #303436;
+  font-weight: 700;
+  color: #000000 !important;
 }
 
 .dgv4-equipment-count span {
@@ -649,13 +646,11 @@
 .dgv4-extended .glass-card-dashboard,
 .dgv4-extended .bg-card,
 .dgv4-extended [class*="bg-card"] {
-  color: #303436 !important;
-  background: linear-gradient(145deg, rgba(255,255,255,.60), rgba(248,249,248,.38)) !important;
-  border: 1px solid rgba(255,255,255,.68) !important;
+  color: #000000 !important;
+  background: #f1f5f9 !important;
+  border: 1px solid rgba(0,0,0,0.05) !important;
   border-radius: 18px !important;
-  box-shadow: 0 13px 32px rgba(34,37,39,.06), inset 0 1px 0 rgba(255,255,255,.60) !important;
-  backdrop-filter: blur(18px) saturate(120%) !important;
-  -webkit-backdrop-filter: blur(18px) saturate(120%) !important;
+  box-shadow: 0 13px 32px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,.8) !important;
 }
 
 .dgv4-extended .text-foreground,
