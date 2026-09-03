@@ -10,8 +10,6 @@ import { Image, Upload, RotateCcw, Sparkles, Palette, Hash, Zap, MonitorPlay, Lo
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { compressImage } from "@/utils/imageCompression";
-
 
 export function LoginBackgroundSettings() {
   const { settings, updateSettings } = useSiteSettings();
@@ -41,7 +39,7 @@ export function LoginBackgroundSettings() {
       const filePath = `transitions/login-transition-${Date.now()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage
         .from("site-assets")
-        .upload(filePath, await compressImage(file), { upsert: true, contentType: file.type });
+        .upload(filePath, file, { upsert: true, contentType: file.type });
       if (uploadError) throw uploadError;
       const { data } = await supabase.storage.from("site-assets").createSignedUrl(filePath, 315360000);
       if (!data?.signedUrl) throw new Error("Erro ao gerar URL");
@@ -96,7 +94,7 @@ export function LoginBackgroundSettings() {
 
       const { error: uploadError } = await supabase.storage
         .from("site-assets")
-        .upload(filePath, await compressImage(file), { upsert: true, contentType: file.type });
+        .upload(filePath, file, { upsert: true, contentType: file.type });
 
       if (uploadError) throw uploadError;
 
@@ -145,7 +143,7 @@ export function LoginBackgroundSettings() {
 
       const { error: uploadError } = await supabase.storage
         .from("site-assets")
-        .upload(filePath, await compressImage(file), { upsert: true });
+        .upload(filePath, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
@@ -210,7 +208,7 @@ export function LoginBackgroundSettings() {
 
       const { error: uploadError } = await supabase.storage
         .from("site-assets")
-        .upload(filePath, await compressImage(file), { upsert: true });
+        .upload(filePath, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
@@ -260,7 +258,7 @@ export function LoginBackgroundSettings() {
 
       const { error: uploadError } = await supabase.storage
         .from("site-assets")
-        .upload(filePath, await compressImage(file), { 
+        .upload(filePath, file, { 
           upsert: true, 
           contentType: file.type,
           cacheControl: '3600'

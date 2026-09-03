@@ -234,9 +234,9 @@ const SidebarTrigger = React.forwardRef<React.ElementRef<typeof Button>, React.C
         {...props}
       >
         {state === "collapsed" ? (
-          <ChevronRight className="h-4 w-4 !text-black !stroke-black modern-text-black" stroke="black" />
+          <ChevronRight className="h-4 w-4" />
         ) : (
-          <ChevronLeft className="h-4 w-4 !text-black !stroke-black modern-text-black" stroke="black" />
+          <ChevronLeft className="h-4 w-4" />
         )}
         <span className="sr-only">Toggle Sidebar</span>
       </Button>

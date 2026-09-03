@@ -17,7 +17,6 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Navigate } from "react-router-dom";
-import { ResetSingleEquipment } from "@/components/driver/ResetSingleEquipment";
 
 type ErrorRow = {
   id: string;
@@ -191,13 +190,10 @@ export default function AdminDriverDiagnostico() {
             Erros, fila de ações idempotentes e auditoria de login
           </p>
         </div>
-        <div className="flex gap-2">
-          <ResetSingleEquipment />
-          <Button onClick={load} disabled={loading} size="default">
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-            Atualizar
-          </Button>
-        </div>
+        <Button onClick={load} disabled={loading} size="sm">
+          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+          Atualizar
+        </Button>
       </div>
 
       <Card>

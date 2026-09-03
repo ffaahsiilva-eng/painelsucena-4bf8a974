@@ -7,8 +7,6 @@ import { Image, Upload, Trash2, Wallpaper } from "lucide-react";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { compressImage } from "@/utils/imageCompression";
-
 
 export const GlobalBackgroundSettings = () => {
   const { settings, updateSettings, isLoading } = useSiteSettings();
@@ -35,7 +33,7 @@ export const GlobalBackgroundSettings = () => {
 
       const { error: uploadError } = await supabase.storage
         .from("site-assets")
-        .upload(filePath, await compressImage(file), { upsert: true, contentType: file.type });
+        .upload(filePath, file, { upsert: true, contentType: file.type });
 
       if (uploadError) throw uploadError;
 

@@ -6,9 +6,6 @@ import { ConfirmDialogHost } from "@/components/ConfirmDialogHost";
 import { AppUpdateChecker } from "@/components/AppUpdateChecker";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
-import * as idb from "idb-keyval";
 import { QueryClient } from "@tanstack/query-core";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -26,12 +23,8 @@ import { WhatsAppGate } from "@/components/auth/WhatsAppGate";
 import { LoginExpiryDialog } from "@/components/auth/LoginExpiryDialog";
 import { AnnouncementModal } from "@/components/announcements/AnnouncementModal";
 import { WapiBroadcastToaster } from "@/components/wapi/WapiBroadcastToaster";
-import { LayoutModeProvider } from "@/contexts/LayoutModeContext";
 import { ShiftPngBackfillRunner } from "@/components/driver/ShiftPngBackfillRunner";
-import { WapiQueuePinger } from "@/components/wapi/WapiQueuePinger";
 import loadingLogo from "@/assets/logo-principal.png";
-
-const FloatingChatWidget = lazy(() => import("@/components/ia/FloatingChatWidget").then(m => ({ default: m.FloatingChatWidget })));
 
 // Lazy-load ALL pages — only the current route's code is downloaded
 const Index = lazy(() => import("./pages/Index"));
@@ -100,7 +93,6 @@ const Equipamentos = lazy(() => import("./pages/Equipamentos"));
 const Planejamento = lazy(() => import("./pages/Planejamento"));
 const AtaReuniaoContrato = lazy(() => import("./pages/AtaReuniaoContrato"));
 const CIPA = lazy(() => import("./pages/CIPA"));
-const DataBookHydro = lazy(() => import("./pages/DataBookHydro"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Optimized PageLoader: Uses local logo immediately to avoid network blocking on FCP
@@ -143,7 +135,7 @@ export const queryClient = new QueryClient({
       gcTime: 1000 * 60 * 60, // 1 hora
       refetchOnWindowFocus: false,
       refetchOnMount: false,
-      refetchOnReconnect: false,
+      refetchOnReconnect: "always",
       networkMode: "offlineFirst",
     },
     mutations: {
@@ -156,53 +148,27 @@ export const queryClient = new QueryClient({
   },
 });
 
-const idbPersister = createAsyncStoragePersister({
-  storage: {
-    getItem: async (key) => await idb.get(key),
-    setItem: async (key, value) => await idb.set(key, value),
-    removeItem: async (key) => await idb.del(key),
-  },
-});
-
-// Limpa todo o cache de queries quando o ambiente é trocado para evitar
-// que dados do ambiente anterior fiquem visíveis.
+// Hidrata o cache do React Query a partir do localStorage para garantir
+// que o Painel do Motorista funcione offline (leituras) imediatamente
+// após reload, e inicia a persistência contínua das queries críticas.
 if (typeof window !== "undefined") {
+  import("@/lib/queryCachePersister").then(({ hydrateQueryCache, startQueryCachePersistence }) => {
+    hydrateQueryCache(queryClient);
+    startQueryCachePersistence(queryClient);
+  }).catch((e) => console.warn("[queryCachePersister] init failed", e));
+
+  // Limpa todo o cache de queries quando o ambiente é trocado para evitar
+  // que dados do ambiente anterior fiquem visíveis.
   window.addEventListener("environment-changed", () => {
     queryClient.clear();
-    try { 
-      localStorage.removeItem("driver_query_cache_v1");
-      idb.clear();
-    } catch {}
+    try { localStorage.removeItem("driver_query_cache_v1"); } catch {}
   });
 }
 
 const App = () => (
   <ErrorBoundary>
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-      <LayoutModeProvider>
-      <PersistQueryClientProvider 
-        client={queryClient} 
-        persistOptions={{ 
-          persister: idbPersister,
-          dehydrateOptions: {
-            shouldDehydrateQuery: (query) => {
-              const k = query.queryKey?.[0];
-              if (typeof k !== "string") return false;
-              const PERSISTED_PREFIXES = [
-                "equipment",
-                "equipment-movements",
-                "equipment-currently-out-v2",
-                "equipment-stop-history",
-                "profile",
-                "daily-shift-records",
-                "user-roles",
-                "driver-checklists",
-              ];
-              return PERSISTED_PREFIXES.some((p) => k === p || k.startsWith(p));
-            }
-          }
-        }}
-      >
+    <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark" enableSystem={false}>
+      <QueryClientProvider client={queryClient}>
         <TooltipProvider>
             <Toaster />
             <Sonner />
@@ -220,7 +186,6 @@ const App = () => (
               <WapiBroadcastToaster />
               <ShiftPngBackfillRunner />
               <ScreensaverClock />
-              <WapiQueuePinger />
               <PersistentSidebar>
                 <VisualizadorProvider>
                 <ErrorBoundary>
@@ -275,7 +240,6 @@ const App = () => (
                       <Route path="/instacena" element={<ProtectedRoute><InstaCena /></ProtectedRoute>} />
                       <Route path="/inspecao-canteiro" element={<ProtectedRoute><InspecaoCanteiro /></ProtectedRoute>} />
                       <Route path="/calendario-hydro" element={<ProtectedRoute><CalendarioHydro /></ProtectedRoute>} />
-                      <Route path="/data-book-hydro" element={<ProtectedRoute><DataBookHydro /></ProtectedRoute>} />
                       <Route path="/games" element={<ProtectedRoute><Games /></ProtectedRoute>} />
                       <Route path="/desvios" element={<ProtectedRoute><Desvios /></ProtectedRoute>} />
                       
@@ -305,14 +269,10 @@ const App = () => (
                 </VisualizadorProvider>
                 <PersistentFooter />
               </PersistentSidebar>
-              <ErrorBoundary>
-                <FloatingChatWidget />
-              </ErrorBoundary>
               </EditModeProvider>
             </BrowserRouter>
         </TooltipProvider>
-      </PersistQueryClientProvider>
-      </LayoutModeProvider>
+      </QueryClientProvider>
     </ThemeProvider>
   </ErrorBoundary>
 );

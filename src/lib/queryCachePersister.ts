@@ -1,59 +1,83 @@
+/**
+ * Persiste seletivamente o cache do React Query em localStorage
+ * para garantir leituras offline (em especial no Painel do Motorista).
+ *
+ * Apenas chaves de queries críticas para uso offline são salvas, para
+ * evitar bloating de armazenamento.
+ */
 import type { QueryClient } from "@tanstack/query-core";
 
 const STORAGE_KEY = "driver_query_cache_v1";
-const MAX_AGE = 1000 * 60 * 60 * 24; // 24h
+const PERSIST_DEBOUNCE_MS = 1500;
 
-type PersistedEntry = {
-  queryKey: unknown;
-  state: { data: unknown; dataUpdatedAt: number };
-};
+// Prefixos de queryKey[0] (string) que devem ser persistidos
+const PERSISTED_PREFIXES = [
+  "equipment",
+  "equipment-movements",
+  "equipment-stop-history",
+  "profile",
+  "daily-shift-records",
+  "user-roles",
+];
 
-/** Restaura queries salvas no localStorage para o cache do React Query. */
-export function hydrateQueryCache(queryClient: QueryClient) {
+function shouldPersist(queryKey: readonly unknown[]): boolean {
+  const k = queryKey?.[0];
+  if (typeof k !== "string") return false;
+  return PERSISTED_PREFIXES.some((p) => k === p || k.startsWith(p));
+}
+
+interface PersistedEntry {
+  queryKey: readonly unknown[];
+  data: unknown;
+}
+
+export function hydrateQueryCache(qc: QueryClient): void {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return;
     const entries = JSON.parse(raw) as PersistedEntry[];
-    if (!Array.isArray(entries)) return;
-    const now = Date.now();
-    for (const entry of entries) {
-      if (!entry?.queryKey || !entry?.state) continue;
-      if (now - (entry.state.dataUpdatedAt || 0) > MAX_AGE) continue;
-      queryClient.setQueryData(entry.queryKey as any, entry.state.data, {
-        updatedAt: entry.state.dataUpdatedAt,
-      });
+    for (const { queryKey, data } of entries) {
+      if (data !== undefined && shouldPersist(queryKey)) {
+        qc.setQueryData(queryKey, data);
+      }
     }
   } catch (e) {
     console.warn("[queryCachePersister] hydrate failed", e);
   }
 }
 
-/** Persiste periodicamente as queries com dados no localStorage. */
-export function startQueryCachePersistence(queryClient: QueryClient) {
-  const persist = () => {
+export function startQueryCachePersistence(qc: QueryClient): () => void {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+
+  const save = () => {
     try {
-      const entries: PersistedEntry[] = [];
-      for (const query of queryClient.getQueryCache().getAll()) {
-        const data = query.state.data;
-        if (data === undefined) continue;
-        entries.push({
-          queryKey: query.queryKey,
-          state: { data, dataUpdatedAt: query.state.dataUpdatedAt },
-        });
-      }
-      const payload = JSON.stringify(entries);
-      // Evita estourar a quota do localStorage (~5MB)
-      if (payload.length > 2_500_000) return;
-      localStorage.setItem(STORAGE_KEY, payload);
-    } catch {
-      try { localStorage.removeItem(STORAGE_KEY); } catch {}
+      const entries: PersistedEntry[] = qc
+        .getQueryCache()
+        .getAll()
+        .filter((q) => shouldPersist(q.queryKey))
+        .filter((q) => q.state.data !== undefined && q.state.status === "success")
+        .map((q) => ({ queryKey: q.queryKey, data: q.state.data }));
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    } catch (e) {
+      // Quota etc. — ignora silenciosamente
+      console.warn("[queryCachePersister] save failed", e);
     }
   };
 
-  const interval = setInterval(persist, 30_000);
-  window.addEventListener("beforeunload", persist);
+  const scheduleSave = () => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(save, PERSIST_DEBOUNCE_MS);
+  };
+
+  const unsubscribe = qc.getQueryCache().subscribe((event) => {
+    if (event.type === "updated" || event.type === "added") {
+      scheduleSave();
+    }
+  });
+
   return () => {
-    clearInterval(interval);
-    window.removeEventListener("beforeunload", persist);
+    if (timer) clearTimeout(timer);
+    unsubscribe();
   };
 }

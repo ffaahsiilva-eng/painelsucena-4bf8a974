@@ -172,16 +172,16 @@ export function LoginTransition({ onComplete, userName, userAvatar, userCargo }:
           )}
 
           <div className="text-center space-y-4">
-            <p className="text-base md:text-lg font-light tracking-[0.5em] uppercase opacity-70 animate-name-rise" style={{ animationDelay: "180ms" }}>
-              <span className="!text-white" style={{ color: "white" }}>Acesso Autorizado</span>
+            <p className="text-blue-400 text-base md:text-lg font-light tracking-[0.5em] uppercase opacity-70 animate-name-rise" style={{ animationDelay: "180ms" }}>
+              Acesso Autorizado
             </p>
-            <h1 className="text-6xl md:text-8xl font-black tracking-tight animate-name-rise" style={{ animationDelay: "340ms" }}>
-              <div className="!text-white" style={{ color: "white" }}>{displayName}</div>
+            <h1 className="text-6xl md:text-8xl font-black text-white tracking-tight animate-name-rise" style={{ animationDelay: "340ms" }}>
+              {displayName}
             </h1>
             {userCargo && (
 
-              <p className="text-sm md:text-base font-medium tracking-[0.3em] uppercase pt-2 animate-name-rise" style={{ animationDelay: "520ms" }}>
-                <span className="!text-white" style={{ color: "white" }}>{userCargo}</span>
+              <p className="text-slate-400 text-sm md:text-base font-medium tracking-[0.3em] uppercase pt-2 animate-name-rise" style={{ animationDelay: "520ms" }}>
+                {userCargo}
               </p>
             )}
           </div>

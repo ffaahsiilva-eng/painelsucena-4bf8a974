@@ -2,8 +2,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { compressImage } from "@/utils/imageCompression";
-
 
 interface DDSPlanningDocument {
   id: string;
@@ -73,7 +71,7 @@ export const useDDSPlanningDocument = () => {
       const fileName = `dds-planning-${Date.now()}.pdf`;
       const { error: uploadError } = await supabase.storage
         .from("dds-documents")
-        .upload(fileName, await compressImage(file), {
+        .upload(fileName, file, {
           cacheControl: "3600",
           upsert: false,
         });

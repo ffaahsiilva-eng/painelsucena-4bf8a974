@@ -30,8 +30,6 @@ import {
   DOCUMENT_TYPE_LABELS,
 } from "@/hooks/useDocuments";
 import { supabase } from "@/integrations/supabase/client";
-import { compressImage } from "@/utils/imageCompression";
-
 
 export function AddDocumentDialog() {
   const [open, setOpen] = useState(false);
@@ -70,7 +68,7 @@ export function AddDocumentDialog() {
 
     const { error } = await supabase.storage
       .from("document-files")
-      .upload(filePath, await compressImage(file));
+      .upload(filePath, file);
 
     if (error) throw error;
 

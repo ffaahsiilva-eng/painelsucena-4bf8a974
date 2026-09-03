@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (cfg.auto_send_ata_contrato === false && !force) {
+    if (!cfg.auto_send_ata_contrato && !force) {
       return new Response(JSON.stringify({ skipped: true, reason: "Auto-envio Ata desabilitado" }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     const targetGroupId = (cfg?.group_id_pos_chuva || cfg?.group_id || "").trim();
-    if (!cfg || !cfg.enabled || cfg.auto_send_pos_chuva === false || !targetGroupId) {
+    if (!cfg || !cfg.enabled || !cfg.auto_send_pos_chuva || !targetGroupId) {
       return new Response(JSON.stringify({ skipped: true, reason: "disabled-or-no-group" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

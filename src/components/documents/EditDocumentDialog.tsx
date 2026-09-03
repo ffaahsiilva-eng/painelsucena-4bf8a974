@@ -31,8 +31,6 @@ import {
   DOCUMENT_TYPE_LABELS,
 } from "@/hooks/useDocuments";
 import { supabase } from "@/integrations/supabase/client";
-import { compressImage } from "@/utils/imageCompression";
-
 
 interface EditDocumentDialogProps {
   document: Document;
@@ -78,7 +76,7 @@ export function EditDocumentDialog({ document }: EditDocumentDialogProps) {
 
     const { error } = await supabase.storage
       .from("document-files")
-      .upload(filePath, await compressImage(file));
+      .upload(filePath, file);
 
     if (error) throw error;
 

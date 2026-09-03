@@ -283,8 +283,8 @@ const EXIT_REASON_LABELS: Record<string, string> = {
              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
            </div>
          ) : (
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-              <div className="xl:col-span-8 grid gap-6 min-w-0">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div className="lg:col-span-8 grid gap-6">
              {/* Equipamentos no Canteiro */}
              <Card>
                 <CardHeader className="pb-3">
@@ -623,7 +623,7 @@ const EXIT_REASON_LABELS: Record<string, string> = {
               </Card>
             </div>
 
-            <div className="xl:col-span-4">
+            <div className="lg:col-span-4">
               <RecentMovementsFeed />
             </div>
           </div>

@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
 
     // Get config
     const { data: cfg } = await admin.from("wapi_config").select("*").limit(1).single();
-    if (!cfg || !cfg.enabled || cfg.auto_send_order_alerts === false) {
+    if (!cfg || !cfg.enabled || !cfg.auto_send_order_alerts) {
       return new Response(JSON.stringify({ skipped: true, reason: "disabled" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -173,13 +173,13 @@ Deno.serve(async (req) => {
         const { data: tp } = await admin.from("profiles").select("whatsapp_number").eq("user_id", targetUserId).single();
         const phone = sanitizePhone(tp?.whatsapp_number || "");
         if (phone) {
-          const dedupeKey = `order|${orderId}|created|contact`;
+          const dedupeKey = `order|${orderId}|created|contact|${Date.now()}`;
           await enqueueWapi("contact", phone, msg, "order", pUrls, dedupeKey);
         }
       } 
       
       if (targetGroupId) {
-        const dedupeKey = `order|${orderId}|created|group`;
+        const dedupeKey = `order|${orderId}|created|group|${Date.now()}`;
         const result = await enqueueWapi("group", targetGroupId, msg, "order", pUrls, dedupeKey);
         if (!targetUserId) {
           return new Response(JSON.stringify({ success: true, group: result }), {
@@ -213,7 +213,7 @@ Deno.serve(async (req) => {
         const { data: tp } = await admin.from("profiles").select("whatsapp_number").eq("user_id", targetUserId).single();
         const phone = sanitizePhone(tp?.whatsapp_number || "");
         if (phone) {
-          const dedupeKey = `order|${orderId}|status|${newStatus}`;
+          const dedupeKey = `order|${orderId}|status|${newStatus}|${Date.now()}`;
           await enqueueWapi("contact", phone, message, "order", pUrls, dedupeKey);
         }
       }

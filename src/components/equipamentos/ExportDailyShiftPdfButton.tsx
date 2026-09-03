@@ -341,16 +341,11 @@ export const ExportDailyShiftPdfButton = forwardRef<HTMLButtonElement, ExportDai
               font-weight: bold;
               font-size: 12px;
               text-align: center;
-              display: flex;
-              align-items: stretch;
             }
             .header-title {
               flex: 1;
               padding: 8px;
               border-right: 1px solid #000;
-              display: flex;
-              align-items: center;
-              justify-content: center;
             }
             .header-obra {
               width: 180px;
@@ -429,10 +424,22 @@ export const ExportDailyShiftPdfButton = forwardRef<HTMLButtonElement, ExportDai
               border-top: 1px solid #000;
             }
             .sig-box { text-align: center; width: 30%; }
-            .sig-name { font-weight: bold; font-size: 10px; margin: 0 0 5px; padding: 0 4px 3px; line-height: 1.2; min-height: 12px; white-space: normal; overflow: visible; word-break: keep-all; border-bottom: 1px solid #000; }
+            .sig-name { font-weight: bold; font-size: 10px; margin: 0; padding: 0; line-height: 1; min-height: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .sig-line { border-top: 1px solid #000; margin-top: 2px; }
             .sig-label { font-size: 8px; margin-top: 2px; }
-            .instructions { border-top: 1px solid #000; padding: 4px 10px; font-size: 6px; line-height: 1.1; }
-            .instructions { border-top: 1px solid #000; padding: 4px 10px; font-size: 6px; line-height: 1.1; }
+            .instructions {
+              background: #f5f5f5;
+              padding: 6px 8px;
+              font-size: 7px;
+              line-height: 1.4;
+              border-top: 1px solid #000;
+            }
+            .logo-row {
+              text-align: center;
+              padding: 5px;
+              border-bottom: 1px solid #000;
+            }
+            .logo { height: 35px; }
             @media print {
               body { padding: 0; }
             }
@@ -440,9 +447,11 @@ export const ExportDailyShiftPdfButton = forwardRef<HTMLButtonElement, ExportDai
         </head>
         <body>
           <div class="form-container">
-            <!-- Title Row with Logo -->
+            <!-- Logo -->
+            ${logoBase64 ? `<div class="logo-row"><img loading="lazy" decoding="async" src="${logoBase64}" class="logo" alt="Logo" /></div>` : ""}
+            
+            <!-- Title Row -->
             <div class="row header-row">
-              ${logoBase64 ? `<div style="padding: 5px 15px; border-right: 1px solid #000; background: #fff; display: flex; align-items: center; justify-content: center;"><img loading="lazy" decoding="async" src="${logoBase64}" style="height: 30px; display: block;" alt="Logo" /></div>` : ""}
               <div class="header-title">PARTE DIÁRIA DE EQUIPAMENTO</div>
               <div class="header-obra">
                 <div class="cell-label" style="background:#d0d0d0;">OBRA:</div>
@@ -540,14 +549,17 @@ export const ExportDailyShiftPdfButton = forwardRef<HTMLButtonElement, ExportDai
             <div class="signatures">
               <div class="sig-box">
                 <div class="sig-name">${activeRecord.driver_name}</div>
+                <div class="sig-line"></div>
                 <div class="sig-label">Ass. Motorista/Op</div>
               </div>
               <div class="sig-box">
                 <div class="sig-name">Creriane Navegantes</div>
+                <div class="sig-line"></div>
                 <div class="sig-label">Ass. Encarreg./Apontador</div>
               </div>
               <div class="sig-box">
                 <div class="sig-name">Luís Carlos</div>
+                <div class="sig-line"></div>
                 <div class="sig-label">Ass. Gerência</div>
               </div>
             </div>
@@ -589,14 +601,14 @@ export const ExportDailyShiftPdfButton = forwardRef<HTMLButtonElement, ExportDai
       size="sm"
       onClick={handleExport}
       disabled={isLoading || isExporting}
-      className="h-8 w-8 p-0"
-      title="Exportar PDF"
+      className="gap-2"
     >
       {isLoading || isExporting ? (
-        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+        <Loader2 className="h-4 w-4 animate-spin" />
       ) : (
-        <FileText className="h-4 w-4 text-red-600" />
+        <FileText className="h-4 w-4" />
       )}
+      Imprimir Relatório
     </Button>
   );
 });

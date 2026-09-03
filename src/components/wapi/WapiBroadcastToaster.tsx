@@ -144,13 +144,6 @@ export function WapiBroadcastToaster() {
           .gt("created_at", sinceIso)
           .order("created_at", { ascending: true })
           .limit(20);
-          
-        // Fallback: ping WAPI queue worker in case pg_cron is suspended/failing
-        fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wapi-queue-worker`, { 
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        }).catch(() => {});
-
         if (cancelled || error || !data) return;
         for (const row of data) {
           pushBroadcast(row as Broadcast);
@@ -185,7 +178,7 @@ export function WapiBroadcastToaster() {
   if (!user || !environment || items.length === 0 || isSelectingEnvironment || isLoginTransitioning) return null;
 
   return (
-    <div className="fixed bottom-20 sm:bottom-4 right-4 z-[100] hidden sm:flex flex-col gap-2 max-w-[92vw] sm:max-w-sm pointer-events-none">
+    <div className="fixed bottom-20 sm:bottom-4 right-4 z-[100] flex flex-col gap-2 max-w-[92vw] sm:max-w-sm pointer-events-none">
       {items.map((b) => {
         const text = b.caption || b.message || "";
         return (

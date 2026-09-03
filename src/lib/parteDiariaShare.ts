@@ -7,8 +7,6 @@ import {
 } from "@/lib/pdf/fuelGauge";
 import type { Equipment, EquipmentStopHistory } from "@/hooks/useEquipment";
 import type { EquipmentMovement } from "@/hooks/useEquipmentMovements";
-import { compressImage } from "@/utils/imageCompression";
-
 
 const PARA_OFFSET_MS = 3 * 60 * 60 * 1000;
 
@@ -135,8 +133,10 @@ export function buildParteDiariaFormHtml(params: BuildParteDiariaParams): string
         body { font-family: Arial, Helvetica, sans-serif; color: #000 !important; font-size: 11px; line-height: 1.3; print-color-adjust: exact; -webkit-print-color-adjust: exact; padding: 0; background: #fff; }
         body, body * { color: #000 !important; text-shadow: none !important; }
         .sheet { border: 2px solid #000; width: 100%; max-width: 190mm; margin: 0 auto; }
-        .top { display: flex; border-bottom: 1px solid #000; align-items: stretch; }
-        .top-title { flex: 1; background: #e6e6e6; font-weight: 700; text-align: center; display: flex; align-items: center; justify-content: center; padding: 8px 10px; border-right: 1px solid #000; font-size: 14px; letter-spacing: .5px; }
+        .logo-row { display: flex; align-items: center; justify-content: center; padding: 8px; border-bottom: 1px solid #000; }
+        .logo-row img { height: 40px; }
+        .top { display: flex; border-bottom: 1px solid #000; }
+        .top-title { flex: 1; background: #e6e6e6; font-weight: 700; text-align: center; padding: 8px 10px; border-right: 1px solid #000; font-size: 14px; letter-spacing: .5px; }
         .obra { width: 180px; display: flex; }
         .obra .label { background: #e6e6e6; font-weight: 700; padding: 8px 10px; border-right: 1px solid #000; font-size: 11px; }
         .obra .value { flex: 1; padding: 8px 10px; font-size: 11px; }
@@ -167,16 +167,17 @@ export function buildParteDiariaFormHtml(params: BuildParteDiariaParams): string
         .desc { width: auto; }
         .signatures { display: flex; justify-content: space-between; align-items: flex-end; gap: 14px; padding: 34px 20px 14px; }
         .sig { text-align: center; width: 30%; min-width: 0; }
-        .sig-name { font-weight: bold; font-size: 11px; margin: 0 0 5px; padding: 0 4px 3px; line-height: 1.3; min-height: 16px; white-space: normal; overflow: visible; word-break: keep-all; border-bottom: 1px solid #000; }
+        .sig-name { font-weight: bold; font-size: 11px; margin: 0 0 4px; padding: 0 4px; line-height: 1.3; min-height: 16px; white-space: normal; overflow: visible; word-break: keep-all; }
+        .sig .line { border-top: 1px solid #000; margin: 0 0 5px; }
         .sig .lbl { font-size: 9px; line-height: 1.2; color: #000 !important; }
-        .instructions { border-top: 1px solid #000; padding: 4px 10px; font-size: 6px; line-height: 1.1; }
+        .instructions { border-top: 1px solid #000; padding: 8px 10px; font-size: 8px; line-height: 1.4; }
         .instructions strong { font-weight: 700; }
       </style>
     </head>
     <body>
       <div class="sheet">
+        ${params.logoBase64 ? `<div class="logo-row"><img src="${params.logoBase64}" alt="Sucena" /></div>` : ""}
         <div class="top">
-          ${params.logoBase64 ? `<div style="padding: 8px 15px; border-right: 1px solid #000; background: #fff; display: flex; align-items: center; justify-content: center;"><img src="${params.logoBase64}" alt="Sucena" style="height: 35px; display: block;" /></div>` : ""}
           <div class="top-title">PARTE DIÁRIA DE EQUIPAMENTO</div>
           <div class="obra"><div class="label">OBRA:</div><div class="value">460001269</div></div>
         </div>
@@ -240,9 +241,9 @@ export function buildParteDiariaFormHtml(params: BuildParteDiariaParams): string
           </div>
         </div>
         <div class="signatures">
-          <div class="sig"><div class="sig-name">${escapeHtml(params.driverName || "")}</div><div class="lbl">Motorista/Operador</div></div>
-          <div class="sig"><div class="sig-name">Creriane Navegantes</div><div class="lbl">Encarregada/Apontadora</div></div>
-          <div class="sig"><div class="sig-name">Luís Carlos</div><div class="lbl">Gerência</div></div>
+          <div class="sig"><div class="sig-name">${escapeHtml(params.driverName || "")}</div><div class="line"></div><div class="lbl">Motorista/Operador</div></div>
+          <div class="sig"><div class="sig-name">Creriane Navegantes</div><div class="line"></div><div class="lbl">Encarregada/Apontadora</div></div>
+          <div class="sig"><div class="sig-name">Luís Carlos</div><div class="line"></div><div class="lbl">Gerência</div></div>
         </div>
         <div class="instructions"><strong>INSTRUÇÃO:</strong> ${instructionText}</div>
       </div>
@@ -482,11 +483,11 @@ export async function renderParteDiariaHtmlToPngBlob(htmlContent: string): Promi
   const wrapper = document.createElement("div");
   wrapper.setAttribute("data-parte-diaria-render", "true");
   wrapper.style.position = "fixed";
-  wrapper.style.left = "-9999px";
+  wrapper.style.left = "0";
   wrapper.style.top = "0";
   wrapper.style.width = "794px";
   wrapper.style.background = "#ffffff";
-  wrapper.style.zIndex = "-1";
+  wrapper.style.zIndex = "2147483647";
   wrapper.style.pointerEvents = "none";
   wrapper.style.opacity = "1";
   wrapper.style.visibility = "visible";
@@ -531,20 +532,17 @@ export async function renderParteDiariaHtmlToPngBlob(htmlContent: string): Promi
     );
     await new Promise((r) => setTimeout(r, 150));
 
-    const canvas = await Promise.race([
-      html2canvas(wrapper, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: false,
-        logging: false,
-        backgroundColor: "#ffffff",
-        width: 794,
-        height: Math.ceil(wrapper.scrollHeight),
-        windowWidth: 794,
-        windowHeight: Math.ceil(wrapper.scrollHeight),
-      }),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Timeout renderizando PNG (html2canvas travou)")), 6000))
-    ]);
+    const canvas = await html2canvas(wrapper, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: false,
+      logging: false,
+      backgroundColor: "#ffffff",
+      width: 794,
+      height: Math.ceil(wrapper.scrollHeight),
+      windowWidth: 794,
+      windowHeight: Math.ceil(wrapper.scrollHeight),
+    });
 
     if (isCanvasMostlyBlank(canvas)) {
       throw new Error("PNG da Parte Diária saiu em branco; tente novamente");
@@ -565,26 +563,35 @@ export async function renderParteDiariaHtmlToPngBlob(htmlContent: string): Promi
 
 
 /**
- * Builds today's Parte Diária PNG for an equipment and returns it as a Base64 string.
- * Bypasses frontend RLS issues by allowing the Edge Function to handle the actual upload.
+ * Builds today's Parte Diária PNG for an equipment, uploads to storage,
+ * and returns the public URL.
  */
-export async function generateParteDiariaBase64(
+export async function generateAndUploadParteDiariaPng(
   equipment: Equipment
-): Promise<string> {
+): Promise<string | null> {
   const html = await buildParteDiariaHtmlForEquipment(equipment);
   const blob = await renderParteDiariaHtmlToPngBlob(html);
-  const compressed = await compressImage(blob);
-  
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      resolve(reader.result as string);
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(compressed);
-  });
-}
+  const today = toParaDateString();
+  const safeName = (equipment.name || "equip").replace(/[^a-zA-Z0-9-_]/g, "_");
+  const path = `parte-diaria/${today}/${safeName}-${equipment.id}-${Date.now()}.png`;
 
+  let lastError: any = null;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const { error } = await supabase.storage
+      .from("site-assets")
+      .upload(path, blob, { contentType: "image/png", upsert: true });
+    if (!error) {
+      const { data } = supabase.storage.from("site-assets").getPublicUrl(path);
+      return data?.publicUrl ?? null;
+    }
+    lastError = error;
+    console.warn(`[parteDiariaShare] upload attempt ${attempt} failed`, error);
+    await new Promise((r) => setTimeout(r, 800 * attempt));
+  }
+  throw new Error(
+    `Falha ao enviar PNG ao storage após 3 tentativas: ${lastError?.message || lastError}`
+  );
+}
 
 function isCanvasMostlyBlank(canvas: HTMLCanvasElement): boolean {
   const ctx = canvas.getContext("2d", { willReadFrequently: true });

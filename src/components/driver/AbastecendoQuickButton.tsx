@@ -11,7 +11,6 @@ import { useProfile } from "@/hooks/useProfile";
 import { useAddStatusToHistory } from "@/hooks/useDailyShiftRecords";
 import { useOfflineSyncV2 } from "@/hooks/useOfflineSyncV2";
 import { confirmOnce } from "@/lib/pendingConfirm";
-import { useQueryClient } from "@tanstack/react-query";
 
 /**
  * Quick-access tile for setting status to "Abastecendo" (end_of_day),
@@ -24,7 +23,6 @@ export function AbastecendoQuickButton() {
   const updateStatus = useUpdateEquipmentStatus();
   const addStatusToHistory = useAddStatusToHistory();
   const { isOnline, addPendingAction } = useOfflineSyncV2();
-  const queryClient = useQueryClient();
 
   const selectedVehicleId =
     typeof window !== "undefined"
@@ -58,17 +56,6 @@ export function AbastecendoQuickButton() {
         const now = new Date().toISOString();
         const newStatus: StopReason = "end_of_day";
 
-        const wapiBody = {
-          equipmentId: selectedVehicleId,
-          equipmentName: selectedVehicle.name,
-          plate: selectedVehicle.plate,
-          newStatus,
-          previousStatus: currentStatus,
-          driverName: profile?.full_name || null,
-          helperName: selectedVehicle.helper || null,
-          timestamp: now,
-        };
-
         if (!isOnline) {
           addPendingAction("equipment_status", {
             id: selectedVehicleId,
@@ -81,23 +68,6 @@ export function AbastecendoQuickButton() {
             started_at: now,
             changed_by_driver: profile?.full_name || null,
           });
-          addPendingAction("wapi_invoke", {
-            functionName: "wapi-driver-status-notify",
-            body: wapiBody,
-          });
-          
-          queryClient.setQueryData(["equipment"], (old: any) => {
-            if (!old) return old;
-            const newData = old.map((eq: any) =>
-              eq.id === selectedVehicleId
-                ? { ...eq, stop_reason: newStatus, stop_start_time: now }
-                : eq
-            );
-            const env = localStorage.getItem("selected_environment") ?? sessionStorage.getItem("selected_environment");
-            localStorage.setItem(`cached_equipment_${env || "default"}`, JSON.stringify(newData));
-            return newData;
-          });
-
           toast.success("Salvo offline: Abastecendo");
           setIsUpdating(false);
           return;
@@ -118,7 +88,16 @@ export function AbastecendoQuickButton() {
             changedBy: profile?.full_name || null,
           });
           supabase.functions
-            .invoke("wapi-driver-status-notify", { body: wapiBody })
+            .invoke("wapi-driver-status-notify", {
+              body: {
+                equipmentId: selectedVehicleId,
+                equipmentName: selectedVehicle.name,
+                plate: selectedVehicle.plate,
+                newStatus,
+                previousStatus: currentStatus,
+                driverName: profile?.full_name || null,
+              },
+            })
             .catch((e) => console.warn("driver-status-notify failed", e));
           toast.success("Status alterado para: Abastecendo");
         } catch (err) {
@@ -127,16 +106,6 @@ export function AbastecendoQuickButton() {
             id: selectedVehicleId,
             stop_reason: newStatus,
             stop_start_time: now,
-          });
-          addPendingAction("stop_history", {
-            equipment_id: selectedVehicleId,
-            stop_reason: newStatus,
-            started_at: now,
-            changed_by_driver: profile?.full_name || null,
-          });
-          addPendingAction("wapi_invoke", {
-            functionName: "wapi-driver-status-notify",
-            body: wapiBody,
           });
           toast.warning("Erro de conexão. Alteração salva para sincronizar depois.");
         } finally {
@@ -151,29 +120,21 @@ export function AbastecendoQuickButton() {
       type="button"
       onClick={handleClick}
       disabled={isUpdating || isCurrent}
-      className={`relative bg-red-600 hover:bg-red-700 active:bg-red-800 transition-all duration-150 border-none shadow-md touch-manipulation rounded-xl w-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary overflow-hidden ${
+      className={`bg-red-600 hover:bg-red-700 active:bg-red-800 transition-all duration-150 border-none shadow-md touch-manipulation rounded-xl w-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${
         isUpdating || isCurrent
-          ? "opacity-90 ring-2 ring-red-400 ring-offset-2 cursor-not-allowed"
+          ? "opacity-70 cursor-not-allowed"
           : "cursor-pointer hover:scale-[1.02] active:scale-[0.97]"
       }`}
     >
-      {isCurrent && (
-        <div className="absolute top-2 right-2">
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
-          </span>
-        </div>
-      )}
-      <div className="p-4 flex flex-col items-center justify-center text-center min-h-[90px] sm:min-h-[110px] pointer-events-none">
-        <div className="text-black mb-2 pointer-events-none">
+      <div className="p-4 flex flex-col items-center justify-center text-center min-h-[110px] pointer-events-none">
+        <div className="text-white mb-2 pointer-events-none">
           {isUpdating ? (
             <Loader2 className="w-8 h-8 animate-spin" />
           ) : (
             <Fuel className="w-8 h-8" />
           )}
         </div>
-        <h3 className="font-bold text-black text-xs uppercase tracking-wide pointer-events-none">
+        <h3 className="font-bold text-white text-xs uppercase tracking-wide pointer-events-none">
           {isCurrent ? "Abastecendo (Ativo)" : "Abastecendo"}
         </h3>
       </div>

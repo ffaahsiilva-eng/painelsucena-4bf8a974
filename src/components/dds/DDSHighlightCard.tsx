@@ -20,8 +20,6 @@ import { useDDSMidnightRefresh } from "@/hooks/useMidnightRefresh";
 import { DDSParticipationDialog } from "./DDSParticipationDialog";
 import sextouVideo from "@/assets/sextou-dds.mp4.asset.json";
 import { useEnvironment, ENVIRONMENTS } from "@/hooks/useEnvironment";
-import { compressImage } from "@/utils/imageCompression";
-
 
 export const DDSHighlightCard = () => {
   const { data: todayDDS, isLoading: loadingToday } = useTodayDDS();
@@ -76,7 +74,7 @@ export const DDSHighlightCard = () => {
     try {
       const fileExt = file.name.split(".").pop();
       const fileName = `dds-theme-${todayDDS.scheduled_date}-${Date.now()}.${fileExt}`;
-      const { error: uploadError } = await supabase.storage.from("site-assets").upload(fileName, await compressImage(file), { upsert: true });
+      const { error: uploadError } = await supabase.storage.from("site-assets").upload(fileName, file, { upsert: true });
       if (uploadError) throw uploadError;
       const { data: urlData } = supabase.storage.from("site-assets").getPublicUrl(fileName);
       await updatePhoto.mutateAsync({ id: todayDDS.id, photo_url: urlData.publicUrl });
@@ -100,7 +98,7 @@ export const DDSHighlightCard = () => {
     try {
       const fileExt = file.name.split(".").pop();
       const fileName = `dds-event-${todayDDS.scheduled_date}-${Date.now()}.${fileExt}`;
-      const { error: uploadError } = await supabase.storage.from("site-assets").upload(fileName, await compressImage(file), { upsert: true });
+      const { error: uploadError } = await supabase.storage.from("site-assets").upload(fileName, file, { upsert: true });
       if (uploadError) throw uploadError;
       const { data: urlData } = supabase.storage.from("site-assets").getPublicUrl(fileName);
       await updateEventPhoto.mutateAsync({ id: todayDDS.id, event_photo_url: urlData.publicUrl });
@@ -215,8 +213,8 @@ export const DDSHighlightCard = () => {
 
               {/* Theme */}
               <div className="p-3 bg-white/40 dark:bg-white/5 backdrop-blur-sm rounded-xl border border-slate-200/30 dark:border-slate-700/20">
-                <p className="text-sm text-muted-foreground modern-text-black mb-1">Tema do dia</p>
-                <p className="font-semibold text-slate-800 dark:text-slate-200 modern-text-black">
+                <p className="text-sm text-muted-foreground mb-1">Tema do dia</p>
+                <p className="font-semibold text-slate-800 dark:text-slate-200">
                   📋 {todayDDS.theme}
                 </p>
               </div>
@@ -371,8 +369,8 @@ export const DDSHighlightCard = () => {
 
               {/* Theme */}
               <div className="p-3 bg-white/40 dark:bg-white/5 backdrop-blur-sm rounded-xl border border-blue-200/30 dark:border-blue-700/20 relative">
-                <p className="text-sm text-muted-foreground modern-text-black mb-1">Tema agendado</p>
-                <p className="font-semibold text-blue-800 dark:text-blue-200 modern-text-black pr-8">
+                <p className="text-sm text-muted-foreground mb-1">Tema agendado</p>
+                <p className="font-semibold text-blue-800 dark:text-blue-200 pr-8">
                   📋 {tomorrowDDS.theme}
                 </p>
                 {tomorrowDDS.presenter_user_id === profile?.user_id && (

@@ -253,12 +253,12 @@ const PainelMotorista = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-muted/30">
+    <div className="min-h-screen h-screen flex flex-col bg-gradient-to-b from-background to-muted/30 overflow-hidden">
       {/* Offline Banner */}
       <OfflineBanner isOnline={isOnline} pendingCount={pendingCount} />
       
       {/* Compact Header for Mobile */}
-      <header className="sticky top-0 z-10 bg-card/95  border-b shadow-sm safe-area-inset-top shrink-0">
+      <header className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm border-b shadow-sm safe-area-inset-top shrink-0">
         <div className="flex items-center justify-between px-3 py-2.5">
           {/* Logo */}
           <img loading="lazy" decoding="async" 
@@ -278,7 +278,7 @@ const PainelMotorista = () => {
               size="sm"
             />
             <div className="min-w-0">
-              <p className="text-xs font-semibold text-foreground leading-tight truncate max-w-[140px] sm:max-w-[180px]">
+              <p className="text-xs font-semibold text-foreground leading-tight truncate max-w-[90px]">
                 {profile?.full_name?.split(' ')[0] || "Motorista"}
               </p>
               <p className="text-[10px] text-muted-foreground leading-tight truncate">
@@ -330,8 +330,8 @@ const PainelMotorista = () => {
       </header>
 
       {/* Content - Scrollable container */}
-      <main className="flex-1">
-        <div className="p-4 max-w-lg mx-auto space-y-4 pb-safe-area safe-area-inset-bottom">
+      <main className="flex-1 overflow-y-auto overscroll-contain">
+        <div className="p-4 max-w-lg mx-auto space-y-4 pb-8 safe-area-inset-bottom">
         {/* Welcome Card */}
         <Card className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground border-none shadow-lg">
           <CardContent className="p-4">
@@ -354,9 +354,9 @@ const PainelMotorista = () => {
         {/* Helper Name Display */}
         {selectedVehicle?.helper && selectedVehicle.helper.trim() !== "" && (
           <div className="flex items-center gap-2 px-3 py-2 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-            <UserCheck className="w-4 h-4 text-slate-900 shrink-0" />
-            <p className="text-sm font-medium text-slate-900">
-              Seu Ajudante é <span className="font-bold text-black">{selectedVehicle.helper}</span>
+            <UserCheck className="w-4 h-4 text-blue-600 shrink-0" />
+            <p className="text-sm font-medium text-foreground">
+              Seu Ajudante é <span className="font-bold text-blue-600">{selectedVehicle.helper}</span>
             </p>
           </div>
         )}
@@ -413,7 +413,7 @@ const PainelMotorista = () => {
         <DriverStatusButtons />
 
         {/* Quick Access Grid - 2 columns, touch-friendly with larger targets */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 sm:gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {quickAccessItems
             .filter((item) => !(item.hideForMunk && isMunk))
             .filter((item) => !(item.hideWhenExitPending && exitPending))
@@ -448,14 +448,11 @@ const PainelMotorista = () => {
                   }}
 
                 >
-                  <div className="p-4 flex flex-col items-center justify-center text-center min-h-[90px] sm:min-h-[110px] pointer-events-none">
+                  <div className="p-4 flex flex-col items-center justify-center text-center min-h-[110px] pointer-events-none">
                     <div className={`${item.iconColor} mb-2 pointer-events-none`}>
                       {item.icon}
                     </div>
-                    <h3 
-                      className={`font-bold ${item.iconColor} text-xs uppercase tracking-wide pointer-events-none`}
-                      style={item.iconColor.includes("white") ? { color: "#ffffff", WebkitTextFillColor: "#ffffff" } : undefined}
-                    >
+                    <h3 className={`font-bold ${item.iconColor} text-xs uppercase tracking-wide pointer-events-none`}>
                       {item.title}
                     </h3>
                   </div>
@@ -473,11 +470,11 @@ const PainelMotorista = () => {
                 type="button"
                 className="bg-orange-500 hover:bg-orange-600 active:bg-orange-700 transition-all duration-150 border-none shadow-md touch-manipulation rounded-xl w-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary cursor-pointer hover:scale-[1.02] active:scale-[0.97]"
               >
-                <div className="p-4 flex flex-col items-center justify-center text-center min-h-[90px] sm:min-h-[110px] pointer-events-none">
-                  <div className="text-black mb-2 pointer-events-none">
+                <div className="p-4 flex flex-col items-center justify-center text-center min-h-[110px] pointer-events-none">
+                  <div className="text-white mb-2 pointer-events-none">
                     <ClipboardCheck className="w-8 h-8" />
                   </div>
-                  <h3 className="font-bold text-black text-xs uppercase tracking-wide pointer-events-none">
+                  <h3 className="font-bold text-white text-xs uppercase tracking-wide pointer-events-none">
                     Check List
                   </h3>
                 </div>

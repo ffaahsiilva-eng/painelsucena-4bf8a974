@@ -19,8 +19,6 @@ import { Megaphone, Upload, Trash2, Users, User, Clock, Eye, Plus, X } from "luc
 import { toast } from "sonner";
 import { resolveStorageUrl } from "@/lib/storage";
 import { AnnouncementImage } from "@/components/announcements/AnnouncementImage";
-import { compressImage } from "@/utils/imageCompression";
-
 
 interface Profile {
   user_id: string;
@@ -104,7 +102,7 @@ export function AnnouncementManager() {
 
       const { error: uploadError } = await supabase.storage
         .from("site-assets")
-        .upload(filePath, await compressImage(file), { cacheControl: '3600', upsert: true });
+        .upload(filePath, file, { cacheControl: '3600', upsert: true });
 
       if (uploadError) throw uploadError;
       

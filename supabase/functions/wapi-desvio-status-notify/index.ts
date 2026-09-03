@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     const targetGroupId = (cfg?.group_id_desvios || cfg?.group_id || "").trim();
-    if (!cfg || !cfg.enabled || cfg.auto_send_desvios === false || !targetGroupId) {
+    if (!cfg || !cfg.enabled || !cfg.auto_send_desvios || !targetGroupId) {
        console.log("Notificações desabilitadas ou sem grupo configurado.");
     }
 

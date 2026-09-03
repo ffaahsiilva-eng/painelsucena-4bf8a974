@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (cfg.auto_send_campaign_alert === false && !force) {
+    if (!cfg.auto_send_campaign_alert && !force) {
       console.log("Campaign alert disabled and not forced");
       return new Response(JSON.stringify({ skipped: true, reason: "Alerta de Campanha do Mês desabilitado" }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },

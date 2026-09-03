@@ -5,8 +5,6 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { compressImage } from "@/utils/imageCompression";
-
 
 interface PhotoUploaderProps {
   photos: string[];
@@ -58,7 +56,7 @@ export function PhotoUploader({
 
         const { data, error } = await supabase.storage
           .from(bucket)
-          .upload(fileName, await compressImage(file));
+          .upload(fileName, file);
 
         if (error) throw error;
 

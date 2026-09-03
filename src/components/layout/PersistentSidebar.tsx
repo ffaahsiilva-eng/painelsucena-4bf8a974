@@ -3,14 +3,12 @@ import { useLocation } from "react-router-dom";
 import { AppSidebar } from "./AppSidebar";
 import { TopNavHeader } from "./TopNavHeader";
 import { DockNavigation } from "./DockNavigation";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { MobileTopNav } from "./MobileTopNav";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { Loader2 } from "lucide-react";
-import { useLayoutMode } from "@/contexts/LayoutModeContext";
 
 interface PersistentSidebarProps {
   children: ReactNode;
@@ -18,58 +16,30 @@ interface PersistentSidebarProps {
 
 const DRIVER_ROLES = ["motorista_pipa", "motorista_munk"];
 
-// Cache em nível de módulo: garante que o fundo global seja resolvido uma única
-// vez por sessão, evitando recarregamentos/piscadas quando a URL assinada muda.
-const bgBlobCache = new Map<string, string>();
-const bgUrlCache = new Map<string, string>();
-function stableBgUrlFor(key: string, url: string) {
-  const existing = bgUrlCache.get(key);
-  if (existing) return existing;
-  bgUrlCache.set(key, url);
-  return url;
-}
-
-
 export const PersistentSidebar = ({ children }: PersistentSidebarProps) => {
   const { user, loading: authLoading } = useAuth();
-  const { data: profile } = useProfile();
+  const { data: profile, isLoading: profileLoading } = useProfile();
   const { settings } = useSiteSettings();
-  const { layoutMode } = useLayoutMode();
   const isMobile = useIsMobile();
   const location = useLocation();
   const [justCompletedTransition, setJustCompletedTransition] = useState(false);
 
   const isAuthPage = location.pathname === "/auth";
   const isEnvSelectionPage = location.pathname === "/selecao-ambiente";
-  const isDriver = !!(profile?.cargo && DRIVER_ROLES.includes(profile.cargo));
-  const isAvatarBlocked = !!(
-    user &&
-    profile &&
-    (!profile.avatar_url || profile.avatar_url.trim().length === 0) &&
-    !isDriver
-  );
-
+  const isDriver = profile?.cargo && DRIVER_ROLES.includes(profile.cargo);
+  const isAvatarBlocked = user && profile && (!profile.avatar_url || profile.avatar_url.trim().length === 0) && !isDriver;
+  
+  // Use global theme from site_settings
   const uiTheme = settings?.ui_theme || "classic";
-  const useDock = !!(
-    user &&
-    !isDriver &&
-    !isAvatarBlocked &&
-    !isEnvSelectionPage &&
-    uiTheme === "macos-dock"
-  );
+  const useDock = user && !isDriver && !isAvatarBlocked && !isEnvSelectionPage && uiTheme === "macos-dock";
 
-  const hasDesktopChrome = !!(
-    user &&
-    !isDriver &&
-    !useDock &&
-    !isAuthPage &&
-    !isEnvSelectionPage
-  );
-
+  // Apply global theme colors and background settings from site_settings
+  // Optimized: useMemo style object to avoid frequent DOM mutations
   useEffect(() => {
     const root = document.documentElement;
     const primaryColor = settings?.primary_color;
-
+    
+    // Batch DOM updates
     if (primaryColor) {
       root.style.setProperty("--primary", primaryColor);
       root.style.setProperty("--ring", primaryColor);
@@ -79,15 +49,23 @@ export const PersistentSidebar = ({ children }: PersistentSidebarProps) => {
     }
 
     root.style.setProperty("--bg-opacity", settings?.global_background_url ? "0.85" : "1");
-
+    
     const cardOpacity = settings?.card_opacity ?? 0.45;
     root.style.setProperty("--card-opacity", String(cardOpacity));
     root.style.setProperty("--card-opacity-dark", String(Math.max(0, cardOpacity - 0.1)));
-    // NOTE: sem cleanup — remover/reaplicar estas variáveis a cada re-render
-    // causava piscada de cor na tela inteira.
+
+    return () => {
+      root.style.removeProperty("--primary");
+      root.style.removeProperty("--ring");
+      root.style.removeProperty("--bg-opacity");
+      root.style.removeProperty("--card-opacity");
+      root.style.removeProperty("--card-opacity-dark");
+    };
   }, [settings?.primary_color, settings?.global_background_url, settings?.card_opacity]);
 
-
+  // Wait only for auth/profile. Remote visual settings must never block the
+  // whole app, otherwise transient network/cache aborts leave the preview in an
+  // infinite spinner.
   const layoutReady = isAuthPage || !authLoading;
 
   useEffect(() => {
@@ -103,162 +81,77 @@ export const PersistentSidebar = ({ children }: PersistentSidebarProps) => {
     return () => window.removeEventListener("login-transition", handler);
   }, [user]);
 
-  const DEFAULT_BG_URL =
-    "https://images.unsplash.com/photo-1542224566-6e85f2e6772f?auto=format&fit=crop&w=1920&q=60";
-  const cachedBgUrl = localStorage.getItem("sucena_global_bg_url");
-  const rawBgUrl = settings?.global_background_url || cachedBgUrl || DEFAULT_BG_URL;
-  // URLs assinadas mudam o token a cada refetch: usamos apenas o caminho como
-  // identidade para o fundo nunca ser recarregado (piscada de cor).
-  const bgKey = rawBgUrl.split("?")[0];
-  const globalBgUrl = stableBgUrlFor(bgKey, rawBgUrl);
-  const isVideoBg = /\.(mp4|webm|ogg|mov|m4v)(\?|$)/i.test(bgKey);
-
-  const [localBgUrl, setLocalBgUrl] = useState<string>(
-    () => bgBlobCache.get(bgKey) || globalBgUrl
-  );
-
   useEffect(() => {
-    if (settings?.global_background_url) {
-      localStorage.setItem("sucena_global_bg_url", settings.global_background_url);
-    }
-  }, [settings?.global_background_url]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const cachedBlob = bgBlobCache.get(bgKey);
-    if (cachedBlob) {
-      setLocalBgUrl(cachedBlob);
-      return;
-    }
-
-    const fetchAndCacheBg = async () => {
-      try {
-        if (!globalBgUrl || isVideoBg || !("caches" in window)) {
-          if (isMounted) setLocalBgUrl(globalBgUrl);
-          return;
-        }
-
-        const cache = await caches.open("sucena-bg-cache-v1");
-        const cachedResponse = await cache.match(bgKey);
-        let blob: Blob | null = null;
-
-        if (cachedResponse) {
-          blob = await cachedResponse.blob();
-        } else {
-          const response = await fetch(globalBgUrl, { mode: "cors" });
-          if (response.ok) {
-            await cache.put(bgKey, response.clone());
-            blob = await response.blob();
-          }
-        }
-
-        if (!blob) {
-          if (isMounted) setLocalBgUrl(globalBgUrl);
-          return;
-        }
-
-        const objectUrl = bgBlobCache.get(bgKey) || URL.createObjectURL(blob);
-        bgBlobCache.set(bgKey, objectUrl);
-        if (isMounted) setLocalBgUrl(objectUrl);
-      } catch (error) {
-        console.warn("Could not cache background image, using normal URL", error);
-        if (isMounted) setLocalBgUrl(globalBgUrl);
-      }
+    const handler = () => {
     };
-    fetchAndCacheBg();
-    return () => { isMounted = false; };
-  }, [bgKey, globalBgUrl, isVideoBg]);
-
+    window.addEventListener("logout-transition", handler);
+    return () => window.removeEventListener("logout-transition", handler);
+  }, []);
 
   if (!layoutReady) {
     return (
-      <div className="sucena-app w-full app-shell" data-has-global-bg="true" data-layout={layoutMode}>
-        {isVideoBg ? (
-          <video src={localBgUrl} autoPlay loop muted playsInline preload="metadata" className="sucena-bg-photo object-cover" />
-        ) : (
-          <div className="sucena-bg-photo" style={{ backgroundImage: `url(${localBgUrl})` }} />
-        )}
-        <div className="sucena-bg-overlay" />
-        <div className="sucena-bg-haze" />
-        <div className="h-screen w-full grid place-items-center relative z-50">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
+      <div className="h-screen w-full grid place-items-center bg-background">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
-
-
   return (
     <SidebarProvider defaultOpen={isAvatarBlocked ? false : !isMobile}>
-      <div
-        className={hasDesktopChrome ? "app-shell-v6" : `sucena-app w-full sucena-app--plain app-shell`}
-        data-has-global-bg="true"
-        data-layout={layoutMode}
+      <div 
+        className={`h-screen flex flex-row w-full overflow-x-clip overflow-y-hidden ${
+          settings?.global_background_url ? "bg-transparent" : "bg-background"
+        }`}
+        data-has-global-bg={!!settings?.global_background_url}
       >
-        {isVideoBg ? (
-          <video
-            src={localBgUrl}
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="metadata"
-            poster="/logo-sucena-pdf.png"
-            className={hasDesktopChrome ? "app-bg-v6 object-cover" : "sucena-bg-photo object-cover"}
-          />
-        ) : (
-          <div
-            className={hasDesktopChrome ? "app-bg-v6" : "sucena-bg-photo"}
-            style={{ backgroundImage: `url(${localBgUrl})` }}
-          />
-        )}
-        
-        {hasDesktopChrome && layoutMode === "modern" ? (
-          <div className="app-overlay-v6" />
-        ) : (
-          <>
-            <div className="sucena-bg-overlay" />
-            <div className="sucena-bg-haze" />
-          </>
-        )}
-
-        {hasDesktopChrome && (
-          <div className={`app-sidebar-v6 ${justCompletedTransition ? "animate-fade-in" : ""}`}>
+        {user && !isDriver && !useDock && !isAuthPage && !isEnvSelectionPage && isMobile && (
+          <div className={`overflow-visible ${justCompletedTransition ? "animate-fade-in" : ""}`}>
             <AppSidebar lockedCollapsed={!!isAvatarBlocked} />
           </div>
         )}
+        <div
+          className={`flex-1 flex flex-col min-w-0 h-full overflow-hidden relative ${
+            justCompletedTransition ? "animate-fade-in" : ""
+          }`}
+        >
+          {settings?.global_background_url && (
+            /\.(mp4|webm|ogg|mov|m4v)(\?|$)/i.test(settings.global_background_url) ? (
+              <video
+                src={settings.global_background_url}
+                autoPlay
+                loop
+                muted
+                playsInline
+                preload="none"
+                poster="/logo-sucena-pdf.png"
+                className="fixed inset-0 w-full h-full object-cover pointer-events-none z-0 transition-opacity duration-300"
 
-        {hasDesktopChrome && !isAvatarBlocked && !isMobile && (
-          <div className="app-topbar-v6">
-             <TopNavHeader />
+                style={{ opacity: settings.global_background_opacity ?? 0.1 }}
+              />
+            ) : (
+              <div 
+                className="fixed inset-0 pointer-events-none z-0 bg-center bg-cover bg-no-repeat transition-opacity duration-300"
+                style={{ 
+                  backgroundImage: `url(${settings.global_background_url})`,
+                  opacity: settings.global_background_opacity ?? 0.1
+                }}
+              />
+            )
+          )}
+
+          <div className="relative z-10 flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+            {user && !isDriver && !useDock && !isAuthPage && !isEnvSelectionPage && !isAvatarBlocked && !isMobile && (
+              <TopNavHeader />
+            )}
+            {!isDriver && (
+              <SidebarTrigger
+                aria-label="Abrir menu"
+                className="fixed bottom-24 left-2 z-[101] md:hidden !h-7 !w-7 !min-h-0 !min-w-0 rounded-full bg-sidebar-accent/85 backdrop-blur-sm border border-sidebar-border/50 text-sidebar-foreground/90 shadow-lg p-0 flex items-center justify-center [&_svg]:!h-3.5 [&_svg]:!w-3.5 [&_img]:!h-3.5 [&_img]:!w-3.5"
+              />
+            )}
+            {children}
           </div>
-        )}
-        
-        {hasDesktopChrome && !isAvatarBlocked && isMobile && (
-          <MobileTopNav />
-        )}
-
-        {hasDesktopChrome ? (
-          <>
-            <main className={`app-main-v6 ${justCompletedTransition ? "animate-fade-in" : ""}`}>
-              {children}
-            </main>
-            <div className="app-footer-v6"></div>
-          </>
-        ) : (
-          <div
-            className={`sucena-main sucena-main--plain ${
-              justCompletedTransition ? "animate-fade-in" : ""
-            }`}
-          >
-            <main className="sucena-content sucena-content--plain">
-              {children}
-            </main>
-          </div>
-        )}
-
+        </div>
         {useDock && !isAuthPage && <DockNavigation />}
       </div>
     </SidebarProvider>

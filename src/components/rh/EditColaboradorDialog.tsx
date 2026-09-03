@@ -25,8 +25,6 @@ import { toast } from "sonner";
 import { X, Calendar, ShieldCheck, Camera, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { NrFileUpload } from "./NrFileUpload";
-import { compressImage } from "@/utils/imageCompression";
-
 
 // Remove ALL_NRS constant as we'll use the catalog from DB
 
@@ -99,7 +97,7 @@ export const EditColaboradorDialog = ({
 
       const { error: uploadError } = await supabase.storage
         .from("site-assets")
-        .upload(fileName, await compressImage(file));
+        .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 

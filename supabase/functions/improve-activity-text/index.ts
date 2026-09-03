@@ -6,9 +6,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const TEXT_MODEL = "google/gemini-2.5-flash";
-
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -22,54 +19,47 @@ serve(async (req) => {
     }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    const GEMINI_API_KEY = Deno.env.get("GeminiAPIKey") || Deno.env.get("GEMINI_API_KEY");
-    if (!LOVABLE_API_KEY && !GEMINI_API_KEY) throw new Error("A chave de IA não está configurada no servidor.");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const systemPrompt = "Você é um assistente de relatórios de atividades de campo (jardinagem, gabião, obras civis). Sua tarefa é melhorar a descrição da atividade fornecida pelo usuário, tornando-a mais clara, profissional e objetiva para um relatório diário de obra (RDO). Mantenha o mesmo sentido original, mas melhore a redação. Responda APENAS com o texto melhorado, sem explicações extras. Mantenha curto e direto.";
-    const response = LOVABLE_API_KEY
-      ? await fetch(AI_GATEWAY_URL, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-            "Content-Type": "application/json",
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-lite",
+        messages: [
+          {
+            role: "system",
+            content:
+              "Você é um assistente de relatórios de atividades de campo (jardinagem, gabião, obras civis). Sua tarefa é melhorar a descrição da atividade fornecida pelo usuário, tornando-a mais clara, profissional e objetiva para um relatório diário de obra (RDO). Mantenha o mesmo sentido original, mas melhore a redação. Responda APENAS com o texto melhorado, sem explicações extras. Mantenha curto e direto.",
           },
-          body: JSON.stringify({
-            model: TEXT_MODEL,
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: text },
-            ],
-            temperature: 0.4,
-            max_tokens: 500,
-          }),
-        })
-      : await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            systemInstruction: {
-              parts: [{ text: systemPrompt }]
-            },
-            contents: [
-              {
-                parts: [{ text: text }]
-              }
-            ]
-          }),
-        });
+          { role: "user", content: text },
+        ],
+      }),
+    });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Gemini API error:", response.status, errorText);
-      throw new Error(`Erro na API de IA (Status: ${response.status})`);
+      if (response.status === 429) {
+        return new Response(JSON.stringify({ error: "Limite de requisições excedido, tente novamente em instantes." }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (response.status === 402) {
+        return new Response(JSON.stringify({ error: "Créditos de IA esgotados." }), {
+          status: 402,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const t = await response.text();
+      console.error("AI gateway error:", response.status, t);
+      throw new Error("Erro no gateway de IA");
     }
 
     const data = await response.json();
-    const improved = LOVABLE_API_KEY
-      ? data.choices?.[0]?.message?.content || text
-      : data.candidates?.[0]?.content?.parts?.[0]?.text || text;
+    const improved = data.choices?.[0]?.message?.content || text;
 
     return new Response(JSON.stringify({ improved }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

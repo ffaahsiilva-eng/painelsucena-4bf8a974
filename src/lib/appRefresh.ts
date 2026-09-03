@@ -217,12 +217,7 @@ export async function hardRefreshToLatest(options: { clearVisualState?: boolean 
 
   clearPreviewCacheResetAttempts();
   markPreviewDocumentFresh();
-  
-  if (isElectronRuntime()) {
-    window.location.reload();
-  } else {
-    window.location.replace(getCacheBustedUrl());
-  }
+  window.location.replace(getCacheBustedUrl());
 }
 
 /**
@@ -252,12 +247,7 @@ export async function nukeAndReload() {
     // ignore
   }
   markPreviewDocumentFresh();
-  
-  if (isElectronRuntime()) {
-    window.location.reload();
-  } else {
-    window.location.replace(getCacheBustedUrl({ "full-reset": Date.now() }));
-  }
+  window.location.replace(getCacheBustedUrl({ "full-reset": Date.now() }));
 }
 
 /**
@@ -327,17 +317,12 @@ export async function refreshIfDocumentStale(trigger = "runtime-check"): Promise
   await clearClientCaches();
   clearPreviewCacheResetAttempts();
   markPreviewDocumentFresh();
-  
-  if (isElectronRuntime()) {
-    window.location.reload();
-  } else {
-    window.location.replace(
-      getCacheBustedUrl({
-        "server-build": serverVersionMismatch,
-        "update-trigger": trigger,
-      }),
-    );
-  }
+  window.location.replace(
+    getCacheBustedUrl({
+      "server-build": serverVersionMismatch,
+      "update-trigger": trigger,
+    }),
+  );
 
   return true;
 }

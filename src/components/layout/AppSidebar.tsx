@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Users, ClipboardList, Grid3X3, LayoutDashboard, FileBarChart, LogOut, LogIn, AlertTriangle, PanelLeftClose, PanelLeft, Settings, Sun, Truck, Bell, FileText, LucideIcon, Heart, ShoppingCart, Package, GripVertical, User, FolderOpen, ShieldCheck, Leaf, Hammer, ClipboardCheck, BadgeCheck, Link2, ArrowLeftRight, Clock, FolderLock, Droplets, Wrench, Presentation, Newspaper, HardHat, CalendarDays, Gamepad2, TriangleAlert, Target, Receipt, FlameKindling, Pencil, PencilOff, Shield, Warehouse, Building2, Video, RefreshCw, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { Users, ClipboardList, Grid3X3, LayoutDashboard, FileBarChart, LogOut, LogIn, AlertTriangle, PanelLeftClose, PanelLeft, Settings, Sun, Truck, Bell, FileText, LucideIcon, Heart, ShoppingCart, Package, GripVertical, User, FolderOpen, ShieldCheck, Leaf, Hammer, ClipboardCheck, BadgeCheck, Link2, ArrowLeftRight, Clock, FolderLock, Droplets, Wrench, Presentation, Newspaper, HardHat, CalendarDays, Gamepad2, TriangleAlert, Target, Receipt, FlameKindling, Pencil, PencilOff, Shield, Warehouse, Building2, Video, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { hardRefreshToLatest } from "@/lib/appRefresh";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useMemo } from "react";
@@ -47,7 +47,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { NeonAvatar } from "@/components/ui/NeonAvatar";
 import { toast } from "sonner";
 import { SidebarBackground } from "./SidebarBackground";
-import { ForbiddenColorButton } from "./ForbiddenColorButton";
 import { formatCargoLabel } from "@/lib/cargoUtils";
 import sidebarCollapsedLogo from "@/assets/sidebar-collapsed-logo.png";
 import admIconAsset from "@/assets/adm-icon.png.asset.json";
@@ -57,8 +56,6 @@ import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { ModeratorBadge } from "@/components/ModeratorBadge";
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { compressImage } from "@/utils/imageCompression";
-
 
 export interface NavItem {
   id: string;
@@ -82,6 +79,7 @@ export const allNavItems: NavItem[] = [
   { id: "rdo-hub", icon: FileText, label: "Relatório Diário Obra", path: "/relatorio-diario-obra" },
   { id: "meio-ambiente", icon: Leaf, label: "Meio Ambiente", path: "/meio-ambiente" },
   { id: "planejamento", icon: Target, label: "Planejamento", path: "/planejamento" },
+  { id: "emergencia", icon: AlertTriangle, label: "Emergência", path: "/emergencia", isEmergency: true },
   { id: "cipa", icon: Heart, label: "CIPA", path: "/cipa" },
 ];
 
@@ -121,23 +119,19 @@ function SortableNavItemComponent({
     <SidebarMenuItem ref={setNodeRef} style={style}>
       <SidebarMenuButton
         asChild
+        isActive={isActive}
         tooltip={item.label}
-        className="group !p-0 bg-transparent hover:bg-transparent hover:text-inherit !shadow-none border-none outline-none h-auto"
+        className="group min-h-[44px] md:min-h-[32px] tap-target"
       >
-        <Link 
-          to={item.path} 
-          onClick={onNavigate} 
-          className="sucena-nav-item w-full gap-2 py-1.5 px-3"
-          data-active={isActive}
-        >
+        <Link to={item.path} onClick={onNavigate} className="flex items-center gap-2 md:gap-1.5 py-1.5">
           {!isCollapsed && showGrip && (
             <span
               {...attributes}
               {...listeners}
-              className="cursor-grab active:cursor-grabbing p-1 -ml-2 opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity"
+              className="cursor-grab active:cursor-grabbing p-1 -ml-1 opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity"
               onClick={(e) => e.preventDefault()}
             >
-              <GripVertical className="h-4 w-4 opacity-50" />
+              <GripVertical className="h-4 w-4 text-sidebar-foreground/50" />
             </span>
           )}
           <item.icon
@@ -150,7 +144,7 @@ function SortableNavItemComponent({
               pageKey="sidebar"
               elementKey={`nav-${item.id}`}
               defaultValue={item.label}
-              className={`font-medium text-xs md:text-[13px] truncate block w-full ${item.isEmergency ? "text-red-500" : ""}`}
+              className={`font-medium text-sm md:text-base truncate block w-full ${item.isEmergency ? "text-red-500" : ""} ${item.id === "destaques" ? "font-weghorst" : ""}`}
               as="span"
               canEdit={!!editMode}
             />
@@ -183,7 +177,7 @@ export function AppSidebar({ lockedCollapsed = false }: { lockedCollapsed?: bool
       const ext = file.name.split(".").pop();
       const path = `logos/logo-${Date.now()}.${ext}`;
       const { error: upErr } = await (await import("@/integrations/supabase/client")).supabase.storage
-        .from("site-assets").upload(path, await compressImage(file), { upsert: true });
+        .from("site-assets").upload(path, file, { upsert: true });
       if (upErr) throw upErr;
       const { data } = await (await import("@/integrations/supabase/client")).supabase.storage
         .from("site-assets").createSignedUrl(path, 315360000, { transform: { width: 500, height: 500, resize: 'contain' } });
@@ -378,60 +372,94 @@ export function AppSidebar({ lockedCollapsed = false }: { lockedCollapsed?: bool
     // The redirect will happen after the animation completes in LogoutTransitionGate
   };
 
+  // Sidebar padrão global — personalizações por usuário foram removidas.
+  // Sempre usa os tokens do tema (--sidebar-*) que respeitam tema claro/escuro.
+  const sidebarStyle: React.CSSProperties = {};
+
+  const particleColors = useMemo(() => {
+    const colors = [settings.login_particles_color || "white"];
+    if (settings.login_particles_color2) colors.push(settings.login_particles_color2);
+    if (settings.login_particles_color3) colors.push(settings.login_particles_color3);
+    return colors;
+  }, [settings.login_particles_color, settings.login_particles_color2, settings.login_particles_color3]);
+
   return (
-    <Sidebar
-      collapsible="icon"
-      className="sucena-sidebar border-none h-screen"
-      style={{ width: "var(--sidebar-w)", "--sidebar-width": "var(--sidebar-w)" } as any}
-    >
-      <SidebarHeader className={`sucena-sidebar-header border-none relative z-10 ${isCollapsed ? "px-2 pt-6" : "px-0"}`}>
-        {!isCollapsed ? (
-          <div className="sucena-contract-block">
-            <span className="sucena-contract-label">CONTRATO</span>
-            <strong className="sucena-contract-number">460001269</strong>
-          </div>
-        ) : (
-          <div className="sucena-contract-collapsed">4600</div>
-        )}
+    <Sidebar collapsible="icon" className="border-r-0 relative shrink-0 h-screen sticky top-0 rounded-r-2xl md:rounded-r-2xl overflow-visible" style={sidebarStyle}>
+      {/* Background com animação e cores personalizadas */}
+      <div className="absolute inset-0 overflow-hidden rounded-r-2xl pointer-events-none bg-sidebar">
+        <SidebarBackground 
+          animation={settings.sidebar_animation || "particles"} 
+          particleColors={particleColors}
+        />
+      </div>
+      
+      {/* Header with Logo - clickable for admin/moderator to change */}
+      <SidebarHeader className={`border-sidebar-border/50 relative z-10 ${isCollapsed ? "p-1.5" : "p-2 md:p-3"}`}>
+        <div className="flex items-center justify-center">
+          {!isCollapsed ? (
+            <div className={`relative group ${!settings.logo_url ? "border-b border-sidebar-border/50 w-full pb-2 md:pb-3 flex justify-center" : ""}`}>
+              <img loading="lazy" decoding="async" 
+                src={settings.logo_url || logoPrincipal} 
+                alt="Logo" 
+                className={settings.logo_url 
+                  ? "h-20 md:h-24 max-w-[200px] md:max-w-[240px] object-contain -mt-2 mb-[-8px] transition-all duration-300" 
+                  : "h-10 md:h-12 max-w-[140px] md:max-w-[160px] object-contain"} 
+              />
+              {isAdmin && isEditMode && (
+                <>
+                  <input
+                    ref={logoEditRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoEditUpload}
+                    className="hidden"
+                  />
+                  <div
+                    className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer rounded transition-opacity"
+                    onClick={() => logoEditRef.current?.click()}
+                  >
+                    <span className="text-white text-[10px] font-medium">Trocar</span>
+                  </div>
+                </>
+              )}
+            </div>
+          ) : (
+            <img loading="lazy" decoding="async" 
+              src={sidebarCollapsedLogo} 
+              alt="Logo" 
+              className="h-8 w-8 object-contain" 
+            />
+          )}
+        </div>
       </SidebarHeader>
 
-      {user && !isCollapsed && (
-        <div className="sucena-sidebar-profile relative z-10">
-          <NeonAvatar
-            src={profile?.avatar_url}
-            name={profile?.full_name || "Usuário"}
-            frameColor={profile?.frame_color}
-            neonColor={profile?.neon_color}
-            frameAnimation={profile?.frame_animation}
-            size="sidebar"
-          />
-          <div className="sucena-sidebar-profile-copy">
-            <p className="sucena-sidebar-name">{profile?.full_name || "Usuário"}</p>
-            <p className="sucena-sidebar-role">{formatCargoLabel(profile?.cargo) || "Membro"}</p>
-          </div>
-          <div className="sucena-sidebar-divider" />
-          
-          <div className="mt-4 flex justify-center w-full relative z-10 px-1 lg:px-2">
-            <button
-              onClick={async () => {
-                await hardRefreshToLatest({ clearVisualState: true });
-              }}
-              className="sucena-sidebar-refresh flex w-[95%] lg:w-[90%] justify-center items-center gap-1 lg:gap-1.5 px-1 lg:px-2 py-1.5 rounded-full bg-[#2a2d30]/90 border border-white/10 shadow-lg hover:bg-black/60 transition-colors"
-              aria-label="Recarregar sistema"
-            >
-              <RefreshCw className="h-2.5 w-2.5 lg:h-3.5 lg:w-3.5 flex-shrink-0 text-white animate-[spin_10s_linear_infinite] hover:animate-[spin_2s_linear_infinite]" />
-              <div className="text-[8px] sm:text-[9px] lg:text-[10px] font-bold tracking-tight uppercase !text-white !block truncate" style={{ color: 'white', display: 'block' }}>
-                Recarregar
-              </div>
-            </button>
-          </div>
-          <ForbiddenColorButton />
-        </div>
+      {/* Floating collapse button - positioned in the middle of sidebar edge, half in half out */}
+      {/* Floating collapse button - positioned in the middle of sidebar edge, half in half out */}
+      {!sidebarIsMobile && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!lockedCollapsed) toggleSidebar();
+          }}
+          disabled={lockedCollapsed}
+          style={{ height: '32px', width: '32px' }}
+          className={`absolute top-1/2 -translate-y-1/2 z-[101] hidden md:flex rounded-full bg-sidebar-accent/90 backdrop-blur-sm border border-sidebar-border/50 text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent shadow-lg transition-all items-center justify-center ${isCollapsed ? "-right-10" : "-right-4"} ${
+            lockedCollapsed ? "opacity-50 cursor-not-allowed" : ""
+          }`}
+        >
+          {isCollapsed ? (
+            <ChevronRight className="h-4 w-4" />
+          ) : (
+            <ChevronLeft className="h-4 w-4" />
+          )}
+        </Button>
       )}
 
-
-
-      <SidebarContent className="relative z-10 md:hidden">
+      {/* Navigation */}
+      <SidebarContent className="relative z-10">
         <ScrollArea className="flex-1">
           <SidebarGroup className="py-2">
             <SidebarGroupContent>
@@ -457,6 +485,29 @@ export function AppSidebar({ lockedCollapsed = false }: { lockedCollapsed?: bool
                             onNavigate={handleMobileClose}
                             editMode={isEditMode}
                           />
+                          {item.id === "emergencia" && sidebarIsMobile && (
+                            <SidebarMenuItem>
+                              <SidebarMenuButton
+                                tooltip="Recarregar e limpar cache"
+                                className="group min-h-[48px]"
+                                onClick={async () => {
+                                  try {
+                                    handleMobileClose();
+                                    toast.info("Limpando cache e recarregando...");
+                                    await hardRefreshToLatest();
+                                  } catch (err) {
+                                    console.error(err);
+                                    window.location.reload();
+                                  }
+                                }}
+                              >
+                                <RefreshCw className="h-5 w-5 flex-shrink-0" />
+                                <span className="flex-1 min-w-0 font-medium text-sm md:text-base truncate">
+                                  Recarregar
+                                </span>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          )}
                         </React.Fragment>
                       );
                     })}
@@ -468,96 +519,102 @@ export function AppSidebar({ lockedCollapsed = false }: { lockedCollapsed?: bool
         </ScrollArea>
       </SidebarContent>
 
-      <SidebarFooter className={`sucena-sidebar-footer border-none relative z-10 safe-area-inset-bottom ${isCollapsed ? "p-2" : "px-4 pb-7"}`}>
+      {/* Footer */}
+      <SidebarFooter className={`border-t border-sidebar-border/50 relative z-10 ${isCollapsed ? "p-1 py-4" : "p-2 md:p-2"}`}>
         {user ? (
-          <div className="flex flex-col gap-2 w-full">
-            <div className={`sucena-sidebar-actions justify-center ${isCollapsed ? "flex-col" : "flex-row"}`}>
-              {isAdmin && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Link
-                        to="/admin"
-                        className="sucena-sidebar-action-icon w-auto px-2 flex items-center justify-center transition-transform hover:scale-110 relative rounded-md"
-                        aria-label="Painel Admin"
-                      >
-                        <span className="text-[10px] font-bold text-[#b58a48] uppercase tracking-wider bg-[#b58a48]/10 border border-[#b58a48]/30 px-2 py-0.5 rounded shadow-[0_0_10px_rgba(181,138,72,0.2)] whitespace-nowrap">
-                          ADMIN
-                        </span>
-                      </Link>
-                    </TooltipTrigger>
-                    <TooltipContent>Painel Admin</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-
-            </div>
-
-            <div className={`sucena-sidebar-actions justify-between ${isCollapsed ? "flex-col" : "flex-row"}`}>
-              <div className="flex items-center gap-1">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => navigate("/configuracoes")}
-                        className="sucena-sidebar-action-icon"
-                        aria-label="Configurações"
-                      >
-                        <Settings className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Configurações</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                {isAdmin && isEditMode && (
-                  <>
-                    <input
-                      ref={logoEditRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleLogoEditUpload}
-                      className="hidden"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => logoEditRef.current?.click()}
-                      className="sucena-sidebar-action-icon"
-                      aria-label="Alterar logo"
-                      title="Alterar logo"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                  </>
+          <>
+            {/* User Info */}
+            <div className={`flex flex-col gap-2 ${isCollapsed ? "items-center" : "p-2"}`}>
+              <div className={`flex items-center gap-2 md:gap-3 ${isCollapsed ? "justify-center" : ""}`}>
+                <NeonAvatar
+                  src={profile?.avatar_url}
+                  name={profile?.full_name || "Usuário"}
+                  frameColor={profile?.frame_color}
+                  neonColor={profile?.neon_color}
+                  frameAnimation={profile?.frame_animation}
+                  size={isCollapsed ? "xs" : "sm"}
+                />
+                {!isCollapsed && (
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold truncate text-sidebar-foreground">{profile?.full_name || "Usuário"}</p>
+                    <p className="text-xs text-sidebar-foreground/60 truncate">{formatCargoLabel(profile?.cargo) || "Membro"}</p>
+                  </div>
                 )}
               </div>
-
-              <Button
-                variant="ghost"
-                className={`sucena-sidebar-logout ${isCollapsed ? "h-9 w-9 p-0" : ""}`}
-                onClick={handleSignOut}
-                title="Sair"
-              >
-                <LogOut className="h-4 w-4" />
-                {!isCollapsed && <span>SAIR</span>}
-              </Button>
+              
+              {/* Horizontal Icon Bar */}
+              <div className={`flex items-center justify-around gap-1 w-full mt-1 ${isCollapsed && !sidebarIsMobile ? "flex-col" : "flex-row"}`}>
+                {isAdmin && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => navigate("/admin")}
+                    className={`${isCollapsed && !sidebarIsMobile ? "h-8 w-8" : "h-10 w-10"} hover:bg-amber-500/20`}
+                    title={isModerator ? "Moderação" : "Administração"}
+                  >
+                    <img loading="lazy" decoding="async" src={admIconAsset.url} alt="ADM" className="h-6 w-6 object-contain" />
+                  </Button>
+                )}
+                {canEdit && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={toggleEditMode}
+                    className={`${isCollapsed && !sidebarIsMobile ? "h-8 w-8" : "h-10 w-10"} transition-colors border-none shadow-none bg-transparent ${
+                      isEditMode 
+                        ? "text-primary hover:bg-primary/10" 
+                        : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                    }`}
+                    title={isEditMode ? "Desativar modo edição" : "Ativar modo edição"}
+                  >
+                    {isEditMode ? <PencilOff className="h-5 w-5" /> : <Pencil className="h-5 w-5" />}
+                  </Button>
+                )}
+                {isAdmin && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => navigate("/selecao-ambiente")}
+                    className={`${isCollapsed && !sidebarIsMobile ? "h-8 w-8" : "h-10 w-10"} text-sidebar-foreground/70 hover:text-emerald-500 hover:bg-emerald-500/20`}
+                    title="Trocar de ambiente"
+                  >
+                    <Building2 className="h-5 w-5" />
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => navigate("/configuracoes")}
+                  className={`${isCollapsed && !sidebarIsMobile ? "h-8 w-8" : "h-10 w-10"} text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent`}
+                  title="Configurações"
+                >
+                  <Settings className="h-5 w-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleSignOut}
+                  className={`${isCollapsed && !sidebarIsMobile ? "h-8 w-8" : "h-10 w-10"} text-sidebar-foreground/70 hover:text-red-500 hover:bg-red-500/20 border-none shadow-none bg-transparent`}
+                  title="Sair"
+                >
+                  <LogOut className="h-5 w-5" />
+                </Button>
+              </div>
             </div>
-          </div>
+          </>
         ) : (
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Entrar">
                 <Link to="/auth">
                   <LogIn className="h-5 w-5" />
-                  <span>Entrar</span>
+                  <span className="font-medium">Entrar</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
         )}
+
       </SidebarFooter>
     </Sidebar>
   );

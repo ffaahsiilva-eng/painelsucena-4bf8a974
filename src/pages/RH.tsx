@@ -635,9 +635,9 @@ const RH = () => {
         {/* Table */}
         <Card className="shadow-lg border-t-2 border-primary">
           <CardContent className="p-0">
-            <div className="table-scroll overflow-x-auto pb-4">
-              <div className="min-w-[1000px] xl:min-w-full">
-                <Table className="text-xs modern-text-black">
+            <div className="table-scroll overflow-x-auto sm:overflow-x-visible">
+              <div className="min-w-full sm:min-w-0">
+                <Table className="text-xs">
                 <TableHeader>
                   <TableRow className="bg-muted/50 whitespace-nowrap sm:whitespace-normal [&_th]:px-1 sm:[&_th]:px-3 [&_th]:py-3 sm:[&_th]:py-4 text-xs font-bold">
                     <TableHead 
@@ -706,7 +706,7 @@ const RH = () => {
                     </TableHead>
                     <TableHead className="w-32">Contato</TableHead>
                     {!permissionsLoading && canEditRH && (
-                      <TableHead className="w-[110px] sm:w-[130px] sticky right-0 bg-muted/80  shadow-[-4px_0_6px_-4px_rgba(0,0,0,0.4)] z-30">Ações</TableHead>
+                      <TableHead className="w-[110px] sm:w-[130px] sticky right-0 bg-muted/80 backdrop-blur-sm shadow-[-4px_0_6px_-4px_rgba(0,0,0,0.4)] z-30">Ações</TableHead>
 
                     )}
                   </TableRow>

@@ -3,8 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEnvironment } from "./useEnvironment";
 import { resolveStorageUrl } from "@/lib/storage";
 import sucenaLogo from "@/assets/Sucena-Official.png.asset.json";
-import { compressImage } from "@/utils/imageCompression";
-
 
 export interface SiteSettings {
   id: string;
@@ -293,7 +291,6 @@ export function useSiteSettings() {
       if (currentEnv === "barcarena") {
         const VISUAL_FIELDS = [
           "logo_url","transition_logo_url","sidebar_color","ui_theme","primary_color",
-          "show_signup_button",
           "instacena_gif_position","instacena_gif_size","instacena_gif_height","instacena_gif_url",
           "instacena_gif_right_url","instacena_gif_right_position","instacena_gif_right_size",
           "instacena_gif_right_height","instacena_gif_opacity","instacena_gif_right_opacity",
@@ -354,7 +351,7 @@ export function useSiteSettings() {
 
     const { error: uploadError } = await supabase.storage
       .from("site-assets")
-      .upload(filePath, await compressImage(file), { upsert: true });
+      .upload(filePath, file, { upsert: true });
 
     if (uploadError) throw uploadError;
 

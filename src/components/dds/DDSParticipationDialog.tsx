@@ -16,8 +16,6 @@ import { downloadPdfFromHtml } from "@/lib/pdfDownload";
 import { supabase } from "@/integrations/supabase/client";
 import html2canvas from "html2canvas";
 import { useEnvironment, ENVIRONMENTS } from "@/hooks/useEnvironment";
-import { compressImage } from "@/utils/imageCompression";
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -259,7 +257,7 @@ export const DDSParticipationDialog = ({ open, onOpenChange, date }: Props) => {
       const blob = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), "image/png"));
 
       const path = `instacena/dds-presenca-${date}-${Date.now()}.png`;
-      const { error: uploadErr } = await supabase.storage.from("site-assets").upload(path, await compressImage(blob), { upsert: true });
+      const { error: uploadErr } = await supabase.storage.from("site-assets").upload(path, blob, { upsert: true });
       if (uploadErr) throw uploadErr;
       const { data: urlData } = supabase.storage.from("site-assets").getPublicUrl(path);
 

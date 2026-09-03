@@ -1,8 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { compressImage } from "@/utils/imageCompression";
-
 
 export const SECURITY_FILE_CATEGORIES = [
   "Encarregado",
@@ -72,7 +70,7 @@ export function useSecurityFiles() {
 
       const { error: uploadError, data: uploadData } = await supabase.storage
         .from("security-files")
-        .upload(fileName, await compressImage(file), {
+        .upload(fileName, file, {
           cacheControl: "3600",
           upsert: false,
           contentType: file.type || "application/octet-stream",

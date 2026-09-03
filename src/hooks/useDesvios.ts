@@ -3,8 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { useProfile } from "./useProfile";
 import { toast } from "sonner";
-import { compressImage } from "@/utils/imageCompression";
-
 
 export interface DesvioItem {
   id: string;
@@ -194,7 +192,7 @@ export function useUploadDesvioPhoto() {
       const path = `${crypto.randomUUID()}.${ext}`;
       const { error } = await supabase.storage
         .from("desvios")
-        .upload(path, await compressImage(file), { cacheControl: "3600", upsert: false });
+        .upload(path, file, { cacheControl: "3600", upsert: false });
       if (error) throw error;
       const { data: urlData } = supabase.storage.from("desvios").getPublicUrl(path);
       return urlData.publicUrl;

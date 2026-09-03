@@ -20,8 +20,7 @@ export interface SyncQueueItem {
     | "equipment_movement"
     | "stop_history"
     | "shift_record"
-    | "driver_checklist"
-    | "wapi_invoke";
+    | "driver_checklist";
   payload: Record<string, unknown>;
   timestamp: string;
   retries: number;

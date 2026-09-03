@@ -30,13 +30,7 @@ export function useMyEnvironmentAccess() {
         .select("environment")
         .eq("user_id", userId!);
       if (error) throw error;
-      let envs = (data ?? []).map((r) => r.environment as EnvironmentId);
-      
-      // Default to barcarena for existing users without explicit grants
-      if (envs.length === 0) {
-        envs = ["barcarena"];
-      }
-      
+      const envs = (data ?? []).map((r) => r.environment as EnvironmentId);
       return Array.from(new Set(envs)) as EnvironmentId[];
     },
   });

@@ -5,7 +5,7 @@ import type { EquipmentType } from "@/components/equipamentos/VehicleIcons";
 import { useEnvironment } from "@/hooks/useEnvironment";
 import { subscribeToTable } from "@/lib/realtimeManager";
 
-export type StopReason = "none" | "maintenance" | "waiting" | "rain" | "end_of_shift" | "end_of_day" | "almoco" | "manutencao_fora" | "manutencao_externa" | "oficina_externa" | "trabalho_externo" | "servico";
+export type StopReason = "none" | "maintenance" | "waiting" | "rain" | "end_of_shift" | "end_of_day" | "almoco" | "manutencao_fora" | "manutencao_externa" | "oficina_externa" | "trabalho_externo";
 
 export type MobilizationStatus = "mobilizando" | "mobilizado" | "desmobilizando" | "desmobilizado";
 
@@ -28,9 +28,6 @@ export interface Equipment {
   stop_reason: StopReason;
   stop_start_time: string | null;
   image_url?: string | null;
-  latitude?: number | null;
-  longitude?: number | null;
-  location_updated_at?: string | null;
   mobilization_status: MobilizationStatus;
   created_at: string;
   updated_at: string;
@@ -79,36 +76,21 @@ export function useEquipment(options: { includeDesmobilized?: boolean } = {}) {
   return useQuery({
     queryKey: ["equipment", { includeDesmobilized, env }],
     queryFn: async () => {
-      const cacheKey = `cached_equipment_${env || "default"}`;
-      try {
-        let query = supabase
-          .from("equipment")
-          .select("id, name, plate, driver, helper, equipment_type, stop_reason, stop_start_time, mobilization_status, image_url, environment, latitude, longitude, location_updated_at")
-          .order("created_at", { ascending: true });
-        if (env) query = query.eq("environment", env);
-        
-        // Set a small timeout for the fetch if we know we are offline, or let it fail
-        const { data, error } = await query;
+      let query = supabase
+        .from("equipment")
+        .select("id, name, plate, driver, helper, equipment_type, stop_reason, stop_start_time, mobilization_status, image_url, environment")
+        .order("created_at", { ascending: true });
+      if (env) query = query.eq("environment", env);
+      const { data, error } = await query;
 
-        if (error) throw error;
-        const rows = (data as Equipment[]).map((r) => ({
-          ...r,
-          mobilization_status: (r.mobilization_status ?? "mobilizado") as MobilizationStatus,
-        }));
-        
-        const finalRows = includeDesmobilized
-          ? rows
-          : rows.filter((r) => r.mobilization_status !== "desmobilizado");
-          
-        localStorage.setItem(cacheKey, JSON.stringify(finalRows));
-        return finalRows;
-      } catch (err) {
-        const cached = localStorage.getItem(cacheKey);
-        if (cached) {
-          return JSON.parse(cached) as Equipment[];
-        }
-        throw err;
-      }
+      if (error) throw error;
+      const rows = (data as Equipment[]).map((r) => ({
+        ...r,
+        mobilization_status: (r.mobilization_status ?? "mobilizado") as MobilizationStatus,
+      }));
+      return includeDesmobilized
+        ? rows
+        : rows.filter((r) => r.mobilization_status !== "desmobilizado");
     },
   });
 }
@@ -344,22 +326,5 @@ export function useEquipmentStopHistory(equipmentId?: string) {
       return data as EquipmentStopHistory[];
     },
     enabled: !!equipmentId || equipmentId === undefined,
-  });
-}
-
-export function useAllActiveEquipmentStops() {
-  const { environment: env } = useEnvironment();
-  const queryClient = useQueryClient();
-  return useQuery({
-    queryKey: ["equipment_stop_history", "active", env],
-    queryFn: async () => {
-      let query = supabase
-        .from("equipment_stop_history")
-        .select("equipment_id, defect_description")
-        .is("ended_at", null);
-      const { data, error } = await query;
-      if (error) throw error;
-      return data as { equipment_id: string; defect_description: string | null }[];
-    }
   });
 }

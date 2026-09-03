@@ -5,8 +5,6 @@ import { Button } from "@/components/ui/button";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { compressImage } from "@/utils/imageCompression";
-
 
 type SlotKey =
   | "day_sunny"
@@ -61,7 +59,7 @@ export function WeatherMediaSettings() {
     try {
       const ext = file.name.split(".").pop();
       const path = `weather/${slot}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-      const { error: upErr } = await supabase.storage.from("site-assets").upload(path, await compressImage(file), { upsert: true, contentType: file.type });
+      const { error: upErr } = await supabase.storage.from("site-assets").upload(path, file, { upsert: true, contentType: file.type });
       if (upErr) throw upErr;
       const { data } = supabase.storage.from("site-assets").getPublicUrl(path);
       const current = getList(slot);

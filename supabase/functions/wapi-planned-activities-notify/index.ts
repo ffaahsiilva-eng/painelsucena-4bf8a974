@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
 
     // Get config
     const { data: cfg } = await admin.from("wapi_config").select("*").limit(1).single();
-    if (!cfg || !cfg.enabled || (cfg.auto_send_planned_activities === false && !force)) {
+    if (!cfg || !cfg.enabled || (!cfg.auto_send_planned_activities && !force)) {
       return new Response(JSON.stringify({ skipped: true, reason: "disabled" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

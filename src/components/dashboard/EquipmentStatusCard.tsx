@@ -69,9 +69,9 @@ const EquipmentList = ({ equipment, emptyMessage }: EquipmentListProps) => {
             >
               {getEquipmentTypeLabel(eq.equipment_type)}
             </Badge>
-            <span className="font-medium text-sm dark:!text-slate-100">{eq.name}</span>
+            <span className="font-medium text-sm">{eq.name}</span>
           </div>
-          <span className="text-xs text-muted-foreground dark:!text-slate-300">{eq.plate}</span>
+          <span className="text-xs text-muted-foreground">{eq.plate}</span>
         </div>
       ))}
     </div>
@@ -100,7 +100,7 @@ export function EquipmentStatusCard() {
       if (error) throw error;
       return (data ?? []).map((r) => r.equipment_id);
     },
-
+    refetchInterval: 60_000,
   });
 
   if (isLoading) {
@@ -134,27 +134,16 @@ export function EquipmentStatusCard() {
     );
   }
 
-  const isMaintenanceStatus = (status: string | null | undefined) => {
-    if (!status) return false;
-    const s = status.toLowerCase();
-    return s.includes("manutenc") || 
-           s.includes("manutenç") || 
-           s.includes("oficina") || 
-           s === "maintenance" || 
-           s === "vistoria";
-  };
-
+  const maintenanceStatuses = ["maintenance", "manutencao_corretiva", "manutencao_preventiva", "vistoria"];
   const activeSet = new Set(activeShiftIds);
   // Placas atualmente fora da obra por manutenção/vistoria (equipment_movements)
   const outMaintenancePlates = new Set(
     currentlyOut
-      .filter((m: any) => isMaintenanceStatus(m.exit_reason))
+      .filter((m: any) => maintenanceStatuses.includes(m.exit_reason || ""))
       .map((m: any) => m.plate)
   );
-
-  const isInMaintenance = (eq: Equipment) => {
-    return isMaintenanceStatus(eq.stop_reason) || outMaintenancePlates.has(eq.plate);
-  };
+  const isInMaintenance = (eq: Equipment) =>
+    maintenanceStatuses.includes(eq.stop_reason || "") || outMaintenancePlates.has(eq.plate);
   // Camionete e Ônibus sempre em Operação, exceto quando saíram para manutenção/vistoria
   const alwaysOperatingTypes = ["camionete", "onibus"];
   const isAlwaysOperating = (eq: Equipment) => alwaysOperatingTypes.includes(eq.equipment_type);
@@ -242,7 +231,7 @@ export function EquipmentStatusCard() {
             />
             <Link
               to="/equipamentos"
-              className="block mt-4 text-xs text-center text-muted-foreground hover:text-foreground dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+              className="block mt-4 text-xs text-center text-muted-foreground hover:text-foreground transition-colors"
             >
               Ver todos os equipamentos →
             </Link>
@@ -270,7 +259,7 @@ export function EquipmentStatusCard() {
             />
             <Link
               to="/equipamentos"
-              className="block mt-4 text-xs text-center text-muted-foreground hover:text-foreground dark:!text-slate-400 dark:hover:!text-slate-200 transition-colors"
+              className="block mt-4 text-xs text-center text-muted-foreground hover:text-foreground transition-colors"
             >
               Ver todos os equipamentos →
             </Link>

@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (cfg.auto_send_vehicle_inspection_alert === false && !force) {
+    if (!cfg.auto_send_vehicle_inspection_alert && !force) {
       return new Response(JSON.stringify({ skipped: true, reason: "Alerta de vistoria desabilitado" }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

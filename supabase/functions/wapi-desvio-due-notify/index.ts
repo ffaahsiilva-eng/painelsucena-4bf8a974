@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (cfg.auto_send_desvio_due_alert === false && !force) {
+    if (!cfg.auto_send_desvio_due_alert && !force) {
       return new Response(JSON.stringify({ skipped: true, reason: "Alerta de prazo de desvio desabilitado" }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

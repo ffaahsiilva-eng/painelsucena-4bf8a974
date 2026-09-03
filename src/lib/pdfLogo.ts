@@ -1,7 +1,7 @@
 // Central logo for PDF generation
 // Logo path in public folder for easy access
-import logoPrincipal from "@/assets/logo-principal.png";
-export const PDF_LOGO_URL = logoPrincipal;
+import sucenaLogo from "@/assets/sucena-official-3.png.asset.json";
+export const PDF_LOGO_URL = sucenaLogo.url;
 
 // Helper to fetch and convert logo to base64 for embedding in PDFs
 export async function getLogoBase64(): Promise<string> {

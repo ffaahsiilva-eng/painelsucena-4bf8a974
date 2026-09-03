@@ -55,31 +55,44 @@ const RelatorioDiarioObra = () => {
           <h1 className="text-2xl md:text-3xl font-bold text-[#c9a84c]">Relatório Diário Obra</h1>
         </div>
 
-        <div className="sucena-module-grid">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-5 max-w-3xl mx-auto">
           {rdoPages.map((page) => (
             <button
               key={page.path}
               onClick={() => navigate(page.path)}
-              className="sucena-module-tile group"
+              className="group relative rounded-2xl p-[2px] cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(201,168,76,0.3)] focus:outline-none"
+              style={{ background: "linear-gradient(145deg, #d4a84c, #b8942e, #e8c95a, #a07828)" }}
             >
-              <page.icon className="h-10 w-10 text-[#555b5f] group-hover:text-[#b68a46] group-hover:scale-110 transition-all duration-300" strokeWidth={1.2} />
-              <span className="text-[15px] font-semibold text-[#2b2f31]">
-                {page.label}
-              </span>
+              <div
+                className="rounded-[14px] flex flex-col items-center justify-center gap-3 p-5 md:p-6 h-full min-h-[140px] md:min-h-[160px]"
+                style={{ background: "linear-gradient(160deg, #d4a84c 0%, #c49a3c 25%, #b08830 50%, #c49a3c 75%, #d8b050 100%)" }}
+              >
+                <div className="absolute inset-[6px] rounded-xl border border-[#b8942e]/50 pointer-events-none" />
+                <page.icon className="h-10 w-10 md:h-12 md:w-12 text-[#1a1a1a] drop-shadow-sm group-hover:scale-110 transition-transform duration-300" strokeWidth={1.5} />
+                <span className="text-[#1a1a1a] text-xs md:text-sm font-semibold text-center leading-tight whitespace-pre-line">
+                  {page.label}
+                </span>
+              </div>
             </button>
           ))}
 
           {definitions.map((def) => {
             const Icon = getIconComponent(def.icon);
             return (
-              <div key={def.id} className="relative group">
+              <div
+                key={def.id}
+                className="group relative rounded-2xl p-[2px] transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(201,168,76,0.3)]"
+                style={{ background: "linear-gradient(145deg, #d4a84c, #b8942e, #e8c95a, #a07828)" }}
+              >
                 <button
                   type="button"
                   onClick={() => navigate(`/atividade-custom/${def.id}`)}
-                  className="sucena-module-tile group w-full h-full"
+                  className="w-full h-full rounded-[14px] flex flex-col items-center justify-center gap-3 p-5 md:p-6 min-h-[140px] md:min-h-[160px] focus:outline-none"
+                  style={{ background: "linear-gradient(160deg, #d4a84c 0%, #c49a3c 25%, #b08830 50%, #c49a3c 75%, #d8b050 100%)" }}
                 >
-                  <Icon className="h-10 w-10 text-[#555b5f] group-hover:text-[#b68a46] group-hover:scale-110 transition-all duration-300" strokeWidth={1.2} />
-                  <span className="text-[15px] font-semibold text-[#2b2f31]">
+                  <div className="absolute inset-[6px] rounded-xl border border-[#b8942e]/50 pointer-events-none" />
+                  <Icon className="h-10 w-10 md:h-12 md:w-12 text-[#1a1a1a] drop-shadow-sm group-hover:scale-110 transition-transform duration-300" strokeWidth={1.5} />
+                  <span className="text-[#1a1a1a] text-xs md:text-sm font-semibold text-center leading-tight whitespace-pre-line">
                     {def.title}
                   </span>
                 </button>
@@ -102,13 +115,19 @@ const RelatorioDiarioObra = () => {
             <button
               type="button"
               onClick={() => setOpen(true)}
-              className="sucena-module-tile group border-2 border-dashed border-[#b68a46]/30 bg-transparent hover:bg-white/10"
+              className="group relative rounded-2xl p-[2px] cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(201,168,76,0.3)] focus:outline-none"
+              style={{ background: "linear-gradient(145deg, #d4a84c, #b8942e, #e8c95a, #a07828)" }}
               title="Adicionar nova atividade"
             >
-              <Plus className="h-10 w-10 text-[#555b5f] group-hover:text-[#b68a46] group-hover:scale-110 transition-all duration-300" strokeWidth={1.2} />
-              <span className="text-[15px] font-semibold text-[#2b2f31]">
-                Nova Atividade
-              </span>
+              <div
+                className="rounded-[14px] flex flex-col items-center justify-center gap-3 p-5 md:p-6 h-full min-h-[140px] md:min-h-[160px] border-2 border-dashed border-[#1a1a1a]/30"
+                style={{ background: "linear-gradient(160deg, #e8c95a 0%, #d4a84c 50%, #e8c95a 100%)" }}
+              >
+                <Plus className="h-10 w-10 md:h-12 md:w-12 text-[#1a1a1a] drop-shadow-sm group-hover:scale-110 transition-transform duration-300" strokeWidth={2} />
+                <span className="text-[#1a1a1a] text-xs md:text-sm font-semibold text-center leading-tight">
+                  Nova Atividade
+                </span>
+              </div>
             </button>
           )}
         </div>

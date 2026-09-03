@@ -23,8 +23,6 @@ import {
 import { format } from "date-fns";
 import cipaLogo from "@/assets/cipa-logo.png.asset.json";
 import { useRHEfetivo } from "@/hooks/useRHEfetivo";
-import { compressImage } from "@/utils/imageCompression";
-
 
 // Colaborador picker (searchable) reused em Presidente/Responsáveis
 function ColaboradorPicker({
@@ -89,7 +87,7 @@ function ColaboradorPicker({
 const uploadFile = async (file: File, folder: string) => {
   const ext = file.name.split(".").pop();
   const path = `cipa/${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-  const { error } = await supabase.storage.from("document-files").upload(path, await compressImage(file), { upsert: false });
+  const { error } = await supabase.storage.from("document-files").upload(path, file, { upsert: false });
   if (error) throw error;
   const { data } = supabase.storage.from("document-files").getPublicUrl(path);
   return { url: data.publicUrl, name: file.name };

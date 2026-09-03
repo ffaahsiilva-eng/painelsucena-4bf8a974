@@ -243,11 +243,7 @@ export default function Estoque() {
                 </CardContent>
               </Card>
             ) : (
-              <Card>
-                <CardContent className="p-0 sm:p-6">
-                  <InventoryTable items={filteredItems} onEdit={setEditItem} />
-                </CardContent>
-              </Card>
+              <InventoryTable items={filteredItems} onEdit={setEditItem} />
             )}
           </TabsContent>
 

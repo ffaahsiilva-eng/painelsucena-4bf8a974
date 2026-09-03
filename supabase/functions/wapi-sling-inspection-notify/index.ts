@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (cfg.auto_send_sling_inspection_alert === false && !force) {
+    if (!cfg.auto_send_sling_inspection_alert && !force) {
       return new Response(JSON.stringify({ skipped: true, reason: "Alerta de cintas desabilitado" }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

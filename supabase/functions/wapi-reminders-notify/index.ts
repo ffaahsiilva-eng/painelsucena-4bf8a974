@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
       .limit(1)
       .maybeSingle();
 
-    if (!cfg || !cfg.enabled || cfg.auto_send_reminders === false) {
+    if (!cfg || !cfg.enabled || !cfg.auto_send_reminders) {
       return new Response(
         JSON.stringify({ ok: true, skipped: "auto_send_reminders disabled" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },

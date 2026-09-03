@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     const targetGroupId = (cfg?.group_id_requisitions || cfg?.group_id || "").trim();
-    if (!cfg || !cfg.enabled || cfg.auto_send_requisitions === false || !targetGroupId) {
+    if (!cfg || !cfg.enabled || !cfg.auto_send_requisitions || !targetGroupId) {
       return new Response(JSON.stringify({ skipped: true, reason: "disabled-or-no-group" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

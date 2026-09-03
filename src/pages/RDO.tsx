@@ -412,15 +412,17 @@ export default function RDO() {
     // - Está mobilizado/mobilizando (novos equipamentos entram automaticamente), OU
     // - Entrou no canteiro na data (ou antes) / teve saída tardia
     // E não está em manutenção nem saiu do canteiro definitivamente.
-    const isMaintenanceStatus = (status: string | null | undefined) => {
-      if (!status) return false;
-      const s = status.toLowerCase();
-      return s.includes("manutenc") || 
-             s.includes("manutenç") || 
-             s.includes("oficina") || 
-             s === "maintenance" || 
-             s === "vistoria";
-    };
+    const maintenanceReasons = new Set([
+      "maintenance",
+      "manutencao_corretiva",
+      "manutencao_preventiva",
+      "manutencao_fora",
+      "manutencao_externa",
+      "oficina_externa",
+      "fora_de_operacao",
+      "fora_de_obra",
+      "vistoria"
+    ]);
 
     const equipmentNoCanteiro = equipment
       .filter(eq => {
@@ -434,11 +436,11 @@ export default function RDO() {
         if (platesOut.has(eq.plate)) return false;
         
         // 2. Filtrar pelo status operacional atual/histórico
-        const currentStopReason = ((eq as any).stop_reason || "none").toLowerCase();
+        const currentStopReason = (eq as any).stop_reason || "none";
         
         // Equipamentos em serviço devem aparecer no RDO
         // Se estiver em manutenção ou vistoria, não deve aparecer (exceto PIPA 04 que é forçada no início do filtro)
-        if (currentStopReason !== "servico" && isMaintenanceStatus(currentStopReason)) return false;
+        if (currentStopReason !== "servico" && maintenanceReasons.has(currentStopReason)) return false;
 
         const isMobilized = eq.mobilization_status === "mobilizado" || eq.mobilization_status === "mobilizando";
         return isMobilized || inPlates.has(eq.plate) || lateSaidaPlates.has(eq.plate);

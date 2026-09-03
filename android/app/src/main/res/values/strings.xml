@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">Painel Sucena</string>
-    <string name="title_activity_main">Painel Sucena</string>
-    <string name="package_name">com.sucena.painel</string>
-    <string name="custom_url_scheme">com.sucena.painel</string>
-</resources>

@@ -3,8 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { FileUp, FileText, Check, Loader2, X, Trash2, Eye, Download } from "lucide-react";
 import { toast } from "sonner";
-import { compressImage } from "@/utils/imageCompression";
-
 
 interface NrFileUploadProps {
   colaboradorId: number | string;
@@ -49,7 +47,7 @@ export const NrFileUpload = ({
 
       const { error: uploadError } = await supabase.storage
         .from("documents")
-        .upload(filePath, await compressImage(file));
+        .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 

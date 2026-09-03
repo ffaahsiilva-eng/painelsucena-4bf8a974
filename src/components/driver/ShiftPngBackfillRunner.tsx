@@ -1,21 +1,12 @@
 /**
- * Runner de backfill da Parte Diária (PNG).
+ * Runner de backfill da Parte Diária (PNG) — DESATIVADO.
  *
- * O envio principal ocorre no Fim de Turno em `DriverStatusButtons`. Porém,
- * quando o turno é encerrado por outro caminho (reset administrativo,
- * autoencerramento, offline, falha ao gerar o PNG no celular) só o texto
- * chegava no WhatsApp. Este runner garante que TODO turno finalizado receba a
- * Parte Diária em PNG no grupo.
- *
- * Proteções contra loop de envio:
- *  - qualquer registro `daily-shift-png-end` existente (qualquer status) marca
- *    o turno como já tratado;
- *  - cache local por sessão (`processedRef`);
- *  - índice único no banco em (origin, external_kind, external_id).
+ * O envio principal já ocorre no fluxo de Fim de Turno em `DriverStatusButtons`
+ * e a edge function `wapi-driver-status-notify` faz dedup por `shiftRecordId`.
+ * O runner ficou reenfileirando o mesmo PNG várias vezes por minuto quando a
+ * dedup do servidor falhava, resultando em envios em loop no grupo do
+ * WhatsApp. Mantemos o componente como no-op para não quebrar imports.
  */
-import { useShiftPngBackfill } from "@/hooks/useShiftPngBackfill";
-
 export function ShiftPngBackfillRunner() {
-  useShiftPngBackfill(true);
   return null;
 }

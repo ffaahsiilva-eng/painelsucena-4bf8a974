@@ -21,18 +21,17 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const admin = createClient(supabaseUrl, serviceKey);
 
-    let mode: "today" | "tomorrow" | "both" = "both";
+    let mode: "today" | "tomorrow" = "today";
     try {
       if (req.method === "POST") {
         const body = await req.json().catch(() => ({}));
-        if (body?.mode === "today") mode = "today";
         if (body?.mode === "tomorrow") mode = "tomorrow";
       }
     } catch { /* ignore */ }
 
     const { data: cfg } = await admin
       .from("wapi_config")
-      .select("enabled, dds_auto_notify, dds_notify_day_before, group_id, group_id_dds")
+      .select("enabled, dds_auto_notify, dds_notify_day_before, group_id_dds")
       .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -43,107 +42,96 @@ Deno.serve(async (req) => {
       });
     }
 
-    const targetGroup = (cfg.group_id_dds || cfg.group_id || "").trim();
-    const modesToRun: Array<"today" | "tomorrow"> = mode === "both" ? ["today", "tomorrow"] : [mode];
-    const overallResults: any[] = [];
-    let totalSent = 0;
-
-    for (const currentMode of modesToRun) {
-      const flagOk = currentMode === "tomorrow" ? cfg.dds_notify_day_before : cfg.dds_auto_notify;
-      if (flagOk === false) {
-        overallResults.push({ skipped: true, mode: currentMode, reason: `Lembrete '${currentMode}' desabilitado` });
-        continue;
-      }
-
-      const targetDate = currentMode === "tomorrow" ? getParaDateISO(1) : getParaDateISO(0);
-
-      const { data: schedules, error: scheduleErr } = await admin
-        .from("dds_schedule")
-        .select("id, theme, presenter_user_id, external_presenter_name, scheduled_date")
-        .eq("scheduled_date", targetDate);
-
-      if (scheduleErr) throw scheduleErr;
-      if (!schedules || schedules.length === 0) {
-        overallResults.push({ skipped: true, mode: currentMode, reason: `Nenhum DDS agendado`, targetDate });
-        continue;
-      }
-
-      const results: Array<{ presenter: string; ok: boolean; error?: string; privateOk?: boolean; privateErr?: string; privatePhone?: string | null }> = [];
-
-      for (const dds of schedules) {
-        let presenterName = dds.external_presenter_name ?? "Palestrante";
-        let presenterPhone: string | null = null;
-        if (dds.presenter_user_id) {
-          const { data: profile } = await admin
-            .from("profiles")
-            .select("full_name, whatsapp_number")
-            .eq("user_id", dds.presenter_user_id)
-            .maybeSingle();
-          if (profile?.full_name) presenterName = profile.full_name;
-          if (profile?.whatsapp_number) presenterPhone = String(profile.whatsapp_number).replace(/\D/g, "");
-        }
-
-        const dateBR = targetDate.split("-").reverse().join("/");
-        const header = currentMode === "tomorrow"
-          ? "🔔 *Lembrete DDS - Amanhã*"
-          : "🎤 *Lembrete DDS - Hoje*";
-        const dayLabel = currentMode === "tomorrow" ? "amanhã" : "hoje";
-        const message = `${header}\n\n👤 *Palestrante:* ${presenterName}\n📅 *Data:* ${dateBR} (${dayLabel})\n📋 *Tema:* ${dds.theme}\n\n_Mensagem automática - Sucena_`;
-
-        const dedupeKey = `dds-${currentMode}-${dds.id}-${targetDate}-${presenterPhone || 'nophone'}`;
-
-        let qErr = null;
-        if (targetGroup) {
-          const { error } = await admin.from("wapi_outbox").insert({
-            kind: "text",
-            target_type: "group",
-            phone: targetGroup,
-            message,
-            origin: "dds",
-            external_kind: "dds-schedule",
-            external_id: dds.id,
-            dedupe_key: dedupeKey,
-          });
-          qErr = error;
-        }
-
-        // Also send to presenter's personal WhatsApp
-        let privateOk = false;
-        let privateErr: string | undefined;
-        if (presenterPhone && presenterPhone.length >= 10) {
-          const phoneFormatted = (presenterPhone.length === 10 || presenterPhone.length === 11)
-            ? `55${presenterPhone}` : presenterPhone;
-          const privateMsg = `Olá *${presenterName}*,\n\n${header.replace(/\*/g, "")}\n\n📅 *Data:* ${dateBR} (${dayLabel})\n📋 *Tema:* ${dds.theme}\n\nVocê está agendado(a) para apresentar o DDS.\n\n_Mensagem automática - Sucena_`;
-          const { error: pErr } = await admin.from("wapi_outbox").insert({
-            kind: "text",
-            target_type: "contact",
-            phone: phoneFormatted,
-            message: privateMsg,
-            origin: "dds",
-            external_kind: "dds-schedule-private",
-            external_id: dds.id,
-            dedupe_key: `dds-${currentMode}-${dds.id}-${targetDate}-${presenterPhone || 'nophone'}-private`,
-          });
-          privateOk = !pErr;
-          privateErr = pErr?.message;
-        }
-
-        results.push({ presenter: presenterName, ok: !qErr, error: qErr?.message, privateOk, privateErr, privatePhone: presenterPhone });
-      }
-
-      const sent = results.filter((r) => r.ok).length;
-      totalSent += sent;
-      overallResults.push({ success: true, mode: currentMode, targetDate, group: targetGroup, sent, total: results.length, results });
+    const flagOk = mode === "tomorrow" ? cfg.dds_notify_day_before : cfg.dds_auto_notify;
+    if (!flagOk) {
+      return new Response(JSON.stringify({ skipped: true, reason: `Lembrete '${mode}' desabilitado` }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    // For compatibility with the front-end parser that expects success/sent fields at top level
-    return new Response(JSON.stringify({ 
-      success: true, 
-      mode, 
-      sent: totalSent, 
-      total: overallResults.reduce((acc, curr) => acc + (curr.total || 0), 0),
-      runs: overallResults 
-    }), {
+    const targetGroup = (cfg.group_id_dds || "").trim();
+    if (!targetGroup) {
+      return new Response(JSON.stringify({ skipped: true, reason: "ID do grupo DDS não configurado" }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const targetDate = mode === "tomorrow" ? getParaDateISO(1) : getParaDateISO(0);
+
+    const { data: schedules, error: scheduleErr } = await admin
+      .from("dds_schedule")
+      .select("id, theme, presenter_user_id, external_presenter_name, scheduled_date")
+      .eq("scheduled_date", targetDate);
+
+    if (scheduleErr) throw scheduleErr;
+    if (!schedules || schedules.length === 0) {
+      return new Response(JSON.stringify({ skipped: true, reason: `Nenhum DDS agendado para ${mode === "tomorrow" ? "amanhã" : "hoje"}`, targetDate }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const results: Array<{ presenter: string; ok: boolean; error?: string }> = [];
+
+    for (const dds of schedules) {
+      let presenterName = dds.external_presenter_name ?? "Palestrante";
+      let presenterPhone: string | null = null;
+      if (dds.presenter_user_id) {
+        const { data: profile } = await admin
+          .from("profiles")
+          .select("full_name, whatsapp_number")
+          .eq("user_id", dds.presenter_user_id)
+          .maybeSingle();
+        if (profile?.full_name) presenterName = profile.full_name;
+        if (profile?.whatsapp_number) presenterPhone = String(profile.whatsapp_number).replace(/\D/g, "");
+      }
+
+      const dateBR = targetDate.split("-").reverse().join("/");
+      const header = mode === "tomorrow"
+        ? "🔔 *Lembrete DDS - Amanhã*"
+        : "🎤 *Lembrete DDS - Hoje*";
+      const dayLabel = mode === "tomorrow" ? "amanhã" : "hoje";
+      const message = `${header}\n\n👤 *Palestrante:* ${presenterName}\n📅 *Data:* ${dateBR} (${dayLabel})\n📋 *Tema:* ${dds.theme}\n\n_Mensagem automática - Sucena_`;
+
+      const dedupeKey = `dds-${mode}-${dds.id}-${targetDate}`;
+
+      const { error: qErr } = await admin.from("wapi_outbox").insert({
+        kind: "text",
+        target_type: "group",
+        phone: targetGroup,
+        message,
+        origin: "dds",
+        external_kind: "dds-schedule",
+        external_id: dds.id,
+        dedupe_key: dedupeKey,
+      });
+
+      // Also send to presenter's personal WhatsApp
+      let privateOk = false;
+      let privateErr: string | undefined;
+      if (presenterPhone && presenterPhone.length >= 10) {
+        const phoneFormatted = (presenterPhone.length === 10 || presenterPhone.length === 11)
+          ? `55${presenterPhone}` : presenterPhone;
+        const privateMsg = `Olá *${presenterName}*,\n\n${header.replace(/\*/g, "")}\n\n📅 *Data:* ${dateBR} (${dayLabel})\n📋 *Tema:* ${dds.theme}\n\nVocê está agendado(a) para apresentar o DDS.\n\n_Mensagem automática - Sucena_`;
+        const { error: pErr } = await admin.from("wapi_outbox").insert({
+          kind: "text",
+          target_type: "contact",
+          phone: phoneFormatted,
+          message: privateMsg,
+          origin: "dds",
+          external_kind: "dds-schedule-private",
+          external_id: dds.id,
+          dedupe_key: `dds-${mode}-${dds.id}-${targetDate}-private`,
+        });
+        privateOk = !pErr;
+        privateErr = pErr?.message;
+      }
+
+      results.push({ presenter: presenterName, ok: !qErr, error: qErr?.message, privateOk, privateErr, privatePhone: presenterPhone });
+    }
+
+
+    const sent = results.filter((r) => r.ok).length;
+    return new Response(JSON.stringify({ success: true, mode, targetDate, group: targetGroup, sent, total: results.length, results }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

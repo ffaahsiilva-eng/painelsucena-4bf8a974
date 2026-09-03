@@ -3,7 +3,6 @@ import { cleanupOutdatedCaches, precacheAndRoute } from "workbox-precaching";
 import { registerRoute } from "workbox-routing";
 import { CacheFirst, NetworkFirst, NetworkOnly, StaleWhileRevalidate } from "workbox-strategies";
 import { ExpirationPlugin } from "workbox-expiration";
-import { CacheableResponsePlugin } from "workbox-cacheable-response";
 
 const PREVIEW_HOST_FRAGMENTS = ["id-preview--", "lovableproject.com"];
 const isPreviewRuntime = PREVIEW_HOST_FRAGMENTS.some((fragment) => self.location.hostname.includes(fragment));
@@ -72,9 +71,6 @@ if (isPreviewRuntime) {
     new StaleWhileRevalidate({
       cacheName: "image-cache",
       plugins: [
-        new CacheableResponsePlugin({
-          statuses: [0, 200],
-        }),
         new ExpirationPlugin({
           maxEntries: 100,
           maxAgeSeconds: 30 * 24 * 60 * 60,
@@ -89,9 +85,6 @@ if (isPreviewRuntime) {
       cacheName: "supabase-storage",
       networkTimeoutSeconds: 4,
       plugins: [
-        new CacheableResponsePlugin({
-          statuses: [0, 200],
-        }),
         new ExpirationPlugin({
           maxEntries: 150,
           maxAgeSeconds: 14 * 24 * 60 * 60,
@@ -112,9 +105,9 @@ if (isPreviewRuntime) {
           return networkResponse;
         } catch {
           const cache = await caches.open("offline-fallback");
-          const cached = await caches.match("/index.html", { ignoreSearch: true });
+          const cached = await caches.match("/index.html");
           if (cached) return cached;
-          const fallback = await cache.match("/offline.html", { ignoreSearch: true });
+          const fallback = await cache.match("/offline.html");
           if (fallback) return fallback;
           return new Response(
             "<!doctype html><meta charset=utf-8><title>Offline</title><body style='font-family:system-ui;background:#0f0f23;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;margin:0'><div style='text-align:center'><h1>Sem conexão</h1><p>Você está offline. Reconecte para continuar.</p></div></body>",

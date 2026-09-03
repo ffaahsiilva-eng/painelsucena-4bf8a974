@@ -140,57 +140,49 @@ export default function RegistroMovimentoMotorista() {
       
       const currentEnv = profile?.environment || "barcarena";
 
-      let onlineSuccess = false;
       if (isOnline) {
-        try {
-          // Caminho online: comportamento original
-          await createMovement.mutateAsync({
-            equipment_name: selectedEquipmentData.name,
-            plate: selectedEquipmentData.plate,
-            movement_type: movementType,
-            exit_reason: movementType === "saida" ? exitReason : null,
-            problem_description: exitReason === "manutencao_corretiva" ? problemDescription : null,
-            observation: observation.trim() || null,
-            environment: currentEnv,
-          });
+        // Caminho online: comportamento original
+        await createMovement.mutateAsync({
+          equipment_name: selectedEquipmentData.name,
+          plate: selectedEquipmentData.plate,
+          movement_type: movementType,
+          exit_reason: movementType === "saida" ? exitReason : null,
+          problem_description: exitReason === "manutencao_corretiva" ? problemDescription : null,
+          observation: observation.trim() || null,
+          environment: currentEnv,
+        });
 
-          if (movementType === "saida" && savedVehicleId) {
-            const today = new Date().toISOString().split("T")[0];
-            try {
-              await updateShiftRecord.mutateAsync({
-                id: undefined, // ensure it uses equipment_id + shift_date path
-                equipment_id: savedVehicleId,
-                shift_date: today,
-                final_horimeter: parseFloat(exitHorimeter),
-                final_km: parseFloat(exitKm),
-              });
-            } catch (e) {
-              console.error("Error updating shift record telemetry:", e);
-            }
+        if (movementType === "saida" && savedVehicleId) {
+          const today = new Date().toISOString().split("T")[0];
+          try {
+            await updateShiftRecord.mutateAsync({
+              id: undefined, // ensure it uses equipment_id + shift_date path
+              equipment_id: savedVehicleId,
+              shift_date: today,
+              final_horimeter: parseFloat(exitHorimeter),
+              final_km: parseFloat(exitKm),
+            });
+          } catch (e) {
+            console.error("Error updating shift record telemetry:", e);
           }
-
-          // Atualiza stop_reason do equipamento para refletir manutenção/vistoria em destaques
-          if (savedVehicleId) {
-            const newStopReason =
-              movementType === "saida" && exitReason
-                ? exitReason // manutencao_corretiva | manutencao_preventiva | vistoria
-                : null;
-            try {
-              await supabase
-                .from("equipment")
-                .update({ stop_reason: newStopReason })
-                .eq("id", savedVehicleId);
-            } catch (e) {
-              console.error("Erro ao atualizar stop_reason do equipamento:", e);
-            }
-          }
-          onlineSuccess = true;
-        } catch (e) {
-          console.warn("Online movement registry failed, will fallback to offline", e);
         }
-      } 
-      
-      if (!onlineSuccess) {
+
+        // Atualiza stop_reason do equipamento para refletir manutenção/vistoria em destaques
+        if (savedVehicleId) {
+          const newStopReason =
+            movementType === "saida" && exitReason
+              ? exitReason // manutencao_corretiva | manutencao_preventiva | vistoria
+              : null;
+          try {
+            await supabase
+              .from("equipment")
+              .update({ stop_reason: newStopReason })
+              .eq("id", savedVehicleId);
+          } catch (e) {
+            console.error("Erro ao atualizar stop_reason do equipamento:", e);
+          }
+        }
+      } else {
         // Caminho offline: enfileira para sincronizar quando voltar a internet
         if (!user?.id) {
           toast.error("Usuário não autenticado. Não é possível registrar offline.");
@@ -340,9 +332,9 @@ export default function RegistroMovimentoMotorista() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen h-screen flex flex-col bg-background overflow-hidden">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-card/95  border-b shadow-sm shrink-0 safe-area-inset-top">
+      <header className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm border-b shadow-sm shrink-0">
         <div className="flex items-center gap-3 p-3">
           {!exitPending && (
             <Button 
@@ -370,8 +362,8 @@ export default function RegistroMovimentoMotorista() {
         )}
       </header>
 
-      <main className="flex-1">
-        <div className="p-4 max-w-lg mx-auto space-y-4 pb-8 safe-area-inset-bottom">
+      <main className="flex-1 overflow-y-auto overscroll-contain">
+        <div className="p-4 max-w-lg mx-auto space-y-4 pb-safe">
         {/* Equipment Selection */}
         <Card>
           <CardHeader className="pb-3">

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { generateParteDiariaBase64 } from "@/lib/parteDiariaShare";
+import { generateAndUploadParteDiariaPng } from "@/lib/parteDiariaShare";
 
 /**
  * Mantém a consistência do envio da Parte Diária (PNG) no grupo do WhatsApp.
@@ -14,7 +14,6 @@ import { generateParteDiariaBase64 } from "@/lib/parteDiariaShare";
  */
 export function useShiftPngBackfill(enabled: boolean = true) {
   const runningRef = useRef(false);
-  const processedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (!enabled) return;
@@ -55,19 +54,16 @@ export function useShiftPngBackfill(enabled: boolean = true) {
           .eq("external_kind", "daily-shift-png-end")
           .in("external_id", ids);
 
-        // Qualquer registro existente (inclusive failed) conta como "já tratado"
-        // para evitar reenvio em loop no grupo do WhatsApp.
         const alreadyDone = new Set(
-          (existingPng || []).map((r) => r.external_id as string)
+          (existingPng || [])
+            .filter((r) => ["pending", "processing", "sent"].includes(r.status as string))
+            .map((r) => r.external_id as string)
         );
 
-        const pending = shifts.filter(
-          (s) => !alreadyDone.has(s.id) && !processedRef.current.has(s.id)
-        );
+        const pending = shifts.filter((s) => !alreadyDone.has(s.id));
         if (pending.length === 0) return;
 
         for (const shift of pending) {
-          processedRef.current.add(shift.id);
           try {
             const { data: eq } = await supabase
               .from("equipment")
@@ -80,8 +76,8 @@ export function useShiftPngBackfill(enabled: boolean = true) {
             const driver = (shift.driver_name || "").trim();
             if (!driver || driver === "—") continue;
 
-            const b64 = await generateParteDiariaBase64(eq as any);
-            if (!b64) continue;
+            const url = await generateAndUploadParteDiariaPng(eq as any);
+            if (!url) continue;
 
             const fuelLabel: Record<string, string> = {
               empty: "Vazio",
@@ -100,26 +96,18 @@ export function useShiftPngBackfill(enabled: boolean = true) {
               .filter(Boolean)
               .join("\n");
 
-            const wapiBody = {
-              equipmentId: shift.equipment_id,
-              equipmentName: shift.equipment_name || "",
-              plate: shift.plate || "",
-              newStatus: "end_of_shift",
-              driverName: driver,
-              extraInfo: extra,
-              shiftRecordId: shift.id,
-              imageBase64: b64,
-              imageCaption: `📄 *PARTE DIÁRIA (Atrasada)*\n${shift.equipment_name} — ${shift.plate}\nMotorista: ${driver}`,
-              timestamp: new Date().toISOString(),
-            };
-
-            await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wapi-driver-status-notify`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            await supabase.functions.invoke("wapi-driver-status-notify", {
+              body: {
+                equipmentId: shift.equipment_id,
+                equipmentName: shift.equipment_name,
+                plate: shift.plate,
+                newStatus: "end_of_shift",
+                driverName: shift.driver_name || null,
+                extraInfo: extra || undefined,
+                shiftRecordId: shift.id,
+                imageUrl: url,
+                imageCaption: `📄 *PARTE DIÁRIA*\n${shift.equipment_name} — ${shift.plate}\nMotorista: ${shift.driver_name || "—"}`,
               },
-              body: JSON.stringify(wapiBody),
             });
           } catch (err) {
             console.warn("[useShiftPngBackfill] falha em shift", shift.id, err);
@@ -134,7 +122,7 @@ export function useShiftPngBackfill(enabled: boolean = true) {
 
     // Primeiro tick rápido para recuperar Fim de Turno em backlog.
     const initial = setTimeout(tick, 4000);
-    const interval = setInterval(tick, 180_000);
+    const interval = setInterval(tick, 60_000);
     return () => {
       clearTimeout(initial);
       clearInterval(interval);

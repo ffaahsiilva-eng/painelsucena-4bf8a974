@@ -34,11 +34,7 @@ import {
   Waves,
   CloudDrizzle,
   CarFront,
-  CheckCircle2,
-  FileText,
-  MessageCircle,
-  Send,
-  ArrowLeft
+  CheckCircle2
 } from "lucide-react";
 
 import { useEquipment, useUpdateEquipmentStatus, useEquipmentStopHistory, type StopReason } from "@/hooks/useEquipment";
@@ -48,11 +44,10 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { FuelLevelGauge, type FuelLevel } from "./FuelLevelGauge";
-import { useQueryClient } from "@tanstack/react-query";
 import { useOfflineSyncV2 } from "@/hooks/useOfflineSyncV2";
 import { useCreateShiftRecord, useUpdateShiftRecord, useAddStatusToHistory, useShiftRecordByEquipment } from "@/hooks/useDailyShiftRecords";
 import { useCreateEquipmentMovement } from "@/hooks/useEquipmentMovements";
-import { generateParteDiariaBase64 } from "@/lib/parteDiariaShare";
+import { generateAndUploadParteDiariaPng } from "@/lib/parteDiariaShare";
 import { confirmOnce } from "@/lib/pendingConfirm";
 import { logDriverError } from "@/lib/driverErrorLog";
 import {
@@ -79,28 +74,28 @@ const statusButtons: StatusButton[] = [
     id: "services",
     label: "Serviços",
     icon: <Wrench className="h-6 w-6" />,
-    color: "bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-black font-bold",
+    color: "bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white",
     action: "services" as any,
   },
   {
     id: "waiting",
     label: "Aguardando",
     icon: <Clock className="h-6 w-6" />,
-    color: "bg-yellow-500 hover:bg-yellow-600 active:bg-yellow-700 text-black font-bold",
+    color: "bg-yellow-500 hover:bg-yellow-600 active:bg-yellow-700 text-white",
     action: "waiting",
   },
   {
     id: "rain",
     label: "Chuva",
     icon: <CloudRain className="h-6 w-6" />,
-    color: "bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-black font-bold",
+    color: "bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white",
     action: "rain",
   },
   {
     id: "almoco",
     label: "Almoço",
     icon: <Utensils className="h-6 w-6" />,
-    color: "bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-black font-bold",
+    color: "bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white",
     action: "almoco" as any,
   },
 ];
@@ -133,7 +128,6 @@ const getStatusLabel = (stopReason: string | null, defectDescription?: string | 
 
 export function DriverStatusButtons() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   // Guarda contra dupla submissão: se uma ação está em voo, ignore cliques repetidos
@@ -149,8 +143,6 @@ export function DriverStatusButtons() {
   };
   const [servicesOpen, setServicesOpen] = useState(false);
   const [submittingServiceId, setSubmittingServiceId] = useState<string | null>(null);
-  const [customServiceDialogOpen, setCustomServiceDialogOpen] = useState(false);
-  const [customServiceText, setCustomServiceText] = useState("");
   const [fuelLevel, setFuelLevel] = useState<FuelLevel>("half");
   const [showEndShiftDialog, setShowEndShiftDialog] = useState(false);
   const [showStartShiftDialog, setShowStartShiftDialog] = useState(false);
@@ -162,20 +154,6 @@ export function DriverStatusButtons() {
   const [initialHorimeter, setInitialHorimeter] = useState<string | null>(null);
   const [initialKm, setInitialKm] = useState<string | null>(null);
   const [endShiftError, setEndShiftError] = useState<string | null>(null);
-  // Tela de sucesso pós-fim de turno
-  const [showShiftSuccess, setShowShiftSuccess] = useState(false);
-  const [isSendingParteDiaria, setIsSendingParteDiaria] = useState(false);
-  const [parteDiariaJaEnviada, setParteDiariaJaEnviada] = useState(false);
-  const [savedShiftMeta, setSavedShiftMeta] = useState<{
-    shiftRecordId: string | null;
-    vehicle: any;
-    driverName: string;
-    helperName: string;
-    fuelLevel: FuelLevel;
-    horimeter: string;
-    km: string;
-    previousStatus: string;
-  } | null>(null);
   const { data: equipment = [], isLoading } = useEquipment();
   const { data: profile, isLoading: isProfileLoading } = useProfile();
   const updateStatus = useUpdateEquipmentStatus();
@@ -187,28 +165,9 @@ export function DriverStatusButtons() {
   const createEquipmentMovement = useCreateEquipmentMovement();
   const { data: currentShiftRecord } = useShiftRecordByEquipment(selectedVehicleId);
 
-  useEffect(() => {
-    if (currentShiftRecord && selectedVehicleId) {
-      console.log("Rehydrating shift from DB:", currentShiftRecord);
-      const h = currentShiftRecord.initial_horimeter != null ? String(currentShiftRecord.initial_horimeter) : "0";
-      const k = currentShiftRecord.initial_km != null ? String(currentShiftRecord.initial_km) : "0";
-      
-      localStorage.setItem(`shift_horimeter_${selectedVehicleId}`, h);
-      localStorage.setItem(`shift_km_${selectedVehicleId}`, k);
-      setInitialHorimeter(h);
-      setInitialKm(k);
-      
-      if (currentShiftRecord.shift_start_time) {
-        const ts = new Date(currentShiftRecord.shift_start_time).getTime();
-        localStorage.setItem(`shift_start_time_${selectedVehicleId}`, ts.toString());
-      }
-    }
-  }, [currentShiftRecord, selectedVehicleId]);
-
   // Activity timer - counts elapsed time since current status was selected
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const hasTriggeredAutoSend = useRef(false);
 
   useEffect(() => {
     const vehicleId = localStorage.getItem("selectedVehicleId");
@@ -221,51 +180,41 @@ export function DriverStatusButtons() {
       setInitialHorimeter(storedHorimeter);
       setInitialKm(storedKm);
 
-      // Rehydrate from DB: if there's an open daily_shift_record, sync it
-      // using the reactive hook currentShiftRecord instead of manual query.
+      // Rehydrate from DB: if there's an open daily_shift_record for today
+      // (no shift_end_time), the shift is already active even if localStorage
+      // was wiped (e.g. cleared cache, different device). This prevents
+      // registering "Iniciar Turno" twice — only Fim de Turno can re-enable it.
+      (async () => {
+        try {
+          const today = new Date().toISOString().split("T")[0];
+          const { data, error } = await (supabase as any)
+            .from("daily_shift_records")
+            .select("initial_horimeter, initial_km, shift_start_time, shift_end_time")
+            .eq("equipment_id", vehicleId)
+            .eq("shift_date", today)
+            .is("shift_end_time", null)
+            .maybeSingle();
+          if (error || !data) return;
+          if (data.initial_horimeter != null) {
+            const h = String(data.initial_horimeter);
+            localStorage.setItem(`shift_horimeter_${vehicleId}`, h);
+            setInitialHorimeter(h);
+          }
+          if (data.initial_km != null) {
+            const k = String(data.initial_km);
+            localStorage.setItem(`shift_km_${vehicleId}`, k);
+            setInitialKm(k);
+          }
+          if (data.shift_start_time) {
+            const ts = new Date(data.shift_start_time).getTime();
+            localStorage.setItem(`shift_start_time_${vehicleId}`, ts.toString());
+          }
+        } catch (e) {
+          console.warn("rehydrate shift from DB failed", e);
+        }
+      })();
     }
   }, []);
-
-  useEffect(() => {
-    if (!selectedVehicleId) return;
-    const fetchFuelLevel = async () => {
-      try {
-        // 1. Check if there's a current open shift — use its initial_fuel_level
-        const { data: openShift } = await supabase
-          .from("daily_shift_records")
-          .select("initial_fuel_level")
-          .eq("equipment_id", selectedVehicleId)
-          .is("shift_end_time", null)
-          .order("shift_start_time", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (openShift?.initial_fuel_level) {
-          setFuelLevel(openShift.initial_fuel_level as FuelLevel);
-          return;
-        }
-
-        // 2. No open shift — use the last completed shift's final_fuel_level
-        const { data: lastShift } = await supabase
-          .from("daily_shift_records")
-          .select("final_fuel_level")
-          .eq("equipment_id", selectedVehicleId)
-          .not("shift_end_time", "is", null)
-          .order("shift_end_time", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (lastShift?.final_fuel_level) {
-          setFuelLevel(lastShift.final_fuel_level as FuelLevel);
-        } else {
-          setFuelLevel("half");
-        }
-      } catch (err) {
-        console.warn("Could not fetch fuel level", err);
-      }
-    };
-    fetchFuelLevel();
-  }, [selectedVehicleId]);
 
 
   const selectedVehicle = equipment.find((eq) => eq.id === selectedVehicleId);
@@ -280,10 +229,6 @@ export function DriverStatusButtons() {
     storedDriverName?.trim() ||
     selectedVehicle?.driver?.trim() ||
     "Motorista";
-  const storedHelperName = selectedVehicleId
-    ? localStorage.getItem(`selected_helper_name_${selectedVehicleId}`)
-    : null;
-  const currentHelperName = selectedVehicle?.helper || storedHelperName || "";
   const canIdentifyLoggedDriver = Boolean(loggedDriverName);
 
   useEffect(() => {
@@ -444,48 +389,14 @@ export function DriverStatusButtons() {
       const today = now.split("T")[0];
 
       // Update the equipment status to end_of_shift
-      let statusSuccess = false;
-      if (isOnline) {
-        try {
-          await updateStatus.mutateAsync({
-            id: selectedVehicleId,
-            stop_reason: "end_of_shift" as any,
-            stop_start_time: now,
-            previousStopReason: currentStatus as any,
-            previousStopStartTime: selectedVehicle.stop_start_time,
-            changed_by_driver: currentDriverName || null,
-          });
-          statusSuccess = true;
-        } catch (e) {
-          console.warn("Online updateStatus failed, will save offline", e);
-        }
-      }
-
-      if (!statusSuccess) {
-        await addPendingAction("equipment_status", {
-          id: selectedVehicleId,
-          stop_reason: "end_of_shift",
-          stop_start_time: now,
-        });
-        
-        await addPendingAction("stop_history", {
-          equipment_id: selectedVehicleId,
-          stop_reason: "end_of_shift",
-          started_at: now,
-          changed_by_driver: currentDriverName || null,
-        });
-
-        // Optimistic update
-        queryClient.setQueryData(["equipment"], (old: any) => {
-          if (!old) return old;
-          const newData = old.map((eq: any) =>
-            eq.id === selectedVehicleId ? { ...eq, stop_reason: "end_of_shift", stop_start_time: now } : eq
-          );
-          const env = localStorage.getItem("selected_environment") ?? sessionStorage.getItem("selected_environment");
-          localStorage.setItem(`cached_equipment_${env || "default"}`, JSON.stringify(newData));
-          return newData;
-        });
-      }
+      await updateStatus.mutateAsync({
+        id: selectedVehicleId,
+        stop_reason: "end_of_shift" as any,
+        stop_start_time: now,
+        previousStopReason: currentStatus as any,
+        previousStopStartTime: selectedVehicle.stop_start_time,
+        changed_by_driver: currentDriverName || null,
+      });
 
       // Upsert daily_shift_record com valores finais. Se o registro não existir
       // (ex.: motorista não clicou em iniciar turno), cria agora a partir dos
@@ -496,82 +407,91 @@ export function DriverStatusButtons() {
       const shiftStartLs = localStorage.getItem(`shift_start_time_${selectedVehicleId}`);
       const shiftStartIso = shiftStartLs ? new Date(parseInt(shiftStartLs, 10)).toISOString() : now;
 
-      const shiftData = {
-        equipment_id: selectedVehicleId,
-        equipment_name: selectedVehicle.name,
-        plate: selectedVehicle.plate,
-        shift_date: today,
-        driver_name: currentDriverName || selectedVehicle.driver || "—",
-        initial_horimeter: initialHorimeterLs ? parseFloat(initialHorimeterLs) : null,
-        initial_km: initialKmLs ? parseFloat(initialKmLs) : null,
-        shift_start_time: shiftStartIso,
-        final_horimeter: endShiftHorimeter ? parseFloat(endShiftHorimeter) : null,
-        final_km: endShiftKm ? parseFloat(endShiftKm) : null,
-        final_fuel_level: endShiftFuelLevel,
-        shift_end_time: now,
-      };
-
-      let savedShiftRecordId = null;
-      let shiftSuccess = false;
-
-      if (isOnline) {
-        try {
-          const { data, error: upsertErr } = await (supabase as any)
-            .from("daily_shift_records")
-            .upsert(shiftData, { onConflict: "equipment_id,shift_date", ignoreDuplicates: false })
-            .select("id")
-            .maybeSingle();
-          if (upsertErr) throw upsertErr;
-          savedShiftRecordId = data?.id || null;
-          shiftSuccess = true;
-        } catch (err) {
-          console.warn("Online upsert shift record failed, will save offline", err);
-        }
-
-        // Fallback: upsert com RLS às vezes não retorna linhas — busca o ID diretamente
-        if (shiftSuccess && !savedShiftRecordId) {
-          try {
-            const { data: fetched } = await (supabase as any)
-              .from("daily_shift_records")
-              .select("id")
-              .eq("equipment_id", selectedVehicleId)
-              .eq("shift_date", shiftData.shift_date)
-              .order("shift_start_time", { ascending: false })
-              .limit(1)
-              .maybeSingle();
-            savedShiftRecordId = fetched?.id || null;
-          } catch (_e) {
-            console.warn("Fallback SELECT for shiftRecordId failed", _e);
-          }
-        }
-      }
-
-      if (!shiftSuccess) {
-        await addPendingAction("shift_record", {
-          ...shiftData,
-          update_existing: true,
-        });
+      const { data: savedShiftRecord, error: upsertErr } = await (supabase as any)
+        .from("daily_shift_records")
+        .upsert(
+          {
+            equipment_id: selectedVehicleId,
+            equipment_name: selectedVehicle.name,
+            plate: selectedVehicle.plate,
+            shift_date: today,
+            driver_name: currentDriverName || selectedVehicle.driver || "—",
+            initial_horimeter: initialHorimeterLs ? parseFloat(initialHorimeterLs) : null,
+            initial_km: initialKmLs ? parseFloat(initialKmLs) : null,
+            shift_start_time: shiftStartIso,
+            final_horimeter: endShiftHorimeter ? parseFloat(endShiftHorimeter) : null,
+            final_km: endShiftKm ? parseFloat(endShiftKm) : null,
+            final_fuel_level: endShiftFuelLevel,
+            shift_end_time: now,
+          },
+          { onConflict: "equipment_id,shift_date", ignoreDuplicates: false }
+        )
+        .select("id")
+        .maybeSingle();
+      if (upsertErr) {
+        console.error("Falha ao upsert daily_shift_records:", upsertErr);
+        throw new Error(`Erro ao salvar parte diária: ${upsertErr.message}`);
       }
 
       // Garante dados frescos do equipamento para decidir/gerar PNG.
-      const { data: freshEquipment } = isOnline ? await supabase
+      const { data: freshEquipment } = await supabase
         .from("equipment")
         .select("*")
         .eq("id", selectedVehicleId)
-        .maybeSingle() : { data: null };
+        .maybeSingle();
       const equipmentForPng = (freshEquipment as any) || selectedVehicle;
-      
-      // Salva metadados para a tela de sucesso (envio manual da Parte Diária)
-      setSavedShiftMeta({
-        shiftRecordId: savedShiftRecordId,
-        vehicle: equipmentForPng,
-        driverName: currentDriverName || "—",
-        helperName: currentHelperName || "",
-        fuelLevel: endShiftFuelLevel,
-        horimeter: endShiftHorimeter,
-        km: endShiftKm,
-        previousStatus: currentStatus,
-      });
+      // Parte Diária PNG é gerada para TODOS os equipamentos no fim de turno (padrão).
+      const shouldGeneratePng = true;
+      let parteDiariaUrl: string | null = null;
+      if (shouldGeneratePng) {
+        toast.info("Gerando Parte Diária para envio...");
+        let lastErr: any = null;
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          try {
+            parteDiariaUrl = await generateAndUploadParteDiariaPng(equipmentForPng as any);
+            if (parteDiariaUrl) break;
+          } catch (e: any) {
+            lastErr = e;
+            console.error(`parte diária png tentativa ${attempt} falhou`, e);
+            await new Promise((r) => setTimeout(r, 700));
+          }
+        }
+        if (!parteDiariaUrl) {
+          toast.error(`Falha ao gerar PNG da Parte Diária: ${lastErr?.message || lastErr || "erro desconhecido"}. Enviando somente texto.`, { duration: 8000 });
+        }
+      }
+
+
+      if (parteDiariaUrl) {
+        try {
+          const notifyUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wapi-driver-status-notify`;
+          const resp = await fetch(notifyUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            keepalive: true,
+            body: JSON.stringify({
+              equipmentId: selectedVehicleId,
+              equipmentName: selectedVehicle.name,
+              plate: selectedVehicle.plate,
+              newStatus: "end_of_shift",
+              previousStatus: currentStatus,
+              driverName: currentDriverName || null,
+              extraInfo: `*Combustível final:* ${getFuelLevelLabel(endShiftFuelLevel)}${endShiftHorimeter ? `\n*Horímetro:* ${endShiftHorimeter}` : ""}${endShiftKm ? `\n*KM:* ${endShiftKm}` : ""}`,
+              shiftRecordId: savedShiftRecord?.id || null,
+              imageUrl: parteDiariaUrl,
+              imageCaption: `📄 *PARTE DIÁRIA*\n${selectedVehicle.name} — ${selectedVehicle.plate}\nMotorista: ${currentDriverName || "—"}`,
+            }),
+          });
+          if (!resp.ok) {
+            const txt = await resp.text().catch(() => "");
+            console.warn("driver-status-notify HTTP", resp.status, txt);
+          }
+        } catch (e: any) {
+          console.warn("driver-status-notify failed", e);
+          toast.error(`Falha ao enviar status ao grupo: ${e?.message || e}`, { duration: 6000 });
+        }
+      }
+
 
       // Fim de Turno does NOT register as equipment exit (saída)
       // The equipment remains on site, only the shift ends
@@ -585,16 +505,26 @@ export function DriverStatusButtons() {
         })
         .eq("id", selectedVehicleId);
 
-      // Invalida cache do React Query para que ao re-selecionar o veículo
-      // não re-hidrate o turno já finalizado como se ainda estivesse aberto
-      queryClient.removeQueries({ queryKey: ["daily-shift-record", selectedVehicleId] });
-      queryClient.invalidateQueries({ queryKey: ["equipment"] });
+      // Clear the selected vehicle and shift data from localStorage
+      localStorage.removeItem("selectedVehicleId");
+      localStorage.removeItem(`shift_horimeter_${selectedVehicleId}`);
+      localStorage.removeItem(`shift_km_${selectedVehicleId}`);
+      localStorage.removeItem(`shift_start_time_${selectedVehicleId}`);
+      setElapsedSeconds(0);
 
       setShowEndShiftDialog(false);
+      
+      const details = [
+        `Combustível: ${getFuelLevelLabel(endShiftFuelLevel)}`,
+        endShiftHorimeter && `Horímetro: ${endShiftHorimeter}`,
+        endShiftKm && `KM: ${endShiftKm}`,
+      ].filter(Boolean).join(" | ");
+      
+      toast.success(`Fim de turno registrado. ${details}`);
       void commitDriverAction(clientActionId);
-
-      // Exibe a tela de sucesso com botão para enviar a Parte Diária
-      setShowShiftSuccess(true);
+      
+      // Navigate to vehicle selection page
+      navigate("/selecao-veiculo", { replace: true });
     } catch (error: any) {
       console.error("Error ending shift:", error);
       toast.error("Erro ao registrar fim de turno");
@@ -618,122 +548,6 @@ export function DriverStatusButtons() {
       setIsUpdating(false);
       release(`end_shift:${selectedVehicleId}`);
     }
-  };
-
-  // Função chamada ao clicar em "Gerar e Enviar Parte Diária" na tela de sucesso
-  const handleSendParteDiaria = async () => {
-    if (!savedShiftMeta) return;
-    setIsSendingParteDiaria(true);
-    let parteDiariaBase64: string | null = null;
-    try {
-      toast.info("Gerando Parte Diária...");
-      let lastErr: any = null;
-      for (let attempt = 1; attempt <= 3; attempt++) {
-        try {
-          parteDiariaBase64 = await generateParteDiariaBase64(savedShiftMeta.vehicle);
-          if (parteDiariaBase64) break;
-        } catch (e: any) {
-          lastErr = e;
-          await new Promise((r) => setTimeout(r, 700));
-        }
-      }
-
-      if (!parteDiariaBase64) {
-        toast.error(`Falha ao gerar o PNG: ${lastErr?.message || "erro desconhecido"}`, { duration: 8000 });
-        return;
-      }
-
-      const wapiBody = {
-        equipmentId: savedShiftMeta.vehicle?.id || null,
-        equipmentName: savedShiftMeta.vehicle?.name || "",
-        plate: savedShiftMeta.vehicle?.plate || "",
-        newStatus: "end_of_shift",
-        previousStatus: savedShiftMeta.previousStatus,
-        driverName: savedShiftMeta.driverName || null,
-        helperName: savedShiftMeta.helperName || null,
-        extraInfo: `*Combustível final:* ${getFuelLevelLabel(savedShiftMeta.fuelLevel)}${savedShiftMeta.horimeter ? `\n*Horímetro:* ${savedShiftMeta.horimeter}` : ""}${savedShiftMeta.km ? `\n*KM:* ${savedShiftMeta.km}` : ""}`,
-        shiftRecordId: savedShiftMeta.shiftRecordId || null,
-        imageBase64: parteDiariaBase64,
-        imageCaption: `📄 *PARTE DIÁRIA*\n${savedShiftMeta.vehicle?.name} — ${savedShiftMeta.vehicle?.plate}\nMotorista: ${savedShiftMeta.driverName || "—"}`,
-        timestamp: new Date().toISOString(),
-      };
-
-      if (isOnline) {
-        const notifyUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wapi-driver-status-notify`;
-        const resp = await fetch(notifyUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify(wapiBody),
-        });
-        if (!resp.ok) {
-          toast.error(`Erro ao enviar para o WhatsApp (${resp.status})`);
-        } else {
-          toast.success("✅ Parte Diária enviada! Voltando em 5 segundos...");
-          setParteDiariaJaEnviada(true);
-          setTimeout(() => handleGoBack(), 5000);
-        }
-      } else {
-        toast.info("Modo Offline: Parte Diária salva na fila. Será enviada automaticamente ao reconectar.");
-        await addPendingAction("wapi_invoke", {
-          functionName: "wapi-driver-status-notify",
-          body: wapiBody,
-        });
-        setParteDiariaJaEnviada(true);
-        setTimeout(() => handleGoBack(), 5000);
-      }
-    } catch (err: any) {
-      console.error(err);
-      toast.warning("Modo Offline: Parte Diária salva na fila para sincronização futura.");
-      // Fallback in case of unexpected fetch crash (e.g. CORS block during transient network states)
-      if (savedShiftMeta) {
-        try {
-          const fallbackBody = {
-            equipmentId: savedShiftMeta.vehicle?.id || null,
-            equipmentName: savedShiftMeta.vehicle?.name || "",
-            plate: savedShiftMeta.vehicle?.plate || "",
-            newStatus: "end_of_shift",
-            previousStatus: savedShiftMeta.previousStatus,
-            driverName: savedShiftMeta.driverName || null,
-            helperName: savedShiftMeta.helperName || null,
-            extraInfo: `*Combustível final:* ${getFuelLevelLabel(savedShiftMeta.fuelLevel)}${savedShiftMeta.horimeter ? `\n*Horímetro:* ${savedShiftMeta.horimeter}` : ""}${savedShiftMeta.km ? `\n*KM:* ${savedShiftMeta.km}` : ""}`,
-            shiftRecordId: savedShiftMeta.shiftRecordId || null,
-            imageBase64: parteDiariaBase64,
-            imageCaption: `📄 *PARTE DIÁRIA*\n${savedShiftMeta.vehicle?.name} — ${savedShiftMeta.vehicle?.plate}\nMotorista: ${savedShiftMeta.driverName || "—"}`,
-            timestamp: new Date().toISOString(),
-          };
-          addPendingAction("wapi_invoke", {
-            functionName: "wapi-driver-status-notify",
-            body: fallbackBody,
-          }).catch(() => {});
-        } catch (e) {}
-      }
-    } finally {
-      setIsSendingParteDiaria(false);
-    }
-  };
-
-  // Volta para a seleção de veículo após fim de turno
-  const handleGoBack = () => {
-    if (savedShiftMeta?.vehicle?.id) {
-      const vid = savedShiftMeta.vehicle.id;
-      localStorage.removeItem("selectedVehicleId");
-      localStorage.removeItem(`shift_horimeter_${vid}`);
-      localStorage.removeItem(`shift_km_${vid}`);
-      localStorage.removeItem(`shift_start_time_${vid}`);
-      localStorage.removeItem(`cached_shift_${vid}_${new Date().toLocaleDateString("sv-SE")}`);
-    }
-    // Impede que SelecaoVeiculo auto-restaure este veículo do DB e jogue o usuário de volta para o painel imediatamente
-    sessionStorage.setItem("skipAutoRestore", "true");
-    setInitialHorimeter(null);
-    setInitialKm(null);
-    setElapsedSeconds(0);
-    setShowShiftSuccess(false);
-    setSavedShiftMeta(null);
-    setParteDiariaJaEnviada(false);
-    navigate("/selecao-veiculo", { replace: true });
   };
 
   const handleStartShift = async () => {
@@ -781,13 +595,13 @@ export function DriverStatusButtons() {
       // open daily_shift_record for today (no shift_end_time), the driver must
       // register Fim de Turno first.
       try {
+        const today = new Date().toISOString().split("T")[0];
         const { data: openShift, error: shiftError } = await (supabase as any)
           .from("daily_shift_records")
           .select("id")
           .eq("equipment_id", selectedVehicleId)
+          .eq("shift_date", today)
           .is("shift_end_time", null)
-          .order("shift_start_time", { ascending: false })
-          .limit(1)
           .maybeSingle();
         
         if (shiftError) {
@@ -813,26 +627,18 @@ export function DriverStatusButtons() {
       setInitialKm(startShiftKm);
 
       // Create daily shift record in the database
-      let startShiftSuccess = false;
       if (isOnline) {
-        try {
-          await createShiftRecord.mutateAsync({
-            equipment_id: selectedVehicleId,
-            equipment_name: selectedVehicle.name,
-            plate: selectedVehicle.plate,
-            driver_name: currentDriverName || "Motorista",
-            helper_name: currentHelperName || undefined,
-            initial_horimeter: parseFloat(startShiftHorimeter),
-            initial_km: parseFloat(startShiftKm),
-            initial_fuel_level: fuelLevel,
-          });
-          startShiftSuccess = true;
-        } catch (e) {
-          console.warn("Online createShiftRecord failed, will save offline", e);
-        }
-      }
-
-      if (!startShiftSuccess) {
+        await createShiftRecord.mutateAsync({
+          equipment_id: selectedVehicleId,
+          equipment_name: selectedVehicle.name,
+          plate: selectedVehicle.plate,
+          driver_name: currentDriverName || "Motorista",
+          helper_name: selectedVehicle.helper || undefined,
+          initial_horimeter: parseFloat(startShiftHorimeter),
+          initial_km: parseFloat(startShiftKm),
+          initial_fuel_level: fuelLevel,
+        });
+      } else {
         await addPendingAction("shift_record", {
           equipment_id: selectedVehicleId,
           equipment_name: selectedVehicle.name,
@@ -859,25 +665,19 @@ export function DriverStatusButtons() {
 
       // Notifica o grupo sobre o INÍCIO de TURNO (sem definir status Operando).
       // O status só vai para "Operando" quando o motorista clicar em "Operar".
-      // Limpa qualquer status anterior — fica em branco até motorista clicar em "Operar"
       try {
-        const wapiBody = {
-          equipmentId: selectedVehicleId,
-          equipmentName: selectedVehicle.name,
-          plate: selectedVehicle.plate,
-          newStatus: "shift_start",
-          previousStatus: null,
-          driverName: currentDriverName || null,
-          helperName: currentHelperName || null,
-          extraInfo: `*Combustível:* ${getFuelLevelLabel(fuelLevel)}\n*Horímetro:* ${startShiftHorimeter}\n*KM:* ${startShiftKm}`,
-          timestamp: new Date().toISOString(),
-        };
         if (isOnline) {
-          await supabase.functions.invoke("wapi-driver-status-notify", { body: wapiBody });
-          // Dispara o envio imediato da fila para que a mensagem chegue na mesma hora
-          supabase.functions.invoke("wapi-queue-worker", { method: "POST" }).catch(() => {});
-        } else {
-          await addPendingAction("wapi_invoke", { functionName: "wapi-driver-status-notify", body: wapiBody });
+          await supabase.functions.invoke("wapi-driver-status-notify", {
+            body: {
+              equipmentId: selectedVehicleId,
+              equipmentName: selectedVehicle.name,
+              plate: selectedVehicle.plate,
+              newStatus: "shift_start",
+              previousStatus: "shift_start",
+              driverName: currentDriverName || null,
+              extraInfo: `*Combustível:* ${getFuelLevelLabel(fuelLevel)}\n*Horímetro:* ${startShiftHorimeter}\n*KM:* ${startShiftKm}`,
+            },
+          });
         }
       } catch (e) {
         console.warn("driver-status-notify failed", e);
@@ -890,8 +690,8 @@ export function DriverStatusButtons() {
         try {
           await updateStatus.mutateAsync({
             id: selectedVehicleId,
-            stop_reason: "waiting",
-            stop_start_time: now,
+            stop_reason: "none",
+            stop_start_time: null,
             previousStopReason: (currentStatus as any) || "none",
             previousStopStartTime: selectedVehicle.stop_start_time,
             changed_by_driver: currentDriverName || null,
@@ -903,19 +703,8 @@ export function DriverStatusButtons() {
       } else {
         await addPendingAction("equipment_status", {
           id: selectedVehicleId,
-          stop_reason: "waiting",
-          stop_start_time: now,
-        });
-        
-        // Optimistic update
-        queryClient.setQueryData(["equipment"], (old: any) => {
-          if (!old) return old;
-          const newData = old.map((eq: any) =>
-            eq.id === selectedVehicleId ? { ...eq, stop_reason: "waiting", stop_start_time: now } : eq
-          );
-          const env = localStorage.getItem("selected_environment") ?? sessionStorage.getItem("selected_environment");
-          localStorage.setItem(`cached_equipment_${env || "default"}`, JSON.stringify(newData));
-          return newData;
+          stop_reason: "none",
+          stop_start_time: null,
         });
       }
 
@@ -986,7 +775,9 @@ export function DriverStatusButtons() {
     setShowStartShiftDialog(true);
   };
 
-  const handleStatusChange = async (newStatus: DriverStopReason, customExtraInfo?: string) => {
+
+
+  const handleStatusChange = async (newStatus: DriverStopReason) => {
     if (!selectedVehicleId || !selectedVehicle) {
       toast.error("Nenhum veículo selecionado");
       return;
@@ -1004,7 +795,7 @@ export function DriverStatusButtons() {
         toast.error("Você precisa iniciar o turno antes de registrar Fim de Turno");
         return;
       }
-      setEndShiftFuelLevel(fuelLevel); // Default to current fuel level
+      setEndShiftFuelLevel("half"); // Reset to default
       setEndShiftHorimeter(initialHorimeter || ""); // Pre-fill with initial value
       setEndShiftKm(initialKm || ""); // Pre-fill with initial value
       setEndShiftError(null);
@@ -1081,18 +872,6 @@ export function DriverStatusButtons() {
           <span>Salvo offline: {statusLabels[newStatus] || newStatus}</span>
         </div>
       );
-
-      // Optimistic update
-      queryClient.setQueryData(["equipment"], (old: any) => {
-        if (!old) return old;
-        const newData = old.map((eq: any) =>
-          eq.id === selectedVehicleId ? { ...eq, stop_reason: newStatus, stop_start_time: newStatus !== "none" ? now : null } : eq
-        );
-        const env = localStorage.getItem("selected_environment") ?? sessionStorage.getItem("selected_environment");
-        localStorage.setItem(`cached_equipment_${env || "default"}`, JSON.stringify(newData));
-        return newData;
-      });
-
       await commitDriverAction(clientActionId);
       setIsUpdating(false);
       release(statusKey);
@@ -1117,29 +896,16 @@ export function DriverStatusButtons() {
       });
 
       // Fire-and-forget WhatsApp group notification
-      const wapiBody = {
-        equipmentId: selectedVehicleId,
-        equipmentName: selectedVehicle.name,
-        plate: selectedVehicle.plate,
-        newStatus,
-        previousStatus: currentStatus,
-        driverName: currentDriverName || null,
-        helperName: currentHelperName || null,
-        extraInfo: customExtraInfo || undefined,
-        timestamp: new Date().toISOString(),
-      };
-      if (isOnline) {
-        supabase.functions.invoke("wapi-driver-status-notify", { body: wapiBody })
-          .then(() => {
-            // Dispara o envio imediato da fila para que a mensagem chegue na mesma hora
-            supabase.functions.invoke("wapi-queue-worker", { method: "POST" }).catch(() => {});
-          })
-          .catch((err) => {
-            console.warn("Failed to notify wapi-driver-status-notify", err);
-          });
-      } else {
-        addPendingAction("wapi_invoke", { functionName: "wapi-driver-status-notify", body: wapiBody }).catch(e => console.warn(e));
-      }
+      supabase.functions.invoke("wapi-driver-status-notify", {
+        body: {
+          equipmentId: selectedVehicleId,
+          equipmentName: selectedVehicle.name,
+          plate: selectedVehicle.plate,
+          newStatus,
+          previousStatus: currentStatus,
+          driverName: currentDriverName || null,
+        },
+      }).catch((e) => console.warn("driver-status-notify failed", e));
 
       toast.success(`Status alterado para: ${statusLabels[newStatus] || newStatus}`);
       await commitDriverAction(clientActionId);
@@ -1171,13 +937,6 @@ export function DriverStatusButtons() {
     }
   };
 
-  // Disparo automático do PNG no Fim de Turno
-  useEffect(() => {
-    if (showShiftSuccess && savedShiftMeta && !hasTriggeredAutoSend.current && !parteDiariaJaEnviada && !isSendingParteDiaria) {
-      hasTriggeredAutoSend.current = true;
-      handleSendParteDiaria();
-    }
-  }, [showShiftSuccess, savedShiftMeta]); // Só deve rodar ao entrar na tela de sucesso
 
   if (isLoading) {
     return (
@@ -1200,199 +959,6 @@ export function DriverStatusButtons() {
     );
   }
 
-  const submitCustomService = async () => {
-    if (!customServiceText.trim()) {
-      toast.error("Digite o serviço");
-      return;
-    }
-    if (!selectedVehicleId || !selectedVehicle) {
-      toast.error("Nenhum veículo selecionado");
-      return;
-    }
-    if (!canIdentifyLoggedDriver) {
-      toast.error("Aguarde carregar o motorista logado");
-      return;
-    }
-
-    setSubmittingServiceId("custom");
-    const now = new Date().toISOString();
-    const serviceLabel = customServiceText.trim();
-    
-    // Optimistic update
-    queryClient.setQueryData(["equipment"], (old: any) => {
-      if (!old) return old;
-      const newData = old.map((eq: any) =>
-        eq.id === selectedVehicleId ? { ...eq, stop_reason: "servico", stop_start_time: now } : eq
-      );
-      const env = localStorage.getItem("selected_environment") ?? sessionStorage.getItem("selected_environment");
-      localStorage.setItem(`cached_equipment_${env || "default"}`, JSON.stringify(newData));
-      return newData;
-    });
-
-    const wapiBody = {
-      equipmentId: selectedVehicleId,
-      equipmentName: selectedVehicle.name,
-      plate: selectedVehicle.plate,
-      newStatus: "servico",
-      previousStatus: selectedVehicle.stop_reason || "none",
-      driverName: currentDriverName || null,
-      helperName: currentHelperName || null,
-      extraInfo: `*Serviço:* ${serviceLabel}`,
-      timestamp: now,
-    };
-
-    if (!isOnline) {
-      addPendingAction("equipment_status", {
-        id: selectedVehicleId,
-        stop_reason: "servico",
-        stop_start_time: now,
-      }).catch(e => console.warn(e));
-      addPendingAction("stop_history", {
-        equipment_id: selectedVehicleId,
-        stop_reason: "servico",
-        started_at: now,
-        changed_by_driver: currentDriverName || null,
-        defect_description: `Serviço: ${serviceLabel}`,
-      }).catch(e => console.warn(e));
-      addPendingAction("wapi_invoke", {
-        functionName: "wapi-driver-status-notify",
-        body: wapiBody,
-      }).catch(e => console.warn(e));
-      
-      localStorage.setItem(`active_service_${selectedVehicleId}`, "custom");
-      localStorage.setItem(`active_service_label_${selectedVehicleId}`, `Serviço: ${serviceLabel}`);
-      toast.success(`Serviço salvo offline: ${serviceLabel}`);
-      setCustomServiceDialogOpen(false);
-      setCustomServiceText("");
-      setSubmittingServiceId(null);
-      return;
-    }
-
-    try {
-      await updateStatus.mutateAsync({
-        id: selectedVehicleId,
-        stop_reason: "servico",
-        stop_start_time: now,
-        previousStopReason: selectedVehicle.stop_reason as any,
-        previousStopStartTime: selectedVehicle.stop_start_time,
-        changed_by_driver: currentDriverName || null,
-      });
-
-      await addStatusToHistory.mutateAsync({
-        equipmentId: selectedVehicleId,
-        status: "servico",
-        changedBy: currentDriverName || null,
-        description: `Serviço: ${serviceLabel}`,
-      });
-
-      supabase.functions
-        .invoke("wapi-driver-status-notify", { body: wapiBody })
-        .catch((e) => console.warn("driver-status-notify failed", e));
-
-      localStorage.setItem(`active_service_${selectedVehicleId}`, "custom");
-      localStorage.setItem(`active_service_label_${selectedVehicleId}`, `Serviço: ${serviceLabel}`);
-      toast.success(`Serviço registrado: ${serviceLabel}`);
-    } catch (err) {
-      console.error(err);
-      toast.warning("Erro de conexão. Serviço salvo para sincronizar depois.");
-      addPendingAction("wapi_invoke", {
-        functionName: "wapi-driver-status-notify",
-        body: wapiBody,
-      }).catch(e => console.warn(e));
-    } finally {
-      setCustomServiceDialogOpen(false);
-      setCustomServiceText("");
-      setSubmittingServiceId(null);
-    }
-  };
-
-  // Se o turno acabou de ser finalizado, exibe tela de sucesso
-  if (showShiftSuccess && savedShiftMeta) {
-    return (
-      <div className="flex flex-col min-h-[60vh] items-center justify-center gap-6 p-4">
-        {/* Ícone de sucesso */}
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-20 h-20 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center shadow-lg">
-            <CheckCircle2 className="w-11 h-11 text-emerald-500" />
-          </div>
-          <h2 className="text-xl font-bold text-foreground">Turno Finalizado!</h2>
-          <p className="text-sm text-muted-foreground text-center max-w-xs">
-            Os dados foram salvos com sucesso.
-          </p>
-        </div>
-
-        {/* Resumo do turno */}
-        <div className="w-full max-w-sm bg-muted/50 border border-border rounded-xl p-4 space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Equipamento</span>
-            <span className="font-semibold">{savedShiftMeta.vehicle?.name}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Placa</span>
-            <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">{savedShiftMeta.vehicle?.plate}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Motorista</span>
-            <span className="font-semibold">{savedShiftMeta.driverName}</span>
-          </div>
-          {savedShiftMeta.horimeter && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Horímetro</span>
-              <span>{savedShiftMeta.horimeter}</span>
-            </div>
-          )}
-          {savedShiftMeta.km && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">KM Final</span>
-              <span>{savedShiftMeta.km}</span>
-            </div>
-          )}
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Combustível</span>
-            <span>{getFuelLevelLabel(savedShiftMeta.fuelLevel)}</span>
-          </div>
-        </div>
-
-        {/* Botão principal: Enviar Parte Diária */}
-        {!parteDiariaJaEnviada ? (
-          <Button
-            onClick={handleSendParteDiaria}
-            disabled={isSendingParteDiaria}
-            className="w-full max-w-sm h-auto min-h-[60px] py-4 flex items-center justify-center gap-3 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white text-base font-bold rounded-xl shadow-lg transition-transform active:scale-95"
-          >
-            {isSendingParteDiaria ? (
-              <>
-                <Loader2 className="h-6 w-6 animate-spin" />
-                <span>Gerando e enviando...</span>
-              </>
-            ) : (
-              <>
-                <Send className="h-6 w-6" />
-                <span>Enviar Parte Diária (WhatsApp)</span>
-              </>
-            )}
-          </Button>
-        ) : (
-          <div className="w-full max-w-sm flex items-center justify-center gap-3 py-4 px-6 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 rounded-xl">
-            <CheckCircle2 className="h-6 w-6 text-emerald-500 shrink-0" />
-            <span className="text-emerald-700 dark:text-emerald-300 font-semibold text-sm">Parte Diária enviada com sucesso!</span>
-          </div>
-        )}
-
-        {/* Botão secundário: Voltar */}
-        <Button
-          variant="outline"
-          onClick={handleGoBack}
-          disabled={isSendingParteDiaria}
-          className="w-full max-w-sm h-auto min-h-[48px] flex items-center justify-center gap-2 text-sm"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Voltar à Seleção de Equipamento
-        </Button>
-      </div>
-    );
-  }
-
   return (
     <>
       <Card className="shadow-md">
@@ -1400,11 +966,7 @@ export function DriverStatusButtons() {
           <div className="flex items-center justify-between gap-2">
             <CardTitle className="text-base font-semibold">Controle de Turno</CardTitle>
             {showStatusBadge && (
-              <Badge className={`${statusInfo.color} text-white text-xs px-2.5 py-0.5 flex items-center gap-1.5 shadow-sm`}>
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
-                </span>
+              <Badge className={`${statusInfo.color} text-white text-xs px-2.5 py-0.5`}>
                 {statusInfo.label}
               </Badge>
             )}
@@ -1493,7 +1055,7 @@ export function DriverStatusButtons() {
           )}
 
           {/* Status Control Buttons - Larger touch targets */}
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-3 pt-3 border-t border-border">
+          <div className="grid grid-cols-2 gap-3 pt-3 border-t border-border">
 
             {statusButtons.map((button) => {
               const isServices = button.action === ("services" as any);
@@ -1501,15 +1063,15 @@ export function DriverStatusButtons() {
               const isDisabledByMaintenance =
                 isInMaintenance && !isServices;
               const isDisabledByNoShift = !shiftStarted;
-              const isBlocked = isDisabledByMaintenance || isDisabledByNoShift;
               const isCurrentStatus = !isServices && currentStatus === button.action;
+              const isBlocked = isDisabledByMaintenance || isDisabledByNoShift;
 
               return (
                 <Button
                   key={button.id}
                   variant="outline"
-                  className={`relative h-auto min-h-[60px] py-3 flex flex-col items-center gap-1.5 touch-manipulation transition-transform active:scale-95 overflow-hidden ${
-                    isCurrentStatus ? "ring-2 ring-primary ring-offset-2 bg-primary/5 border-primary/20" : ""
+                  className={`h-auto min-h-[60px] py-3 flex flex-col items-center gap-1.5 touch-manipulation transition-transform active:scale-95 ${
+                    isCurrentStatus ? "ring-2 ring-primary ring-offset-2" : ""
                   } ${button.color}`}
                   onClick={() => {
                     if (!canIdentifyLoggedDriver) {
@@ -1537,16 +1099,10 @@ export function DriverStatusButtons() {
                       },
                     );
                   }}
+
+
                   disabled={isUpdating || isProfileLoading || !canIdentifyLoggedDriver || (isCurrentStatus && !isBlocked)}
                 >
-                  {isCurrentStatus && (
-                    <div className="absolute top-2 right-2">
-                      <span className="relative flex h-2.5 w-2.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span>
-                      </span>
-                    </div>
-                  )}
                   {isUpdating && !isServices ? (
                     <Loader2 className="h-6 w-6 animate-spin" />
                   ) : (
@@ -1851,35 +1407,21 @@ export function DriverStatusButtons() {
           <div className="grid grid-cols-1 gap-2.5 py-2">
             {[
               { id: "lavagem_mirante", label: "Lavagem Mirante", icon: <Waves className="h-5 w-5" />, color: "bg-cyan-600 hover:bg-cyan-700" },
-              { id: "irrigacao_carretel_ca01", label: "Irrigação Carretel CA01", icon: <Droplets className="h-5 w-5" />, color: "bg-blue-600 hover:bg-blue-700" },
-              { id: "irrigacao_carretel_ca02", label: "Irrigação Carretel CA02", icon: <Droplets className="h-5 w-5" />, color: "bg-blue-600 hover:bg-blue-700" },
+              { id: "irrigacao_carretel", label: "Irrigação Carretel", icon: <Droplets className="h-5 w-5" />, color: "bg-blue-600 hover:bg-blue-700" },
               { id: "irrigacao_faixa_3_4", label: "Irrigação FAIXA 3 e 4", icon: <Sprout className="h-5 w-5" />, color: "bg-emerald-600 hover:bg-emerald-700" },
               { id: "abastecimento_tanque_irrigacao", label: "Abastecimento do Tanque de Irrigação", icon: <Fuel className="h-5 w-5" />, color: "bg-indigo-600 hover:bg-indigo-700" },
               { id: "lavagem_vertedouro", label: "Lavagem Vertedouro", icon: <Waves className="h-5 w-5" />, color: "bg-teal-600 hover:bg-teal-700" },
               { id: "umectacao_vias", label: "Umectação de Vias", icon: <CloudDrizzle className="h-5 w-5" />, color: "bg-sky-600 hover:bg-sky-700" },
               { id: "lavagem_carro", label: "Lavagem de Carro", icon: <CarFront className="h-5 w-5" />, color: "bg-slate-600 hover:bg-slate-700" },
-              { id: "lavagem_97_ambulatorio", label: "Lavagem 97 Ambulatório", icon: <Waves className="h-5 w-5" />, color: "bg-cyan-500 hover:bg-cyan-600" },
-              { id: "irrigacao_faixa_5", label: "Irrigação Faixa 5", icon: <Sprout className="h-5 w-5" />, color: "bg-emerald-500 hover:bg-emerald-600" },
-              { id: "apoio_sistema_irrigacao", label: "Apoio sistema de irrigação", icon: <Droplets className="h-5 w-5" />, color: "bg-blue-500 hover:bg-blue-600" },
-              { id: "outros", label: "Outros...", icon: <FileText className="h-5 w-5" />, color: "bg-slate-500 hover:bg-slate-600" },
             ].map((s) => {
               const loading = submittingServiceId === s.id;
-              const isActiveService = currentStatus === "servico" && (
-                activeServiceDescription === `Serviço: ${s.label}` || 
-                (selectedVehicleId && localStorage.getItem(`active_service_${selectedVehicleId}`) === s.id)
-              );
-              
               return (
                 <Button
                   key={s.id}
                   type="button"
                   variant="outline"
-                  disabled={isActiveService || !!submittingServiceId || isProfileLoading || !canIdentifyLoggedDriver}
-                  className={`h-auto min-h-[56px] py-3 px-3 flex items-center justify-start gap-3 text-white transition-all ${
-                    isActiveService 
-                      ? 'bg-red-600 border-2 border-red-400 shadow-[0_0_15px_rgba(239,68,68,0.8)] animate-pulse opacity-100 z-10' 
-                      : `border-2 border-transparent opacity-90 hover:opacity-100 ${s.color}`
-                  }`}
+                    disabled={!!submittingServiceId || isProfileLoading || !canIdentifyLoggedDriver}
+                  className={`h-auto min-h-[56px] py-3 px-3 flex items-center justify-start gap-3 text-white border-transparent ${s.color}`}
                   onClick={async () => {
                     if (!selectedVehicleId || !selectedVehicle) {
                       toast.error("Nenhum veículo selecionado");
@@ -1889,65 +1431,9 @@ export function DriverStatusButtons() {
                       toast.error("Aguarde carregar o motorista logado");
                       return;
                     }
-                    if (s.id === "outros") {
-                      setServicesOpen(false);
-                      setCustomServiceText("");
-                      setCustomServiceDialogOpen(true);
-                      return;
-                    }
                     setSubmittingServiceId(s.id);
-                    const now = new Date().toISOString();
-                    
-                    // Optimistic update
-                    queryClient.setQueryData(["equipment"], (old: any) => {
-                      if (!old) return old;
-                      const newData = old.map((eq: any) =>
-                        eq.id === selectedVehicleId ? { ...eq, stop_reason: "servico", stop_start_time: now } : eq
-                      );
-                      const env = localStorage.getItem("selected_environment") ?? sessionStorage.getItem("selected_environment");
-                      localStorage.setItem(`cached_equipment_${env || "default"}`, JSON.stringify(newData));
-                      return newData;
-                    });
-
-                    const wapiBody = {
-                      equipmentId: selectedVehicleId,
-                      equipmentName: selectedVehicle.name,
-                      plate: selectedVehicle.plate,
-                      newStatus: "servico",
-                      previousStatus: selectedVehicle.stop_reason || "none",
-                      driverName: currentDriverName || null,
-                      helperName: selectedVehicle.helper || null,
-                      extraInfo: `*Serviço:* ${s.label}`,
-                      timestamp: now,
-                    };
-
-                    if (!isOnline) {
-                      addPendingAction("equipment_status", {
-                        id: selectedVehicleId,
-                        stop_reason: "servico",
-                        stop_start_time: now,
-                      }).catch(e => console.warn(e));
-                      addPendingAction("stop_history", {
-                        equipment_id: selectedVehicleId,
-                        stop_reason: "servico",
-                        started_at: now,
-                        changed_by_driver: currentDriverName || null,
-                        defect_description: `Serviço: ${s.label}`,
-                      }).catch(e => console.warn(e));
-                      addPendingAction("wapi_invoke", {
-                        functionName: "wapi-driver-status-notify",
-                        body: wapiBody,
-                      }).catch(e => console.warn(e));
-                      
-                      localStorage.setItem(`active_service_${selectedVehicleId}`, s.id);
-                      localStorage.setItem(`active_service_label_${selectedVehicleId}`, `Serviço: ${s.label}`);
-                      toast.success(`Serviço salvo offline: ${s.label}`);
-                      setServicesOpen(false);
-                      setSubmittingServiceId(null);
-                      return;
-                    }
-
                     try {
+                      const now = new Date().toISOString();
                       await updateStatus.mutateAsync({
                         id: selectedVehicleId,
                         stop_reason: "servico" as any,
@@ -1959,53 +1445,31 @@ export function DriverStatusButtons() {
                       } as any);
                       localStorage.setItem(`active_service_${selectedVehicleId}`, s.id);
                       localStorage.setItem(`active_service_label_${selectedVehicleId}`, `Serviço: ${s.label}`);
-                      
-                      supabase.functions.invoke("wapi-driver-status-notify", { body: wapiBody }).catch((err) => {
-                        console.warn("Failed to notify wapi-driver-status-notify", err);
-                      });
+                      supabase.functions
+                        .invoke("wapi-driver-status-notify", {
+                          body: {
+                            equipmentId: selectedVehicleId,
+                            equipmentName: selectedVehicle.name,
+                            plate: selectedVehicle.plate,
+                            newStatus: "servico",
+                            previousStatus: selectedVehicle.stop_reason || "none",
+                            driverName: currentDriverName || null,
+                            extraInfo: `*Serviço:* ${s.label}`,
+                          },
+                        })
+                        .catch((e) => console.warn("driver-status-notify failed", e));
                       toast.success(`Serviço selecionado: ${s.label}`);
                       setServicesOpen(false);
                     } catch (err: any) {
                       console.error(err);
-                      addPendingAction("equipment_status", {
-                        id: selectedVehicleId,
-                        stop_reason: "servico",
-                        stop_start_time: now,
-                      }).catch(e => console.warn(e));
-                      addPendingAction("stop_history", {
-                        equipment_id: selectedVehicleId,
-                        stop_reason: "servico",
-                        started_at: now,
-                        changed_by_driver: currentDriverName || null,
-                        defect_description: `Serviço: ${s.label}`,
-                      }).catch(e => console.warn(e));
-                      addPendingAction("wapi_invoke", {
-                        functionName: "wapi-driver-status-notify",
-                        body: wapiBody,
-                      }).catch(e => console.warn(e));
-                      
-                      localStorage.setItem(`active_service_${selectedVehicleId}`, s.id);
-                      localStorage.setItem(`active_service_label_${selectedVehicleId}`, `Serviço: ${s.label}`);
-                      toast.warning(`Erro de conexão. Serviço ${s.label} salvo para sincronizar depois.`);
-                      setServicesOpen(false);
+                      toast.error(`Erro ao registrar serviço: ${err?.message || err}`);
                     } finally {
                       setSubmittingServiceId(null);
                     }
                   }}
                 >
-                  {loading ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : isActiveService ? (
-                    <CheckCircle2 className="h-5 w-5" />
-                  ) : (
-                    s.icon
-                  )}
+                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : s.icon}
                   <span className="text-sm font-semibold text-left flex-1">{s.label}</span>
-                  {isActiveService && (
-                    <span className="text-[10px] uppercase font-bold tracking-wider bg-white/20 px-2 py-1 rounded-full">
-                      Ativo
-                    </span>
-                  )}
                 </Button>
               );
             })}
@@ -2017,47 +1481,6 @@ export function DriverStatusButtons() {
               disabled={!!submittingServiceId}
             >
               Cancelar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={customServiceDialogOpen} onOpenChange={(o) => !submittingServiceId && setCustomServiceDialogOpen(o)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" /> Outro Serviço
-            </DialogTitle>
-            <DialogDescription>
-              Digite qual serviço está sendo realizado.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <Input
-              value={customServiceText}
-              onChange={(e) => setCustomServiceText(e.target.value)}
-              className="w-full"
-            />
-          </div>
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setCustomServiceDialogOpen(false)}
-              disabled={submittingServiceId === "custom"}
-              className="w-full sm:w-auto"
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={submitCustomService}
-              disabled={submittingServiceId === "custom" || !customServiceText.trim()}
-              className="w-full sm:w-auto bg-emerald-600 text-white hover:bg-emerald-700"
-            >
-              {submittingServiceId === "custom" ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <CheckCircle2 className="h-4 w-4 mr-2" />
-              )}
-              Confirmar Serviço
             </Button>
           </DialogFooter>
         </DialogContent>

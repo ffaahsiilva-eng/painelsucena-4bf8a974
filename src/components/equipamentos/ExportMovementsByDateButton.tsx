@@ -218,9 +218,20 @@ export function ExportMovementsByDateButton({ equipment }: ExportMovementsByDate
           }
           .logo-row img { height: 40px; }
 
-          .top { display: flex; border-bottom: 1px solid #000; align-items: stretch; }
-          .top-title { flex: 1; background: #e6e6e6; font-weight: 700; text-align: center; display: flex; align-items: center; justify-content: center; padding: 8px 10px; border-right: 1px solid #000; font-size: 14px; letter-spacing: .5px; }
-
+          .top {
+            display: flex;
+            border-bottom: 1px solid #000;
+          }
+          .top-title {
+            flex: 1;
+            background: #e6e6e6;
+            font-weight: 700;
+            text-align: center;
+            padding: 8px 10px;
+            border-right: 1px solid #000;
+            font-size: 14px;
+            letter-spacing: .5px;
+          }
           .obra {
             width: 180px;
             display: flex;
@@ -353,18 +364,27 @@ export function ExportMovementsByDateButton({ equipment }: ExportMovementsByDate
           .sig-name {
             font-weight: bold;
             font-size: 10px;
-            margin: 0 0 5px;
-            padding: 0 4px 3px;
-            line-height: 1.2;
+            margin: 0;
+            padding: 0;
+            line-height: 1;
             min-height: 12px;
-            white-space: normal;
-            overflow: visible;
-            word-break: keep-all;
-            border-bottom: 1px solid #000;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+          .sig .line {
+            border-top: 1px solid #000;
+            margin-top: 2px;
+            margin-bottom: 5px;
           }
           .sig .lbl { font-size: 9px; }
 
-          .instructions { border-top: 1px solid #000; padding: 4px 10px; font-size: 6px; line-height: 1.1; }
+          .instructions {
+            border-top: 1px solid #000;
+            padding: 8px 10px;
+            font-size: 8px;
+            line-height: 1.4;
+          }
           .instructions strong { font-weight: 700; }
 
           @media print {
@@ -380,8 +400,9 @@ export function ExportMovementsByDateButton({ equipment }: ExportMovementsByDate
       </head>
       <body>
         <div class="sheet">
+          ${params.logoBase64 ? `<div class="logo-row"><img loading="lazy" decoding="async" src="${params.logoBase64}" alt="Sucena" /></div>` : ""}
+
           <div class="top">
-            ${params.logoBase64 ? `<div style="padding: 8px 15px; border-right: 1px solid #000; background: #fff; display: flex; align-items: center; justify-content: center;"><img loading="lazy" decoding="async" src="${params.logoBase64}" style="height: 35px; display: block;" alt="Logo" /></div>` : ""}
             <div class="top-title">PARTE DIÁRIA DE EQUIPAMENTO</div>
             <div class="obra">
               <div class="label">OBRA:</div>
@@ -446,9 +467,9 @@ export function ExportMovementsByDateButton({ equipment }: ExportMovementsByDate
           ${additionalTablesHtml}
 
           <div class="signatures">
-            <div class="sig"><div class="sig-name">${params.driverName || ""}</div><div class="lbl">Ass. Motorista/Op</div></div>
-            <div class="sig"><div class="sig-name">Creriane Navegantes</div><div class="lbl">Ass. Encarreg./Apontador</div></div>
-            <div class="sig"><div class="sig-name">Luís Carlos</div><div class="lbl">Ass. Gerência</div></div>
+            <div class="sig"><div class="sig-name">${params.driverName || ""}</div><div class="line"></div><div class="lbl">Ass. Motorista/Op</div></div>
+            <div class="sig"><div class="sig-name">Creriane Navegantes</div><div class="line"></div><div class="lbl">Ass. Encarreg./Apontador</div></div>
+            <div class="sig"><div class="sig-name">Luís Carlos</div><div class="line"></div><div class="lbl">Ass. Gerência</div></div>
           </div>
 
           <div class="instructions"><strong>INSTRUÇÃO:</strong> ${instructionText}</div>

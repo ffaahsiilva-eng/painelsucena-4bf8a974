@@ -9,8 +9,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { resolveStorageUrl } from "@/lib/storage";
 import { Colaborador, funcoes } from "@/data/efetivoData";
 import { toast } from "sonner";
-import { compressImage } from "@/utils/imageCompression";
-
 
 interface AddEmployeeDialogProps {
   onAdd: (employee: Omit<Colaborador, "id">) => void;
@@ -44,7 +42,7 @@ export const AddEmployeeDialog = ({ onAdd }: AddEmployeeDialogProps) => {
 
       const { error: uploadError } = await supabase.storage
         .from("site-assets")
-        .upload(fileName, await compressImage(file));
+        .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 

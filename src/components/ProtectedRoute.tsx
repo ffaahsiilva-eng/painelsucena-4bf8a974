@@ -144,7 +144,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     // consultado fresco para evitar redirect em loop caso o cache
     // esteja desatualizado após upload de foto.
     const cacheKey = `user_profile_${userId}`;
-    const cached = sessionStorage.getItem(cacheKey) || localStorage.getItem(cacheKey);
+    const cached = sessionStorage.getItem(cacheKey);
     if (cached) {
       try {
         const data = JSON.parse(cached);
@@ -191,7 +191,6 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
       const result = { cargo, admin };
       sessionStorage.setItem(cacheKey, JSON.stringify(result));
-      localStorage.setItem(cacheKey, JSON.stringify(result));
       return { ...result, hasAvatar: hasAvatarVal };
     } catch (err) {
       console.error("Error fetching user cargo:", err);
@@ -218,12 +217,14 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   // Check if driver has selected a vehicle
   const hasSelectedVehicle = localStorage.getItem("selectedVehicleId");
 
-  // Environment gate: TODOS os usuários devem escolher
+  // Environment gate: TODOS os usuários (exceto motoristas) devem escolher
   // ambiente após o login. O acesso a ambientes não autorizados é bloqueado
   // dentro da própria tela de seleção (useMyEnvironmentAccess).
-  const environment = getStoredEnvironment();
-  if (!environment && location.pathname !== "/selecao-ambiente") {
-    return <Navigate to="/selecao-ambiente" replace />;
+  if (!isDriver) {
+    const environment = getStoredEnvironment();
+    if (!environment && location.pathname !== "/selecao-ambiente") {
+      return <Navigate to="/selecao-ambiente" replace />;
+    }
   }
 
   // If user is a driver
@@ -233,8 +234,17 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       try { localStorage.setItem("is_driver_session", "true"); } catch { /* ignore */ }
     }
 
-    // If no vehicle selected and not already on vehicle selection page or environment selection, redirect to vehicle selection
-    if (!hasSelectedVehicle && location.pathname !== '/selecao-veiculo' && location.pathname !== '/selecao-ambiente') {
+    // Drivers always operate in 'barcarena' — ensure header is set even if a
+    // previous admin session left 'paragominas' in sessionStorage.
+    if (getStoredEnvironment() !== "barcarena") {
+      try {
+        sessionStorage.setItem("selected_environment", "barcarena");
+        window.dispatchEvent(new Event("environment-changed"));
+      } catch { /* ignore */ }
+    }
+
+    // If no vehicle selected and not already on vehicle selection page, redirect to vehicle selection
+    if (!hasSelectedVehicle && location.pathname !== '/selecao-veiculo') {
       return <Navigate to="/selecao-veiculo" replace />;
     }
     
@@ -243,8 +253,8 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       return <Navigate to="/painel-motorista" replace />;
     }
     
-    // If trying to access a page not in allowed list (and not selecting environment), redirect to driver panel
-    if (!DRIVER_ALLOWED_PATHS.includes(location.pathname) && location.pathname !== '/selecao-ambiente') {
+    // If trying to access a page not in allowed list, redirect to driver panel
+    if (!DRIVER_ALLOWED_PATHS.includes(location.pathname)) {
       return <Navigate to="/painel-motorista" replace />;
     }
   }

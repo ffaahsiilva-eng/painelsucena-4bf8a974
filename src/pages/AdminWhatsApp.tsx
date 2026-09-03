@@ -18,7 +18,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Save, Send, Search, Users, Bell, Play, FileImage, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { generateParteDiariaBase64 } from "@/lib/parteDiariaShare";
+import { generateAndUploadParteDiariaPng } from "@/lib/parteDiariaShare";
 import { format } from "date-fns";
 
 const formatBR = (digits: string): string => {
@@ -66,22 +66,22 @@ const AdminWhatsApp = () => {
   const [sending, setSending] = useState(false);
   const [sendToGroup, setSendToGroup] = useState(false);
   const [groupIdOverride, setGroupIdOverride] = useState("");
-  const [ddsAutoNotify, setDdsAutoNotify] = useState(true);
-  const [ddsNotifyDayBefore, setDdsNotifyDayBefore] = useState(true);
-  const [autoSendReq, setAutoSendReq] = useState(true);
-  const [autoSendReminders, setAutoSendReminders] = useState(true);
-  const [autoSendAsoAlert, setAutoSendAsoAlert] = useState(true);
-  const [autoSendMatrixAlert, setAutoSendMatrixAlert] = useState(true);
-  const [autoSendForbiddenColorAlert, setAutoSendForbiddenColorAlert] = useState(true);
-  const [autoSendCampaignAlert, setAutoSendCampaignAlert] = useState(true);
-  const [autoSendOrderAlerts, setAutoSendOrderAlerts] = useState(true);
-  const [autoSendOrdersToGroup, setAutoSendOrdersToGroup] = useState(true);
+  const [ddsAutoNotify, setDdsAutoNotify] = useState(false);
+  const [ddsNotifyDayBefore, setDdsNotifyDayBefore] = useState(false);
+  const [autoSendReq, setAutoSendReq] = useState(false);
+  const [autoSendReminders, setAutoSendReminders] = useState(false);
+  const [autoSendAsoAlert, setAutoSendAsoAlert] = useState(false);
+  const [autoSendMatrixAlert, setAutoSendMatrixAlert] = useState(false);
+  const [autoSendForbiddenColorAlert, setAutoSendForbiddenColorAlert] = useState(false);
+  const [autoSendCampaignAlert, setAutoSendCampaignAlert] = useState(false);
+  const [autoSendOrderAlerts, setAutoSendOrderAlerts] = useState(false);
+  const [autoSendOrdersToGroup, setAutoSendOrdersToGroup] = useState(false);
   const [groupIdOrders, setGroupIdOrders] = useState("");
-  const [autoSendEquipmentMovements, setAutoSendEquipmentMovements] = useState(true);
-  const [autoSendPlanningAlerts, setAutoSendPlanningAlerts] = useState(true);
-  const [autoSendBillingAlert, setAutoSendBillingAlert] = useState(true);
-  const [autoSendVehicleInspectionAlert, setAutoSendVehicleInspectionAlert] = useState(true);
-  const [autoSendSlingInspectionAlert, setAutoSendSlingInspectionAlert] = useState(true);
+  const [autoSendEquipmentMovements, setAutoSendEquipmentMovements] = useState(false);
+  const [autoSendPlanningAlerts, setAutoSendPlanningAlerts] = useState(false);
+  const [autoSendBillingAlert, setAutoSendBillingAlert] = useState(false);
+  const [autoSendVehicleInspectionAlert, setAutoSendVehicleInspectionAlert] = useState(false);
+  const [autoSendSlingInspectionAlert, setAutoSendSlingInspectionAlert] = useState(false);
   // Group ID overrides per feature (when empty, falls back to default group_id)
   const [groupIdRequisitions, setGroupIdRequisitions] = useState("");
   const [groupIdReminders, setGroupIdReminders] = useState("");
@@ -94,20 +94,20 @@ const AdminWhatsApp = () => {
   const [groupIdBilling, setGroupIdBilling] = useState("");
   const [groupIdVehicleInspection, setGroupIdVehicleInspection] = useState("");
   const [groupIdSlingInspection, setGroupIdSlingInspection] = useState("");
-  const [autoSendPosChuva, setAutoSendPosChuva] = useState(true);
+  const [autoSendPosChuva, setAutoSendPosChuva] = useState(false);
   const [groupIdPosChuva, setGroupIdPosChuva] = useState("");
-  const [autoSendDdsPhoto, setAutoSendDdsPhoto] = useState(true);
+  const [autoSendDdsPhoto, setAutoSendDdsPhoto] = useState(false);
   const [groupIdDds, setGroupIdDds] = useState("");
-  const [autoSendAttendance, setAutoSendAttendance] = useState(true);
+  const [autoSendAttendance, setAutoSendAttendance] = useState(false);
   const [groupIdAttendance, setGroupIdAttendance] = useState("");
-  const [autoSendDesvios, setAutoSendDesvios] = useState(true);
+  const [autoSendDesvios, setAutoSendDesvios] = useState(false);
   const [groupIdDesvios, setGroupIdDesvios] = useState("");
-  const [autoSendDesvioDue, setAutoSendDesvioDue] = useState(true);
+  const [autoSendDesvioDue, setAutoSendDesvioDue] = useState(false);
   const [groupIdDesvioDue, setGroupIdDesvioDue] = useState("");
   const [testingDesvioDue, setTestingDesvioDue] = useState(false);
-  const [autoSendLowStock, setAutoSendLowStock] = useState(true);
+  const [autoSendLowStock, setAutoSendLowStock] = useState(false);
   const [groupIdLowStock, setGroupIdLowStock] = useState("");
-  const [autoSendAdubo, setAutoSendAdubo] = useState(true);
+  const [autoSendAdubo, setAutoSendAdubo] = useState(false);
   const [groupIdAdubo, setGroupIdAdubo] = useState("");
   const [testingPlanning, setTestingPlanning] = useState(false);
   const [testingBilling, setTestingBilling] = useState(false);
@@ -116,24 +116,24 @@ const AdminWhatsApp = () => {
   const [testingDds, setTestingDds] = useState(false);
   const [testingDdsTomorrow, setTestingDdsTomorrow] = useState(false);
   const [testingAso, setTestingAso] = useState(false);
-  const [autoSendTrainingAlert, setAutoSendTrainingAlert] = useState(true);
+  const [autoSendTrainingAlert, setAutoSendTrainingAlert] = useState(false);
   const [groupIdTraining, setGroupIdTraining] = useState("");
   const [testingTraining, setTestingTraining] = useState(false);
-  const [autoSendAtaContrato, setAutoSendAtaContrato] = useState(true);
+  const [autoSendAtaContrato, setAutoSendAtaContrato] = useState(false);
   const [groupIdAtaContrato, setGroupIdAtaContrato] = useState("");
   const [testingAtaContrato, setTestingAtaContrato] = useState(false);
   const [testingMatrix, setTestingMatrix] = useState(false);
   const [testingForbiddenColor, setTestingForbiddenColor] = useState(false);
   const [testingCampaign, setTestingCampaign] = useState(false);
-  const [autoSendCronogramaMirante, setAutoSendCronogramaMirante] = useState(true);
+  const [autoSendCronogramaMirante, setAutoSendCronogramaMirante] = useState(false);
   const [groupIdCronogramaMirante, setGroupIdCronogramaMirante] = useState("");
   const [testingCronogramaMirante, setTestingCronogramaMirante] = useState(false);
-  const [autoSendDriverStatus, setAutoSendDriverStatus] = useState(true);
+  const [autoSendDriverStatus, setAutoSendDriverStatus] = useState(false);
   const [groupIdDriverStatus, setGroupIdDriverStatus] = useState("");
-  const [autoSendDriverAppReminder, setAutoSendDriverAppReminder] = useState(true);
+  const [autoSendDriverAppReminder, setAutoSendDriverAppReminder] = useState(false);
   const [groupIdDriverAppReminder, setGroupIdDriverAppReminder] = useState("");
   const [testingDriverAppReminder, setTestingDriverAppReminder] = useState(false);
-  const [autoSendPlannedActivities, setAutoSendPlannedActivities] = useState(true);
+  const [autoSendPlannedActivities, setAutoSendPlannedActivities] = useState(false);
   const [groupIdPlannedActivities, setGroupIdPlannedActivities] = useState("");
   const [testingPlannedActivities, setTestingPlannedActivities] = useState(false);
   const [parteDiariaOpen, setParteDiariaOpen] = useState(false);
@@ -168,7 +168,7 @@ const AdminWhatsApp = () => {
       setDelaySeconds(typeof cfg.delay_seconds === "number" ? cfg.delay_seconds : 5);
       setGroupId(cfg.group_id || "");
       const c = cfg as unknown as Record<string, unknown>;
-      setReroutePrivateToGroup(c.reroute_private_to_group !== false);
+      setReroutePrivateToGroup((c.reroute_private_to_group as boolean | null) !== false);
       setGroupIdRequisitions((c.group_id_requisitions as string | null) || "");
       setGroupIdReminders((c.group_id_reminders as string | null) || "");
       setGroupIdAso((c.group_id_aso as string | null) || "");
@@ -180,47 +180,47 @@ const AdminWhatsApp = () => {
       setGroupIdBilling((c.group_id_billing as string | null) || "");
       setGroupIdVehicleInspection((c.group_id_vehicle_inspection as string | null) || "");
       setGroupIdSlingInspection((c.group_id_sling_inspection as string | null) || "");
-      setDdsAutoNotify(cfg.dds_auto_notify !== false);
-      setDdsNotifyDayBefore(cfg.dds_notify_day_before !== false);
-      setAutoSendReq(cfg.auto_send_requisitions !== false);
-      setAutoSendReminders(cfg.auto_send_reminders !== false);
-      setAutoSendAsoAlert(cfg.auto_send_aso_alert !== false);
-      setAutoSendMatrixAlert(cfg.auto_send_matrix_alert !== false);
-      setAutoSendForbiddenColorAlert(cfg.auto_send_forbidden_color_alert !== false);
-      setAutoSendCampaignAlert(cfg.auto_send_campaign_alert !== false);
-      setAutoSendOrderAlerts(cfg.auto_send_order_alerts !== false);
-      setAutoSendOrdersToGroup(c.auto_send_orders_to_group !== false);
+      setDdsAutoNotify(!!cfg.dds_auto_notify);
+      setDdsNotifyDayBefore(!!cfg.dds_notify_day_before);
+      setAutoSendReq(!!cfg.auto_send_requisitions);
+      setAutoSendReminders(!!cfg.auto_send_reminders);
+      setAutoSendAsoAlert(!!cfg.auto_send_aso_alert);
+      setAutoSendMatrixAlert(!!cfg.auto_send_matrix_alert);
+      setAutoSendForbiddenColorAlert(!!cfg.auto_send_forbidden_color_alert);
+      setAutoSendCampaignAlert(!!cfg.auto_send_campaign_alert);
+      setAutoSendOrderAlerts(!!cfg.auto_send_order_alerts);
+      setAutoSendOrdersToGroup(!!(c.auto_send_orders_to_group as boolean | null));
       setGroupIdOrders((c.group_id_orders as string | null) || "");
-      setAutoSendEquipmentMovements(cfg.auto_send_equipment_movements !== false);
-      setAutoSendPlanningAlerts(cfg.auto_send_planning_alerts !== false);
-      setAutoSendBillingAlert(cfg.auto_send_billing_alert !== false);
-      setAutoSendVehicleInspectionAlert(cfg.auto_send_vehicle_inspection_alert !== false);
-      setAutoSendSlingInspectionAlert(cfg.auto_send_sling_inspection_alert !== false);
-      setAutoSendPosChuva(c.auto_send_pos_chuva !== false);
+      setAutoSendEquipmentMovements(!!cfg.auto_send_equipment_movements);
+      setAutoSendPlanningAlerts(!!cfg.auto_send_planning_alerts);
+      setAutoSendBillingAlert(!!cfg.auto_send_billing_alert);
+      setAutoSendVehicleInspectionAlert(!!cfg.auto_send_vehicle_inspection_alert);
+      setAutoSendSlingInspectionAlert(!!cfg.auto_send_sling_inspection_alert);
+      setAutoSendPosChuva(!!(c.auto_send_pos_chuva as boolean | null));
       setGroupIdPosChuva((c.group_id_pos_chuva as string | null) || "");
-      setAutoSendDdsPhoto(c.auto_send_dds_photo !== false);
+      setAutoSendDdsPhoto(!!(c.auto_send_dds_photo as boolean | null));
       setGroupIdDds((c.group_id_dds as string | null) || "");
-      setAutoSendAttendance(c.auto_send_attendance !== false);
+      setAutoSendAttendance(!!(c.auto_send_attendance as boolean | null));
       setGroupIdAttendance((c.group_id_attendance as string | null) || "");
-      setAutoSendDesvios(c.auto_send_desvios !== false);
+      setAutoSendDesvios(!!(c.auto_send_desvios as boolean | null));
       setGroupIdDesvios((c.group_id_desvios as string | null) || "");
-      setAutoSendDesvioDue(c.auto_send_desvio_due_alert !== false);
+      setAutoSendDesvioDue(!!(c.auto_send_desvio_due_alert as boolean | null));
       setGroupIdDesvioDue((c.group_id_desvio_due as string | null) || "");
-      setAutoSendLowStock(c.auto_send_low_stock_alert !== false);
+      setAutoSendLowStock(!!(c.auto_send_low_stock_alert as boolean | null));
       setGroupIdLowStock((c.group_id_low_stock as string | null) || "");
-      setAutoSendTrainingAlert(c.auto_send_training_alert !== false);
+      setAutoSendTrainingAlert(!!(c.auto_send_training_alert as boolean | null));
       setGroupIdTraining((c.group_id_training as string | null) || "");
-      setAutoSendAdubo(c.auto_send_adubo_alert !== false);
+      setAutoSendAdubo(!!(c.auto_send_adubo_alert as boolean | null));
       setGroupIdAdubo((c.group_id_adubo as string | null) || "");
-      setAutoSendAtaContrato(c.auto_send_ata_contrato !== false);
+      setAutoSendAtaContrato(!!(c.auto_send_ata_contrato as boolean | null));
       setGroupIdAtaContrato((c.group_id_ata_contrato as string | null) || "");
-      setAutoSendCronogramaMirante(c.auto_send_cronograma_mirante !== false);
+      setAutoSendCronogramaMirante(!!(c.auto_send_cronograma_mirante as boolean | null));
       setGroupIdCronogramaMirante((c.group_id_cronograma_mirante as string | null) || "");
-      setAutoSendDriverStatus(c.auto_send_driver_status !== false);
+      setAutoSendDriverStatus(!!(c.auto_send_driver_status as boolean | null));
       setGroupIdDriverStatus((c.group_id_driver_status as string | null) || "");
-      setAutoSendDriverAppReminder(c.auto_send_driver_app_reminder !== false);
+      setAutoSendDriverAppReminder(!!(c.auto_send_driver_app_reminder as boolean | null));
       setGroupIdDriverAppReminder((c.group_id_driver_app_reminder as string | null) || "");
-      setAutoSendPlannedActivities(c.auto_send_planned_activities !== false);
+      setAutoSendPlannedActivities(!!(c.auto_send_planned_activities as boolean | null));
       setGroupIdPlannedActivities((c.group_id_planned_activities as string | null) || "");
     }
   }, [cfg]);
@@ -243,7 +243,7 @@ const AdminWhatsApp = () => {
   const { data: logs } = useQuery({
     queryKey: ["wapi-logs"],
     enabled: !!user && isAdmin,
-
+    refetchInterval: 30000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("wapi_message_logs" as never)
@@ -619,78 +619,6 @@ const AdminWhatsApp = () => {
     }
   };
 
-  const handleResendYesterdayOrders = async () => {
-    try {
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      yesterday.setHours(0, 0, 0, 0);
-
-      const endOfYesterday = new Date(yesterday);
-      endOfYesterday.setHours(23, 59, 59, 999);
-
-      const { data: orders, error } = await supabase
-        .from('orders')
-        .select('id, created_at, order_number')
-        .gte('created_at', yesterday.toISOString())
-        .lte('created_at', endOfYesterday.toISOString());
-
-      if (error) throw error;
-
-      if (!orders || orders.length === 0) {
-        toast.info("Nenhum pedido encontrado ontem");
-        return;
-      }
-
-      let successCount = 0;
-      for (const order of orders) {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const accessToken = sessionData.session?.access_token;
-        
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wapi-order-notify`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            "Authorization": `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({
-            orderId: order.id,
-            eventType: "created",
-          }),
-        });
-
-        if (response.ok) {
-          successCount++;
-        }
-      }
-
-      toast.success(`${successCount} de ${orders.length} pedidos de ontem reenviados com sucesso!`);
-    } catch (e: any) {
-      toast.error("Erro ao reenviar pedidos", { description: e.message });
-    }
-  };
-
-  const handleResendFailedToday = async () => {
-    try {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const { data, error } = await supabase
-        .from('wapi_outbox')
-        .update({ status: 'pending', attempts: 0, last_error: null })
-        .eq('status', 'failed')
-        .gte('created_at', today.toISOString())
-        .select('id');
-
-      if (error) throw error;
-
-      toast.success(`${data?.length || 0} mensagem(ns) falha(s) de hoje foram re-enfileirada(s) com sucesso!`);
-      queryClient.invalidateQueries({ queryKey: ["wapi-logs"] });
-    } catch (e: any) {
-      toast.error("Erro ao re-enfileirar mensagens falhas", { description: e.message });
-    }
-  };
-
   const handleTestDesvioDue = async () => {
     setTestingDesvioDue(true);
     try {
@@ -856,8 +784,8 @@ const AdminWhatsApp = () => {
       if (eqErr || !eq) throw eqErr || new Error("Equipamento não encontrado");
 
       toast.info("Gerando Parte Diária em PNG...");
-      const imageBase64 = await generateParteDiariaBase64(eq as any);
-      if (!imageBase64) throw new Error("Falha ao gerar/enviar a imagem ao storage");
+      const imageUrl = await generateAndUploadParteDiariaPng(eq as any);
+      if (!imageUrl) throw new Error("Falha ao gerar/enviar a imagem ao storage");
 
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wapi-driver-status-notify`;
       const resp = await fetch(url, {
@@ -870,7 +798,7 @@ const AdminWhatsApp = () => {
           newStatus: "end_of_shift",
           driverName: rec.driver_name,
           shiftRecordId: rec.id,
-          imageBase64,
+          imageUrl,
           imageCaption: `📄 Parte Diária — ${rec.equipment_name} (${rec.plate})\n👤 Motorista: ${rec.driver_name || "—"}`,
           extraInfo: "♻️ Reenvio manual da Parte Diária pelo painel admin.",
         }),
@@ -1151,15 +1079,9 @@ const AdminWhatsApp = () => {
                 <Switch checked={enabled} onCheckedChange={setEnabled} id="wapi-enabled" />
                 <Label htmlFor="wapi-enabled">Integração habilitada</Label>
               </div>
-              <div className="flex items-center gap-2">
-                <Button onClick={handleResendFailedToday} variant="secondary" className="gap-2">
-                  <Send className="w-4 h-4" />
-                  Reenviar Falhas de Hoje
-                </Button>
-                <Button onClick={() => saveConfig.mutate()} disabled={saveConfig.isPending}>
-                  <Save className="w-4 h-4 mr-2" /> Salvar Configuração
-                </Button>
-              </div>
+              <Button onClick={() => saveConfig.mutate()} disabled={saveConfig.isPending}>
+                <Save className="w-4 h-4 mr-2" /> Salvar Configuração
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -1698,12 +1620,6 @@ const AdminWhatsApp = () => {
               Requisitos: integração W-API habilitada e usuários com WhatsApp cadastrado no perfil. Quando "Enviar também para o grupo" está ativo,
               as mensagens vão para os números pessoais mencionados/solicitante <strong>e</strong> para o grupo configurado abaixo.
             </p>
-            <div className="mt-4 flex justify-end">
-              <Button onClick={handleResendYesterdayOrders} variant="secondary" className="gap-2">
-                <Send className="w-4 h-4" />
-                Reenviar Pedidos de Ontem
-              </Button>
-            </div>
           </CardContent>
         </Card>
 

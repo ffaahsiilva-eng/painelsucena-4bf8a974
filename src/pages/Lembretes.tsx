@@ -265,8 +265,8 @@ const Lembretes = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-6 sm:mb-8">
           <div>
-            <EditablePageTitle pageKey="lembretes" defaultValue="Lembretes" className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2 force-dark-title" />
-            <p className="text-sm text-muted-foreground force-dark-title">
+            <EditablePageTitle pageKey="lembretes" defaultValue="Lembretes" className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2 text-gradient" />
+            <p className="text-sm text-muted-foreground">
               Crie lembretes e mencione usuários
             </p>
           </div>

@@ -6,7 +6,7 @@ interface NeonAvatarProps {
   frameColor?: string | null;
   neonColor?: string | null;
   frameAnimation?: string | null;
-  size?: "xs" | "sm" | "md" | "lg" | "sidebar";
+  size?: "xs" | "sm" | "md" | "lg";
   className?: string;
 }
 
@@ -38,13 +38,6 @@ const sizeConfig = {
     border: 4,
     glow: 20,
     text: "text-xl",
-  },
-  sidebar: {
-    outer: 86,
-    inner: 80,
-    border: 3,
-    glow: 14,
-    text: "text-base",
   },
 };
 

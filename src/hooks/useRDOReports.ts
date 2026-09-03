@@ -1,8 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
-import { compressImage } from "@/utils/imageCompression";
-
 
 export interface RDOReport {
   id: string;
@@ -360,7 +358,7 @@ export const useUploadRDOPhotos = () => {
 
       const { error: uploadError } = await supabase.storage
         .from("rdo-photos")
-        .upload(fileName, await compressImage(file));
+        .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 

@@ -27,18 +27,30 @@ export const VerifiedBadge = forwardRef<HTMLDivElement, VerifiedBadgeProps>(
       <div
         ref={ref}
         className={cn(
-          "relative inline-flex items-center justify-center flex-shrink-0 ml-2",
+          "relative inline-flex items-center justify-center flex-shrink-0",
+          sizeClasses[size],
           className
         )}
         title="Administrador verificado"
       >
+        {/* Subtle animated gold glow behind the badge */}
         <span
+          aria-hidden
           className={cn(
-            "text-[10px] font-bold text-[#b58a48] uppercase tracking-wider bg-[#b58a48]/10 border border-[#b58a48]/30 px-2 py-0.5 rounded shadow-[0_0_10px_rgba(181,138,72,0.2)]"
+            "absolute rounded-full pointer-events-none animate-admin-glow",
+            glowSizeClasses[size]
           )}
-        >
-          ADMIN
-        </span>
+          style={{
+            background:
+              "radial-gradient(circle, rgba(56,182,255,0.35) 0%, rgba(30,144,255,0.12) 45%, rgba(30,144,255,0) 75%)",
+            filter: "blur(2px)",
+          }}
+        />
+        <img loading="lazy" decoding="async"
+          src={adminBadge}
+          alt="Administrador"
+          className={cn(sizeClasses[size], "relative z-10 object-contain")}
+        />
       </div>
     );
   }

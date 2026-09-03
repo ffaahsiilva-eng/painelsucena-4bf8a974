@@ -1,7 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { compressImage } from "@/utils/imageCompression";
-
 
 export interface SiteInspection {
   id: string;
@@ -175,7 +173,7 @@ export async function uploadInspectionPhoto(file: File, taskId: string, type: "b
 
   const { error } = await supabase.storage
     .from("inspection-photos")
-    .upload(path, await compressImage(file), { upsert: true });
+    .upload(path, file, { upsert: true });
   if (error) throw error;
 
   const { data } = supabase.storage.from("inspection-photos").getPublicUrl(path);

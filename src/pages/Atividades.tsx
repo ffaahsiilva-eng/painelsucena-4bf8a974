@@ -1,5 +1,5 @@
 import { bermaLabel } from "@/lib/bermaLabel";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import * as E from "@/lib/whatsappEmojis";
 import { copyAndShareWhatsApp, copyToClipboard } from "@/lib/copyAndShare";
@@ -16,8 +16,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { DebouncedTextarea } from "@/components/atividades/DebouncedTextarea";
-import { AIImproveButton } from "@/components/atividades/AIImproveButton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -45,7 +45,7 @@ import MonthlyReportDialog from "@/components/atividades/MonthlyReportDialog";
 import { PhotoUploader } from "@/components/atividades/PhotoUploader";
 import { ReadOnlyBanner } from "@/components/ReadOnlyBanner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-
+import { AIImproveButton } from "@/components/atividades/AIImproveButton";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MudasParaPlantarTab from "@/components/atividades/MudasParaPlantarTab";
@@ -106,7 +106,7 @@ export default function Atividades() {
   const [selectedDate, setSelectedDate] = useState<Date>(today);
   const selectedDateStr = format(selectedDate, "yyyy-MM-dd");
 
-  const { data: existingReport, isLoading: isLoadingReport, isFetching } = useJardinagemReportByDate(selectedDateStr);
+  const { data: existingReport, isLoading: isLoadingReport } = useJardinagemReportByDate(selectedDateStr);
   const { data: allReports } = useJardinagemReports();
   const saveReport = useSaveJardinagemReport();
   const deleteReport = useDeleteJardinagemReport();
@@ -301,15 +301,8 @@ export default function Atividades() {
     profile?.cargo === "encarregado_i"
   );
 
-  const prevDateRef = useRef<string | null>(null);
-
   // Load existing report when date changes
   useEffect(() => {
-    if (isLoadingReport || isFetching) return;
-    
-    // If we already populated the form for this date, don't overwrite user edits
-    if (prevDateRef.current === selectedDateStr) return;
-
     if (existingReport) {
       setLocalFaixa(existingReport.local_faixa || "FAIXA 2");
       setRocagem(existingReport.rocagem_m2?.toString() || "");
@@ -377,9 +370,7 @@ export default function Atividades() {
       setAtividadesManuais(""); setAtividadesManuaisFaixa(""); setAtividadesManuaisBerma("");
       setPhotos([]); setExtraEntries({});
     }
-
-    prevDateRef.current = selectedDateStr;
-  }, [existingReport, selectedDateStr, isLoadingReport, isFetching]);
+  }, [existingReport, selectedDateStr]);
 
   // Show loading while checking permissions
   if (!authReady || isLoadingProfile) {
@@ -1381,10 +1372,7 @@ export default function Atividades() {
               {/* Atividades Manuais */}
               <div className="space-y-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-2">
-                  <div className="flex items-center gap-2">
-                    <Label className="text-amber-600 dark:text-amber-400 font-semibold">✏️ OUTRAS ATIVIDADES (Preenchimento Manual)</Label>
-                    <AIImproveButton text={atividadesManuais} onImproved={setAtividadesManuais} />
-                  </div>
+                  <Label className="text-amber-600 dark:text-amber-400 font-semibold">✏️ OUTRAS ATIVIDADES (Preenchimento Manual)</Label>
                   <div className="flex flex-wrap items-center gap-2">
                     <Select value={atividadesManuaisFaixa} onValueChange={setAtividadesManuaisFaixa}>
                       <SelectTrigger className="w-[120px] h-8 text-xs"><SelectValue placeholder="Faixa" /></SelectTrigger>
@@ -1394,6 +1382,11 @@ export default function Atividades() {
                       <SelectTrigger className="w-[120px] h-8 text-xs"><SelectValue>{atividadesManuaisBerma ? BERMA_OPTIONS.find(o => o.value === atividadesManuaisBerma)?.label : "Berma"}</SelectValue></SelectTrigger>
                       <SelectContent>{BERMA_OPTIONS.map((opt) => (<SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>))}</SelectContent>
                     </Select>
+                    <AIImproveButton
+                      text={atividadesManuais}
+                      onImproved={setAtividadesManuais}
+                      disabled={!canEdit}
+                    />
                   </div>
                 </div>
                 <DebouncedTextarea
@@ -1419,6 +1412,11 @@ export default function Atividades() {
                       <SelectTrigger className="w-[120px] h-8 text-xs"><SelectValue>{manutencaoCanteiroBerma ? BERMA_OPTIONS.find(o => o.value === manutencaoCanteiroBerma)?.label : "Berma"}</SelectValue></SelectTrigger>
                       <SelectContent>{BERMA_OPTIONS.map((opt) => (<SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>))}</SelectContent>
                     </Select>
+                    <AIImproveButton
+                      text={manutencaoCanteiro}
+                      onImproved={setManutencaoCanteiro}
+                      disabled={!canEdit}
+                    />
                   </div>
                 </div>
                 <DebouncedTextarea

@@ -5,8 +5,6 @@ import { subscribeToTables } from "@/lib/realtimeManager";
 import { useAuth } from "./useAuth";
 import { playSoundFile } from "@/lib/sounds";
 import type { Tables } from "@/integrations/supabase/types";
-import { compressImage } from "@/utils/imageCompression";
-
 
 export type ChatMessage = Tables<"chat_messages">;
 
@@ -176,7 +174,7 @@ export const useChatMessages = (otherUserId: string | null) => {
 
     const { error: uploadError } = await supabase.storage
       .from("chat-images")
-      .upload(fileName, await compressImage(file));
+      .upload(fileName, file);
 
     if (uploadError) throw uploadError;
 
@@ -195,7 +193,7 @@ export const useChatMessages = (otherUserId: string | null) => {
 
     const { error: uploadError } = await supabase.storage
       .from("chat-images")
-      .upload(fileName, await compressImage(blob), { contentType: blob.type || "audio/webm" });
+      .upload(fileName, blob, { contentType: blob.type || "audio/webm" });
 
     if (uploadError) throw uploadError;
 

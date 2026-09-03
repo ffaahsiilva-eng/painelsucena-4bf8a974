@@ -608,7 +608,7 @@ export default function MeioAmbiente() {
           <h1 className="text-2xl md:text-3xl font-bold text-[#c9a84c]">Meio Ambiente</h1>
         </div>
 
-        <div className="sucena-module-grid">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 md:gap-5 max-w-4xl mx-auto">
           {hubPages.map((page) => (
             <button
               key={page.key}
@@ -619,12 +619,23 @@ export default function MeioAmbiente() {
                   setSelectedSection(page.key);
                 }
               }}
-              className="sucena-module-tile group"
+              className="group relative rounded-2xl p-[2px] cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(201,168,76,0.3)] focus:outline-none"
+              style={{
+                background: "linear-gradient(145deg, #d4a84c, #b8942e, #e8c95a, #a07828)",
+              }}
             >
-              <page.icon className="h-10 w-10 text-[#555b5f] group-hover:text-[#b68a46] group-hover:scale-110 transition-all duration-300" strokeWidth={1.2} />
-              <span className="text-[15px] font-semibold text-[#2b2f31]">
-                {page.label}
-              </span>
+              <div
+                className="rounded-[14px] flex flex-col items-center justify-center gap-3 p-5 md:p-6 h-full min-h-[140px] md:min-h-[160px]"
+                style={{
+                  background: "linear-gradient(160deg, #d4a84c 0%, #c49a3c 25%, #b08830 50%, #c49a3c 75%, #d8b050 100%)",
+                }}
+              >
+                <div className="absolute inset-[6px] rounded-xl border border-[#b8942e]/50 pointer-events-none" />
+                <page.icon className="h-10 w-10 md:h-12 md:w-12 text-[#1a1a1a] drop-shadow-sm group-hover:scale-110 transition-transform duration-300" strokeWidth={1.5} />
+                <span className="text-[#1a1a1a] text-xs md:text-sm font-semibold text-center leading-tight whitespace-pre-line">
+                  {page.label}
+                </span>
+              </div>
             </button>
           ))}
         </div>

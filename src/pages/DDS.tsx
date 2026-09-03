@@ -48,8 +48,6 @@ import { ENVIRONMENTS, type EnvironmentId } from "@/hooks/useEnvironment";
 import { DDSParticipationDialog } from "@/components/dds/DDSParticipationDialog";
 import { getLogoBase64, generatePdfHeader, PDF_HEADER_STYLES } from "@/lib/pdfLogo";
 import { downloadPdfFromHtml } from "@/lib/pdfDownload";
-import { compressImage } from "@/utils/imageCompression";
-
 
 const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
@@ -179,7 +177,7 @@ export default function DDS() {
     try {
       const ext = file.name.split(".").pop() || "jpg";
       const path = `dds-event_${scheduleId}_${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from("site-assets").upload(path, await compressImage(file), { upsert: true });
+      const { error: uploadError } = await supabase.storage.from("site-assets").upload(path, file, { upsert: true });
       if (uploadError) throw uploadError;
       const { data: urlData } = supabase.storage.from("site-assets").getPublicUrl(path);
       await updateDDSEventPhoto.mutateAsync({ id: scheduleId, event_photo_url: urlData.publicUrl });

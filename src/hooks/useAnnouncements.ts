@@ -192,7 +192,7 @@ export function useUnreadAnnouncements() {
       return results;
     },
     enabled: !!user,
-
+    refetchInterval: 120000,
   });
 
   // Play sound when new announcements arrive

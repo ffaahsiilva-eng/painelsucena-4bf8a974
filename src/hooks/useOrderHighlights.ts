@@ -71,7 +71,7 @@ export const useOrderHighlights = () => {
       return highlights;
     },
     enabled: !!user?.id,
-
+    refetchInterval: 60000, // Refresh every minute
   });
 };
 

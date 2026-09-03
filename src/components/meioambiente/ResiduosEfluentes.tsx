@@ -555,7 +555,7 @@ export default function ResiduosEfluentes() {
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-[#1a5276] tracking-wide">RESÍDUOS</h2>
             <span className="text-lg font-bold">ANO {ano}</span>
-            <img loading="lazy" decoding="async" src={sucenaLogo.url} alt="Sucena" className="h-14 object-contain" />
+            <img loading="lazy" decoding="async" src={logoSucenaEmpreendimentos} alt="Sucena" className="h-14 object-contain" />
           </div>
         </div>
 

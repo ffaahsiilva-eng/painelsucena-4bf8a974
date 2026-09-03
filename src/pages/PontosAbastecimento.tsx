@@ -12,7 +12,6 @@ import { confirmOnce } from "@/lib/pendingConfirm";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useOfflineSyncV2 } from "@/hooks/useOfflineSyncV2";
 
 const PONTOS_ABASTECIMENTO = ["46", "3C", "3D", "82"];
 
@@ -26,7 +25,6 @@ export default function PontosAbastecimento() {
   const { data: equipment = [], refetch } = useEquipment();
   const { data: profile } = useProfile();
   const addStatusToHistory = useAddStatusToHistory();
-  const { isOnline, addPendingAction } = useOfflineSyncV2();
   
   const selectedVehicle = equipment.find(eq => eq.id === selectedVehicleId);
 
@@ -110,106 +108,60 @@ export default function PontosAbastecimento() {
 
   const startRefueling = async (point: string) => {
     const now = new Date().toISOString();
-    const wapiBody = {
-      equipmentId: selectedVehicleId,
-      equipmentName: selectedVehicle?.name,
-      plate: selectedVehicle?.plate,
-      newStatus: "abastecimento",
-      previousStatus: selectedVehicle?.stop_reason || null,
-      driverName: profile?.full_name || selectedVehicle?.driver || null,
-      waterPoint: point,
-      timestamp: now,
-    };
 
-    if (!isOnline) {
-      addPendingAction("equipment_status", {
-        id: selectedVehicleId,
+    // Update equipment status to abastecimento
+    const { error: equipError } = await supabase
+      .from("equipment")
+      .update({
         stop_reason: "abastecimento",
         stop_start_time: now,
-      }).catch(e => console.warn(e));
-      addPendingAction("stop_history", {
+      })
+      .eq("id", selectedVehicleId);
+
+    if (equipError) throw equipError;
+
+    // Create history record
+    const { error: historyError } = await supabase
+      .from("equipment_stop_history")
+      .insert({
         equipment_id: selectedVehicleId,
         stop_reason: "abastecimento",
         started_at: now,
         defect_description: `Ponto: ${point}`,
         changed_by_driver: profile?.full_name || selectedVehicle?.driver || null,
-      }).catch(e => console.warn(e));
-      addPendingAction("wapi_invoke", {
-        functionName: "wapi-driver-status-notify",
-        body: wapiBody,
-      }).catch(e => console.warn(e));
-      
-      setCurrentPoint(point);
-      setRefuelingStartTime(now);
-      toast.success(`Abastecimento salvo offline no ponto ${point}`);
-      return;
+      });
+
+    if (historyError) throw historyError;
+
+    // Also add to daily shift record status history
+    if (selectedVehicleId) {
+      await addStatusToHistory.mutateAsync({
+        equipmentId: selectedVehicleId,
+        status: "abastecimento",
+        changedBy: profile?.full_name || selectedVehicle?.driver || null,
+        description: `Abastecendo - Ponto: ${point}`,
+      });
     }
 
-    try {
-      // Update equipment status to abastecimento
-      const { error: equipError } = await supabase
-        .from("equipment")
-        .update({
-          stop_reason: "abastecimento",
-          stop_start_time: now,
-        })
-        .eq("id", selectedVehicleId);
+    setCurrentPoint(point);
+    setRefuelingStartTime(now);
+    await refetch();
 
-      if (equipError) throw equipError;
+    // Fire-and-forget WhatsApp group notification
+    supabase.functions.invoke("wapi-driver-status-notify", {
+      body: {
+        equipmentId: selectedVehicleId,
+        equipmentName: selectedVehicle?.name,
+        plate: selectedVehicle?.plate,
+        newStatus: "abastecimento",
+        previousStatus: selectedVehicle?.stop_reason || null,
+        driverName: profile?.full_name || selectedVehicle?.driver || null,
+        waterPoint: point,
+      },
+    }).catch((e) => console.warn("driver-status-notify failed", e));
 
-      // Create history record
-      const { error: historyError } = await supabase
-        .from("equipment_stop_history")
-        .insert({
-          equipment_id: selectedVehicleId,
-          stop_reason: "abastecimento",
-          started_at: now,
-          defect_description: `Ponto: ${point}`,
-          changed_by_driver: profile?.full_name || selectedVehicle?.driver || null,
-        });
+    toast.success(`Abastecimento iniciado no ponto ${point}`);
 
-      if (historyError) throw historyError;
-
-      // Also add to daily shift record status history
-      if (selectedVehicleId) {
-        await addStatusToHistory.mutateAsync({
-          equipmentId: selectedVehicleId,
-          status: "abastecimento",
-          changedBy: profile?.full_name || selectedVehicle?.driver || null,
-          description: `Abastecendo - Ponto: ${point}`,
-        });
-      }
-
-      setCurrentPoint(point);
-      setRefuelingStartTime(now);
-      await refetch();
-
-      // Fire-and-forget WhatsApp group notification
-      supabase.functions.invoke("wapi-driver-status-notify", { body: wapiBody }).catch((e) => console.warn("driver-status-notify failed", e));
-
-      toast.success(`Abastecimento iniciado no ponto ${point}`);
-    } catch (err) {
-      console.error(err);
-      addPendingAction("equipment_status", {
-        id: selectedVehicleId,
-        stop_reason: "abastecimento",
-        stop_start_time: now,
-      }).catch(e => console.warn(e));
-      addPendingAction("stop_history", {
-        equipment_id: selectedVehicleId,
-        stop_reason: "abastecimento",
-        started_at: now,
-        defect_description: `Ponto: ${point}`,
-        changed_by_driver: profile?.full_name || selectedVehicle?.driver || null,
-      }).catch(e => console.warn(e));
-      addPendingAction("wapi_invoke", {
-        functionName: "wapi-driver-status-notify",
-        body: wapiBody,
-      }).catch(e => console.warn(e));
-      setCurrentPoint(point);
-      setRefuelingStartTime(now);
-      toast.warning("Erro de conexão. Alteração salva para sincronizar depois.");
-    }
   };
 
   const endRefueling = async (point: string) => {
@@ -223,137 +175,76 @@ export default function PontosAbastecimento() {
       durationMinutes = Math.round((now.getTime() - start.getTime()) / 60000);
     }
 
-    const wapiBody = {
-      equipmentId: selectedVehicleId,
-      equipmentName: selectedVehicle?.name,
-      plate: selectedVehicle?.plate,
-      newStatus: "none",
-      previousStatus: "abastecimento",
-      driverName: profile?.full_name || selectedVehicle?.driver || null,
-      extraInfo: `*Retorno do Ponto ${point}*\n*Duração:* ${durationMinutes} min`,
-      timestamp: nowIso,
-    };
-
-    if (!isOnline) {
-      addPendingAction("equipment_status", {
-        id: selectedVehicleId,
+    // Update equipment status back to operando
+    const { error: equipError } = await supabase
+      .from("equipment")
+      .update({
         stop_reason: "operando",
         stop_start_time: nowIso,
-      }).catch(e => console.warn(e));
-      addPendingAction("stop_history", {
-        update_ended_at: true,
-        equipment_id: selectedVehicleId,
+      })
+      .eq("id", selectedVehicleId);
+
+    if (equipError) throw equipError;
+
+    // Close the abastecimento history record (set end time)
+    const { error: historyError } = await supabase
+      .from("equipment_stop_history")
+      .update({
         ended_at: nowIso,
         duration_minutes: durationMinutes,
-        stop_reason: "operando", // neq operando = abastecimento
-      }).catch(e => console.warn(e));
-      addPendingAction("stop_history", {
+      })
+      .eq("equipment_id", selectedVehicleId)
+      .eq("stop_reason", "abastecimento")
+      .is("ended_at", null);
+
+    if (historyError) throw historyError;
+
+    // Create "Operando" history entry so it shows in Parte Diária
+    await supabase
+      .from("equipment_stop_history")
+      .insert({
         equipment_id: selectedVehicleId,
         stop_reason: "operando",
         started_at: nowIso,
         defect_description: `Retorno do Ponto ${point}`,
         changed_by_driver: profile?.full_name || selectedVehicle?.driver || null,
-      }).catch(e => console.warn(e));
-      addPendingAction("wapi_invoke", {
-        functionName: "wapi-driver-status-notify",
-        body: wapiBody,
-      }).catch(e => console.warn(e));
-      
-      setCurrentPoint(null);
-      setRefuelingStartTime(null);
-      toast.success(`Retorno salvo offline (${durationMinutes} min)`);
-      return;
+      });
+
+    // Also add to daily shift record status history
+    if (selectedVehicleId) {
+      await addStatusToHistory.mutateAsync({
+        equipmentId: selectedVehicleId,
+        status: "operando",
+        changedBy: profile?.full_name || selectedVehicle?.driver || null,
+        description: `Operando - Retorno do Ponto ${point}`,
+      });
     }
 
-    try {
-      // Update equipment status back to operando
-      const { error: equipError } = await supabase
-        .from("equipment")
-        .update({
-          stop_reason: "operando",
-          stop_start_time: nowIso,
-        })
-        .eq("id", selectedVehicleId);
+    setCurrentPoint(null);
+    setRefuelingStartTime(null);
+    await refetch();
 
-      if (equipError) throw equipError;
+    // Fire-and-forget WhatsApp group notification
+    supabase.functions.invoke("wapi-driver-status-notify", {
+      body: {
+        equipmentId: selectedVehicleId,
+        equipmentName: selectedVehicle?.name,
+        plate: selectedVehicle?.plate,
+        newStatus: "none",
+        previousStatus: "abastecimento",
+        driverName: profile?.full_name || selectedVehicle?.driver || null,
+        extraInfo: `*Retorno do Ponto ${point}*\n*Duração:* ${durationMinutes} min`,
+      },
+    }).catch((e) => console.warn("driver-status-notify failed", e));
 
-      // Close the abastecimento history record (set end time)
-      const { error: historyError } = await supabase
-        .from("equipment_stop_history")
-        .update({
-          ended_at: nowIso,
-          duration_minutes: durationMinutes,
-        })
-        .eq("equipment_id", selectedVehicleId)
-        .eq("stop_reason", "abastecimento")
-        .is("ended_at", null);
+    toast.success(`Abastecimento finalizado (${durationMinutes} min)`);
 
-      if (historyError) throw historyError;
-
-      // Create "Operando" history entry so it shows in Parte Diária
-      await supabase
-        .from("equipment_stop_history")
-        .insert({
-          equipment_id: selectedVehicleId,
-          stop_reason: "operando",
-          started_at: nowIso,
-          defect_description: `Retorno do Ponto ${point}`,
-          changed_by_driver: profile?.full_name || selectedVehicle?.driver || null,
-        });
-
-      // Also add to daily shift record status history
-      if (selectedVehicleId) {
-        await addStatusToHistory.mutateAsync({
-          equipmentId: selectedVehicleId,
-          status: "operando",
-          changedBy: profile?.full_name || selectedVehicle?.driver || null,
-          description: `Operando - Retorno do Ponto ${point}`,
-        });
-      }
-
-      setCurrentPoint(null);
-      setRefuelingStartTime(null);
-      await refetch();
-
-      // Fire-and-forget WhatsApp group notification
-      supabase.functions.invoke("wapi-driver-status-notify", { body: wapiBody }).catch((e) => console.warn("driver-status-notify failed", e));
-
-      toast.success(`Abastecimento finalizado (${durationMinutes} min)`);
-    } catch (err) {
-      console.error(err);
-      addPendingAction("equipment_status", {
-        id: selectedVehicleId,
-        stop_reason: "operando",
-        stop_start_time: nowIso,
-      }).catch(e => console.warn(e));
-      addPendingAction("stop_history", {
-        update_ended_at: true,
-        equipment_id: selectedVehicleId,
-        ended_at: nowIso,
-        duration_minutes: durationMinutes,
-        stop_reason: "operando",
-      }).catch(e => console.warn(e));
-      addPendingAction("stop_history", {
-        equipment_id: selectedVehicleId,
-        stop_reason: "operando",
-        started_at: nowIso,
-        defect_description: `Retorno do Ponto ${point}`,
-        changed_by_driver: profile?.full_name || selectedVehicle?.driver || null,
-      }).catch(e => console.warn(e));
-      addPendingAction("wapi_invoke", {
-        functionName: "wapi-driver-status-notify",
-        body: wapiBody,
-      }).catch(e => console.warn(e));
-      setCurrentPoint(null);
-      setRefuelingStartTime(null);
-      toast.warning("Erro de conexão. Retorno salvo para sincronizar depois.");
-    }
   };
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-card/95  border-b shadow-sm">
+      <header className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm border-b shadow-sm">
         <div className="flex items-center gap-2 p-2 sm:p-3">
           <Button
             variant="ghost"

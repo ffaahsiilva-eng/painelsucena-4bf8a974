@@ -16,7 +16,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { toast } from "sonner";
-import { useOfflineSyncV2 } from "@/hooks/useOfflineSyncV2";
 
 interface VehicleChecklistDialogProps {
   equipmentId: string | null;
@@ -52,7 +51,6 @@ export const VehicleChecklistDialog = ({
   const [saving, setSaving] = useState(false);
   const { data: profile } = useProfile();
   const queryClient = useQueryClient();
-  const { isOnline, addPendingAction } = useOfflineSyncV2();
 
   const { data: checklists = [], isLoading } = useQuery({
     queryKey: ["driver-checklists", equipmentId],
@@ -85,33 +83,16 @@ export const VehicleChecklistDialog = ({
       const fullDescription = observation.trim()
         ? `${problem.trim()}\n\n*Observação:* ${observation.trim()}`
         : problem.trim();
-        
-      const payload = {
+      const { error } = await supabase.from("driver_vehicle_checklists").insert({
         equipment_id: equipmentId,
         equipment_name: equipmentName || "—",
         plate: plate || "—",
         driver_name: profile?.full_name || null,
         problem_description: fullDescription,
         created_by: user?.id || null,
-      };
-
-      let success = false;
-      if (isOnline) {
-        try {
-          const { error } = await supabase.from("driver_vehicle_checklists").insert(payload);
-          if (error) throw error;
-          success = true;
-          toast.success("Problema registrado e enviado ao grupo");
-        } catch (e: any) {
-          console.warn("Online checklist insert failed, falling back to offline", e);
-        }
-      }
-
-      if (!success) {
-        await addPendingAction("driver_checklist", payload);
-        toast.success("Salvo offline. Será enviado quando houver internet.");
-      }
-
+      });
+      if (error) throw error;
+      toast.success("Problema registrado e enviado ao grupo");
       setProblem("");
       setObservation("");
       queryClient.invalidateQueries({ queryKey: ["driver-checklists", equipmentId] });

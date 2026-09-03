@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import * as E from "@/lib/whatsappEmojis";
@@ -13,8 +13,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { DebouncedTextarea } from "@/components/atividades/DebouncedTextarea";
-import { AIImproveButton } from "@/components/atividades/AIImproveButton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -38,7 +38,7 @@ import MonthlyReportDialog from "@/components/atividades/MonthlyReportDialog";
 import { PhotoUploader } from "@/components/atividades/PhotoUploader";
 import { ReadOnlyBanner } from "@/components/ReadOnlyBanner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-
+import { AIImproveButton } from "@/components/atividades/AIImproveButton";
 import { EditablePageTitle } from "@/components/cms/EditablePageTitle";
 import { EditableIcon } from "@/components/cms/EditableIcon";
 import { JardinagemMetasSummary } from "@/components/atividades/JardinagemMetasSummary";
@@ -74,7 +74,7 @@ export default function AtividadesII() {
   const [selectedDate, setSelectedDate] = useState<Date>(today);
   const selectedDateStr = format(selectedDate, "yyyy-MM-dd");
 
-  const { data: existingReport, isLoading: isLoadingReport, isFetching } = useGabiaoReportByDate(selectedDateStr);
+  const { data: existingReport, isLoading: isLoadingReport } = useGabiaoReportByDate(selectedDateStr);
   const { data: allReports } = useGabiaoReports();
   const saveReport = useSaveGabiaoReport();
   const deleteReport = useDeleteGabiaoReport();
@@ -151,13 +151,8 @@ export default function AtividadesII() {
   // Photo state
   const [photos, setPhotos] = useState<string[]>([]);
 
-  const prevDateRef = useRef<string | null>(null);
-
   // Load existing data when report changes
   useEffect(() => {
-    if (isLoadingReport || isFetching) return;
-    if (prevDateRef.current === selectedDateStr) return;
-
     if (existingReport) {
       const localServicoStr = existingReport.local_servico || "";
       
@@ -309,12 +304,12 @@ export default function AtividadesII() {
       setTransporteMateriaisQuantidade("");
       setAtividadesManuais("");
       setObservacoes("");
+      setObservacoes("");
       setPhotos([]);
       setGabiaoExtra({});
+      setPhotos([]);
     }
-
-    prevDateRef.current = selectedDateStr;
-  }, [existingReport, selectedDateStr, isLoadingReport, isFetching]);
+  }, [existingReport, selectedDateStr]);
 
   // Check access permissions - can view if encarregado_geral, encarregado_ii, planejador, engenheiro_planejamento, or admin
   const canView = authReady && (
@@ -1254,10 +1249,12 @@ export default function AtividadesII() {
               {/* Manual Activities Text */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Label className="text-base font-semibold">✏️ ATIVIDADES MANUAIS</Label>
-                    <AIImproveButton text={atividadesManuais} onImproved={setAtividadesManuais} />
-                  </div>
+                  <Label className="text-base font-semibold">✏️ ATIVIDADES MANUAIS</Label>
+                  <AIImproveButton
+                    text={atividadesManuais}
+                    onImproved={setAtividadesManuais}
+                    disabled={!canEdit}
+                  />
                 </div>
                 <DebouncedTextarea
                   value={atividadesManuais}
@@ -1275,6 +1272,11 @@ export default function AtividadesII() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label>📝 OBSERVAÇÕES</Label>
+                  <AIImproveButton
+                    text={observacoes}
+                    onImproved={setObservacoes}
+                    disabled={!canEdit}
+                  />
                 </div>
                 <DebouncedTextarea
                   value={observacoes}

@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     const targetGroupId = (cfg?.group_id_low_stock || cfg?.group_id || "").trim();
-    if (!cfg || !cfg.enabled || cfg.auto_send_low_stock_alert === false || !targetGroupId) {
+    if (!cfg || !cfg.enabled || !cfg.auto_send_low_stock_alert || !targetGroupId) {
       return new Response(JSON.stringify({ skipped: true, reason: "disabled-or-no-group" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

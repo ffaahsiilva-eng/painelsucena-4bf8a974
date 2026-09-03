@@ -53,11 +53,6 @@ export default {
         success: "hsl(var(--success))",
         warning: "hsl(var(--warning))",
         info: "hsl(var(--info))",
-        glass: "var(--glass)",
-        "glass-heavy": "var(--glass-heavy)",
-        "glass-light": "var(--glass-light)",
-        "accent-gold": "var(--accent-gold)",
-        "accent-gold-soft": "var(--accent-gold-soft)",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -117,6 +112,10 @@ export default {
         "fadeInUp": {
           "0%": { opacity: "0", transform: "translateY(8px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "float": {
+          "0%, 100%": { transform: "translate(-50%, 0)" },
+          "50%": { transform: "translate(-50%, -6px)" },
         },
       },
       animation: {

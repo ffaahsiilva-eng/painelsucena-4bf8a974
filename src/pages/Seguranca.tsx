@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import {
   Sun, FolderOpen, ClipboardCheck, BadgeCheck, Link2,
-  HardHat, Droplets, TriangleAlert, ShieldCheck, FlameKindling, Shield, Heart, Grid3X3, GraduationCap, BookOpen
+  HardHat, Droplets, TriangleAlert, ShieldCheck, FlameKindling, Shield, Heart, Grid3X3, GraduationCap
 } from "lucide-react";
 
 const securityPages = [
@@ -18,7 +18,6 @@ const securityPages = [
   { label: "Campanhas", icon: Heart, path: "/campanhas" },
   { label: "Matriz\nResponsabilidade", icon: Grid3X3, path: "/matriz" },
   { label: "Controle de\nTreinamento", icon: GraduationCap, path: "/controle-treinamento" },
-  { label: "Data Book\nHydro", icon: BookOpen, path: "/data-book-hydro" },
 ];
 
 const Seguranca = () => {
@@ -34,17 +33,31 @@ const Seguranca = () => {
           <h1 className="text-3xl md:text-4xl font-bold text-[#c9a84c] tracking-tight">Segurança</h1>
         </div>
 
-        <div className="sucena-module-grid">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-8 mx-auto">
           {securityPages.map((page) => (
             <button
               key={page.path}
               onClick={() => navigate(page.path)}
-              className="sucena-module-tile group"
+              className="group relative rounded-2xl p-[2px] cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(201,168,76,0.3)] focus:outline-none"
+              style={{
+                background: "linear-gradient(145deg, #d4a84c, #b8942e, #e8c95a, #a07828)",
+              }}
             >
-              <page.icon className="h-10 w-10 text-[#555b5f] group-hover:text-[#b68a46] group-hover:scale-110 transition-all duration-300" strokeWidth={1.2} />
-              <span className="text-[15px] font-semibold text-[#2b2f31]">
-                {page.label}
-              </span>
+              {/* Inner card */}
+              <div
+                className="rounded-[14px] flex flex-col items-center justify-center gap-3 p-4 md:p-6 h-full min-h-[120px] md:min-h-[160px]"
+                style={{
+                  background: "linear-gradient(160deg, #d4a84c 0%, #c49a3c 25%, #b08830 50%, #c49a3c 75%, #d8b050 100%)",
+                }}
+              >
+                {/* Inner border effect */}
+                <div className="absolute inset-[6px] rounded-xl border border-[#b8942e]/50 pointer-events-none" />
+                
+                <page.icon className="h-8 w-8 md:h-12 md:w-12 text-[#1a1a1a] drop-shadow-sm group-hover:scale-110 transition-transform duration-300" strokeWidth={1.5} />
+                <span className="text-[#1a1a1a] text-xs md:text-sm font-semibold text-center leading-tight whitespace-pre-line">
+                  {page.label}
+                </span>
+              </div>
             </button>
           ))}
         </div>

@@ -61,7 +61,21 @@ export default function SelecaoAmbiente() {
   const handleSelect = async (envId: EnvironmentId) => {
     setSelecting(envId);
     setEnvironment(envId);
-    navigate("/", { replace: true });
+    const label = allEnvs.find((e) => e.id === envId)?.label ?? envId;
+    
+    // Inicia a transição de login (mesmo que já esteja logado, usamos o gate para efeito visual)
+    const payload = {
+      userName: user?.fullName,
+      userAvatar: user?.avatarUrl,
+      destination: "/"
+    };
+    
+    sessionStorage.setItem("loginTransitionInProgress", "true");
+    sessionStorage.setItem("loginTransitionStage", "play");
+    sessionStorage.setItem("loginTransitionPayload", JSON.stringify(payload));
+    
+    // Dispara o evento para o LoginTransitionGate
+    window.dispatchEvent(new Event("login-transition"));
   };
 
   const handleLogout = async () => {
@@ -149,17 +163,14 @@ export default function SelecaoAmbiente() {
             </div>
             <div>
               <p className="text-[10px] uppercase tracking-[0.2em] text-[#c9a84c]/70 font-bold">Autenticado como</p>
-              <h3 className="text-lg font-bold tracking-tight">
-                <div className="!text-[#c9a84c]" style={{ color: "#c9a84c" }}>{user?.fullName || "Carregando..."}</div>
-              </h3>
+              <h3 className="text-lg font-bold tracking-tight text-white/90">{user?.fullName || "Carregando..."}</h3>
             </div>
           </motion.div>
 
           <Button 
             variant="ghost" 
             onClick={handleLogout}
-            className="!text-red-500 hover:!text-red-400 hover:bg-red-500/10 gap-2 transition-all rounded-full border border-red-500/20 px-6"
-            style={{ color: "#ef4444" }}
+            className="text-white/60 hover:text-white hover:bg-white/5 gap-2 transition-all rounded-full border border-white/5 px-6"
           >
             <LogOut className="h-4 w-4" />
             Encerrar Sessão
@@ -172,8 +183,8 @@ export default function SelecaoAmbiente() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-16 space-y-4"
           >
-            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]">
-              <div className="!text-white" style={{ color: "white" }}>Selecione o Ambiente</div>
+            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.1)]">
+              Selecione o <span className="text-[#c9a84c] drop-shadow-[0_0_20px_rgba(201,168,76,0.3)]">Ambiente</span>
             </h1>
             <p className="text-white/50 text-lg max-w-lg mx-auto font-medium">
               Gestão inteligente de operações em tempo real. Escolha a unidade de trabalho para prosseguir.
@@ -234,9 +245,7 @@ export default function SelecaoAmbiente() {
                       )}
                     </div>
                     
-                    <h2 className="text-3xl font-bold mb-2 tracking-tight transition-colors">
-                      <div className="!text-[#c9a84c]" style={{ color: "#c9a84c" }}>{env.label}</div>
-                    </h2>
+                    <h2 className="text-3xl font-bold text-white mb-2 tracking-tight group-hover:text-[#c9a84c] transition-colors">{env.label}</h2>
                     <p className="text-white/40 text-[15px] leading-relaxed line-clamp-2">
                       {env.description || "Acesse o painel completo de controle operacional desta unidade."}
                     </p>
@@ -284,9 +293,7 @@ export default function SelecaoAmbiente() {
                 <div className="w-16 h-16 rounded-full bg-[#c9a84c]/10 border border-[#c9a84c]/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                   <Plus className="h-8 w-8 text-[#c9a84c]" />
                 </div>
-                <h3 className="text-xl font-bold transition-colors">
-                  <div className="!text-[#c9a84c]" style={{ color: "#c9a84c" }}>Novo Ambiente</div>
-                </h3>
+                <h3 className="text-xl font-bold text-white/60 group-hover:text-[#c9a84c] transition-colors">Novo Ambiente</h3>
                 <p className="text-white/30 text-sm mt-2 text-center px-10">Expanda as operações do sistema</p>
               </motion.div>
             )}

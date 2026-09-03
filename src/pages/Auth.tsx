@@ -59,7 +59,6 @@ const clearTransitionStorage = () => {
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
-  const [isSuccess, setIsSuccess] = useState(() => sessionStorage.getItem("loginTransitionInProgress") === "true");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -77,7 +76,25 @@ const Auth = () => {
   const { settings: envSettings, isLoading: settingsLoading } = useSiteSettings();
   
 
-  const showSignup = envSettings.show_signup_button;
+  // Fetch all site settings to check if signup is enabled in ANY environment
+  // (since user hasn't selected an environment yet on login screen)
+  const { data: allSettings, isLoading: allSettingsLoading } = useQuery({
+    queryKey: ["all-site-settings"],
+    queryFn: async () => {
+      const { data } = await supabase.from("site_settings").select("show_signup_button");
+      return data || [];
+    }
+  });
+
+  const showSignup = useMemo(() => {
+    // If enabled in current environment
+    if (envSettings.show_signup_button) return true;
+    // Or if enabled in any other environment record
+    if (allSettings && allSettings.length > 0) {
+      return allSettings.some(s => s.show_signup_button);
+    }
+    return false;
+  }, [envSettings.show_signup_button, allSettings]);
 
   // Fetch occupied cargos on mount
   useEffect(() => {
@@ -179,7 +196,6 @@ const Auth = () => {
     sessionStorage.setItem("loginTransitionInProgress", "true");
     sessionStorage.setItem("loginTransitionStage", "pending");
     dispatchTransitionEvent();
-    setIsSuccess(true);
 
     const loginStartedAt = performance.now();
     try {
@@ -203,7 +219,6 @@ const Auth = () => {
         if (error) {
           clearTransitionStorage();
           dispatchTransitionEvent();
-          setIsSuccess(false);
           const isNetworkError =
             /failed to fetch|network|load failed|timeout/i.test(error.message || "") ||
             (error as any)?.name === "AuthRetryableFetchError";
@@ -326,7 +341,6 @@ const Auth = () => {
             cargoOptions.find((c) => c.value === cargo)?.label || cargo;
           clearTransitionStorage();
           dispatchTransitionEvent();
-          setIsSuccess(false);
           toast({
             title: "Cargo já ocupado",
             description: `Já existe um usuário cadastrado como ${cargoLabel}.`,
@@ -346,7 +360,6 @@ const Auth = () => {
         if (error) {
           clearTransitionStorage();
           dispatchTransitionEvent();
-          setIsSuccess(false);
           if (error.message.includes("User already registered")) {
             toast({
               title: "Erro no cadastro",
@@ -375,7 +388,6 @@ const Auth = () => {
           if (profileError) {
             clearTransitionStorage();
             dispatchTransitionEvent();
-            setIsSuccess(false);
             toast({
               title: "Erro ao criar perfil",
               description: profileError.message,
@@ -409,7 +421,6 @@ const Auth = () => {
     } catch (error) {
       clearTransitionStorage();
       dispatchTransitionEvent();
-      setIsSuccess(false);
       toast({
         title: "Erro",
         description: "Ocorreu um erro inesperado. Tente novamente.",
@@ -418,10 +429,6 @@ const Auth = () => {
       setIsLoading(false);
     }
   };
-
-  if (isSuccess) {
-    return <div className="fixed inset-0 bg-[#010101] z-50" />;
-  }
 
   return (
     <div className="min-h-screen w-full relative overflow-hidden flex items-center justify-center">
@@ -452,8 +459,8 @@ const Auth = () => {
           </div>
           {previewName && (
             <div className="mt-3 animate-fade-in">
-              <span className="text-sm font-medium tracking-wide">
-                <span className="!text-white" style={{ color: "white" }}>Olá, {previewName}!</span>
+              <span className="text-white/90 text-sm font-medium tracking-wide">
+                Olá, {previewName}!
               </span>
             </div>
           )}
@@ -589,9 +596,9 @@ const Auth = () => {
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : isLogin ? (
-              <span className="!text-white" style={{ color: "white" }}>ENTRAR</span>
+              "ENTRAR"
             ) : (
-              <span className="!text-white" style={{ color: "white" }}>CADASTRAR</span>
+              "CADASTRAR"
             )}
           </Button>
 
@@ -603,11 +610,9 @@ const Auth = () => {
             <button
               type="button"
               onClick={() => setIsLogin(!isLogin)}
-              className="text-xs underline underline-offset-2 transition-colors"
+              className="text-white/70 hover:text-white text-xs underline underline-offset-2 transition-colors"
             >
-              <span className="!text-white" style={{ color: "white" }}>
-                {isLogin ? "Criar uma conta" : "Já tenho uma conta"}
-              </span>
+              {isLogin ? "Criar uma conta" : "Já tenho uma conta"}
             </button>
           </div>
         )}

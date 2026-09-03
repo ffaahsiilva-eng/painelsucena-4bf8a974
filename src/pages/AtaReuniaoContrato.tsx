@@ -36,8 +36,6 @@ import {
 } from "@/hooks/useMeetingMinutes";
 import { parseAtaPdf } from "@/lib/parseAtaPdf";
 import { cn } from "@/lib/utils";
-import { compressImage } from "@/utils/imageCompression";
-
 
 export default function AtaReuniaoContrato() {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -93,7 +91,7 @@ export default function AtaReuniaoContrato() {
       const path = `atas/${Date.now()}-${file.name}`;
       const { error: upErr } = await supabase.storage
         .from("security-files")
-        .upload(path, await compressImage(file), { upsert: false, contentType: "application/pdf" });
+        .upload(path, file, { upsert: false, contentType: "application/pdf" });
       let fileUrl: string | null = null;
       if (!upErr) {
         const { data } = supabase.storage.from("security-files").getPublicUrl(path);

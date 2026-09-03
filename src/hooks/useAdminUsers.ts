@@ -23,11 +23,7 @@ export const useAdminUsers = () => {
       // Combined set for backward compatibility (isAdmin checks)
       const combinedSet = new Set([...adminSet, ...moderatorSet]);
 
-      return { 
-        admins: Array.from(adminSet), 
-        moderators: Array.from(moderatorSet), 
-        all: Array.from(combinedSet) 
-      };
+      return { admins: adminSet, moderators: moderatorSet, all: combinedSet };
     },
     staleTime: 5 * 60 * 1000,
     select: (data) => data,
